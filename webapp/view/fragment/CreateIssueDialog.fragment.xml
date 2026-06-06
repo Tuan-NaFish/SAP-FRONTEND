@@ -1,8 +1,9 @@
 <core:FragmentDefinition
     xmlns="sap.m"
     xmlns:core="sap.ui.core"
-    xmlns:form="sap.ui.layout.form">
-    <Dialog title="Create New Defect Ticket" contentWidth="600px" class="sapUiContentPadding">
+    xmlns:form="sap.ui.layout.form"
+    xmlns:upload="sap.m.upload">
+    <Dialog title="Create New Defect Ticket" contentWidth="650px" class="sapUiContentPadding">
         <content>
             <form:SimpleForm layout="ColumnLayout" columnsM="1" columnsL="1" columnsXL="1">
                 <form:content>
@@ -17,7 +18,7 @@
                     </Select>
 
                     <Label text="Environment"/>
-                    <Select id="selectEnv">
+                    <Select id="selectEnv" change=".onEnvChange">
                         <core:Item key="DEV" text="Development (DEV)" />
                         <core:Item key="QA" text="Testing (QA/UAT)" />
                         <core:Item key="PROD" text="Production (PROD)" />
@@ -38,6 +39,23 @@
                     <TextArea id="inputDesc" rows="4" placeholder="1. Open T-Code...&#10;2. Enter data...&#10;3. System dumps..." />
                 </form:content>
             </form:SimpleForm>
+
+            <VBox class="sapUiSmallMarginTop">
+                <Title text="Attachments" level="H5" class="sapUiTinyMarginBottom" />
+                <upload:UploadSet
+                    id="uploadSet"
+                    instantUpload="false"
+                    showIcons="true"
+                    uploadEnabled="true"
+                    multiple="true" 
+                    maxFileSize="5"
+                    fileTypes="jpg,png,pdf,docx"
+                    fileTypeMismatch=".onTypeMissmatch"
+                    fileSizeExceeded=".onFileSizeExceed"
+                    noDataText="Kéo &amp; Thả tập tin đính kèm vào đây"
+                    noDataDescription="Hoặc sử dụng nút Tải lên ở góc phải (Tối đa 5MB)">
+                </upload:UploadSet>
+            </VBox>
         </content>
         <buttons>
             <Button text="Save" type="Emphasized" press=".onSaveIssue" />
