@@ -1,0 +1,88 @@
+<mvc:View
+    controllerName="sap.defectmgmt.controller.IssueDetail"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:f="sap.f"
+    xmlns:uxap="sap.uxap"
+    xmlns:layout="sap.ui.layout"
+    xmlns:form="sap.ui.layout.form"
+    displayBlock="true">
+    
+    <Page id="detailPage">
+        <customHeader>
+            <f:ShellBar 
+                title="SAP Defect Management System" 
+                homeIcon="https://ui5.sap.com/resources/sap/ui/documentation/sdk/images/logo_sap.png"
+                showNavButton="true"
+                navButtonPressed=".onNavBack" />
+        </customHeader>
+        <content>
+            <uxap:ObjectPageLayout id="ObjectPageLayout" showTitleInHeaderContent="true" alwaysShowContentHeader="false" preserveHeaderStateOnScroll="false" headerContentPinnable="true" isChildPage="true">
+                <uxap:headerTitle>
+                    <uxap:ObjectPageDynamicHeaderTitle>
+                        <uxap:expandedHeading>
+                            <Title text="{defectModel>TITLE}" wrapping="true" class="sapUiSmallMarginEnd"/>
+                        </uxap:expandedHeading>
+                        <uxap:snappedHeading>
+                            <Title text="{defectModel>TITLE}" wrapping="true"/>
+                        </uxap:snappedHeading>
+                    </uxap:ObjectPageDynamicHeaderTitle>
+                </uxap:headerTitle>
+
+                <uxap:headerContent>
+                    <FlexBox wrap="Wrap" fitContainer="true" alignItems="Stretch">
+                        <layout:VerticalLayout class="sapUiLargeMarginEnd">
+                            <Label text="Ticket ID"/>
+                            <Text text="{defectModel>ISSUE_ID}"/>
+                        </layout:VerticalLayout>
+                        <layout:VerticalLayout class="sapUiLargeMarginEnd">
+                            <Label text="Status"/>
+                            <ObjectStatus text="{defectModel>STATUS}" state="Information"/>
+                        </layout:VerticalLayout>
+                        <layout:VerticalLayout class="sapUiLargeMarginEnd">
+                            <Label text="Severity"/>
+                            <ObjectStatus text="{defectModel>SEVERITY}" state="{= ${defectModel>SEVERITY} === 'Critical' ? 'Error' : ${defectModel>SEVERITY} === 'High' ? 'Warning' : 'Success' }"/>
+                        </layout:VerticalLayout>
+                    </FlexBox>
+                </uxap:headerContent>
+
+                <uxap:sections>
+                    <uxap:ObjectPageSection title="General Information">
+                        <uxap:subSections>
+                            <uxap:ObjectPageSubSection>
+                                <uxap:blocks>
+                                    <form:SimpleForm editable="false" layout="ColumnLayout" columnsM="2" columnsL="3" columnsXL="4">
+                                        <form:content>
+                                            <Label text="Module"/>
+                                            <Text text="{defectModel>MODULE}"/>
+                                            <Label text="T-Code"/>
+                                            <Text text="{defectModel>TCODE}"/>
+                                            <Label text="Environment"/>
+                                            <Text text="{defectModel>ENVIRONMENT}"/>
+                                            <Label text="Assigned To"/>
+                                            <Text text="{defectModel>ASSIGNED_TO}"/>
+                                            <Label text="Due Date"/>
+                                            <Text text="{defectModel>DUE_DATE}"/>
+                                        </form:content>
+                                    </form:SimpleForm>
+                                </uxap:blocks>
+                            </uxap:ObjectPageSubSection>
+                        </uxap:subSections>
+                    </uxap:ObjectPageSection>
+
+                    <uxap:ObjectPageSection title="Description">
+                        <uxap:subSections>
+                            <uxap:ObjectPageSubSection>
+                                <uxap:blocks>
+                                    <VBox class="sapUiSmallMargin">
+                                        <Text text="{defectModel>DESCRIPTION}"/>
+                                    </VBox>
+                                </uxap:blocks>
+                            </uxap:ObjectPageSubSection>
+                        </uxap:subSections>
+                    </uxap:ObjectPageSection>
+                </uxap:sections>
+            </uxap:ObjectPageLayout>
+        </content>
+    </Page>
+</mvc:View>

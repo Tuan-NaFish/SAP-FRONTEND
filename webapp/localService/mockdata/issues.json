@@ -1,0 +1,62 @@
+[
+  {
+    "ISSUE_ID": "DEF-1001",
+    "TITLE": "FI Document Posting Fails with Vendor Invoice",
+    "DESCRIPTION": "When posting a vendor invoice in FB60, the system throws a short dump 'CONVT_OVERFLOW' for amounts exceeding 999,999,999.99 in JPY currency.",
+    "MODULE": "FI",
+    "TCODE": "FB60",
+    "ENVIRONMENT": "QA",
+    "SEVERITY": "Critical",
+    "STATUS": "IN_PROGRESS",
+    "ASSIGNED_TO": "Anna Schmidt",
+    "DUE_DATE": "2026-06-15"
+  },
+  {
+    "ISSUE_ID": "DEF-1002",
+    "TITLE": "Goods Receipt Not Updating Stock Valuation",
+    "DESCRIPTION": "MIGO goods receipt against a purchase order updates quantity but not the moving average price in MBEW. The cumulative stock value remains unchanged.",
+    "MODULE": "MM",
+    "TCODE": "MIGO",
+    "ENVIRONMENT": "PROD",
+    "SEVERITY": "High",
+    "STATUS": "NEW",
+    "ASSIGNED_TO": "Bjorn Muller",
+    "DUE_DATE": "2026-06-20"
+  },
+  {
+    "ISSUE_ID": "DEF-1003",
+    "TITLE": "Sales Order Billing Block Not Released via VA02",
+    "DESCRIPTION": "Billing block set by delivery tolerances cannot be removed in VA02 even with full authorization. Work item remains in SBWP queue indefinitely.",
+    "MODULE": "SD",
+    "TCODE": "VA02",
+    "ENVIRONMENT": "PROD",
+    "SEVERITY": "High",
+    "STATUS": "IN_PROGRESS",
+    "ASSIGNED_TO": "Clara Weber",
+    "DUE_DATE": "2026-06-18"
+  },
+  {
+    "ISSUE_ID": "DEF-1004",
+    "TITLE": "Asset Depreciation Run Arithmetik Error in Year-End",
+    "DESCRIPTION": "AFAB depreciation posting for year-end shows rounding difference of 0.01 EUR for every 10th asset. Error occurs only in companies using pro-rata temporis method.",
+    "MODULE": "FI",
+    "TCODE": "AFAB",
+    "ENVIRONMENT": "QA",
+    "SEVERITY": "Medium",
+    "STATUS": "NEW",
+    "ASSIGNED_TO": "Anna Schmidt",
+    "DUE_DATE": "2026-06-28"
+  },
+  {
+    "ISSUE_ID": "DEF-1005",
+    "TITLE": "Output Condition Record Missing for Customer Master",
+    "DESCRIPTION": "VF01 invoice output determination fails for newly created customers. Condition record KOMG-KUNNR not generated despite having the output condition assigned in XD02.",
+    "MODULE": "SD",
+    "TCODE": "VF01",
+    "ENVIRONMENT": "DEV",
+    "SEVERITY": "Medium",
+    "STATUS": "RESOLVED",
+    "ASSIGNED_TO": "Clara Weber",
+    "DUE_DATE": "2026-06-10"
+  }
+]

@@ -1,0 +1,93 @@
+{
+  "_version": "1.49.0",
+  "sap.app": {
+    "id": "sap.defectmgmt",
+    "type": "application",
+    "title": "Defect Management",
+    "description": "Defect Management System",
+    "applicationVersion": {
+      "version": "1.0.0"
+    }
+  },
+  "sap.ui": {
+    "technology": "UI5",
+    "deviceTypes": {
+      "desktop": true,
+      "tablet": true,
+      "phone": true
+    }
+  },
+  "sap.ui5": {
+    "flexEnabled": false,
+    "dependencies": {
+      "minUI5Version": "1.108.0",
+      "libs": {
+        "sap.m": {},
+        "sap.f": {},
+        "sap.ui.core": {},
+        "sap.ui.layout": {},
+        "sap.uxap": {}
+      }
+    },
+    "contentDensities": {
+      "compact": true,
+      "cozy": true
+    },
+    "models": {
+      "": {
+        "type": "sap.ui.model.json.JSONModel"
+      },
+      "defectModel": {
+        "type": "sap.ui.model.json.JSONModel",
+        "uri": "localService/mockdata/issues.json"
+      },
+      "kpiModel": {
+        "type": "sap.ui.model.json.JSONModel",
+        "uri": "localService/mockdata/dashboard.json"
+      }
+    },
+    "routing": {
+      "config": {
+        "routerClass": "sap.m.routing.Router",
+        "viewType": "XML",
+        "async": true,
+        "viewPath": "sap.defectmgmt.view",
+        "controlAggregation": "pages",
+        "controlId": "app",
+        "clearControlAggregation": false
+      },
+      "routes": [
+        {
+          "name": "Dashboard",
+          "pattern": "",
+          "target": ["TargetDashboard"]
+        },
+        {
+          "name": "IssueDetail",
+          "pattern": "issue/{issuePath}",
+          "target": ["TargetIssueDetail"]
+        }
+      ],
+      "targets": {
+        "TargetDashboard": {
+          "viewType": "XML",
+          "transition": "slide",
+          "viewId": "Dashboard",
+          "viewName": "Dashboard"
+        },
+        "TargetIssueDetail": {
+          "viewType": "XML",
+          "transition": "slide",
+          "viewId": "IssueDetail",
+          "viewName": "IssueDetail"
+        }
+      }
+    },
+    "rootView": {
+      "viewName": "sap.defectmgmt.view.App",
+      "type": "XML",
+      "async": true,
+      "id": "App"
+    }
+  }
+}
