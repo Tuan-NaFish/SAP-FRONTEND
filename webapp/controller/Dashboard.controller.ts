@@ -177,4 +177,43 @@ public onEnvChange(): void {
             MessageToast.show("Ticket created successfully! Table updated.");
         });
     }
+    // --- LOGIC CHO BIỂU ĐỒ TƯƠNG TÁC ---
+    public onChartSelect(oEvent: Event): void {
+        const oSegment = (oEvent as any).getParameter("segment");
+        const aFilters: Filter[] = []; // (Lưu ý: Bạn đã có import Filter từ trước rồi)
+        
+        if (oSegment) {
+            // Lấy tên của miếng biểu đồ vừa bấm (Critical, High, Medium, Low)
+            const sSeverity = oSegment.getLabel();
+            
+            // Tạo bộ lọc theo cột SEVERITY
+            aFilters.push(new Filter("SEVERITY", FilterOperator.EQ, sSeverity));
+            MessageToast.show("Filtering tickets by: " + sSeverity);
+        } else {
+            // Nếu bấm lần nữa để bỏ chọn miếng đó -> Hiển thị lại toàn bộ bảng
+            MessageToast.show("Showing all tickets");
+        }
+
+        // Áp dụng bộ lọc vào bảng
+        const oTable = this.byId("defectTable") as Table;
+        const oBinding = oTable.getBinding("items") as ListBinding;
+        oBinding.filter(aFilters);
+    }
+    public onModuleChartSelect(oEvent: Event): void {
+        const oBar = (oEvent as any).getParameter("bar");
+        const aFilters: Filter[] = [];
+        
+        if (oBar) {
+            const sModule = oBar.getLabel();
+            // Lọc tuyệt đối (EQ) theo cột MODULE
+            aFilters.push(new Filter("MODULE", FilterOperator.EQ, sModule));
+            MessageToast.show("Filtering tickets by Module: " + sModule);
+        } else {
+            MessageToast.show("Showing all tickets");
+        }
+
+        const oTable = this.byId("defectTable") as Table;
+        const oBinding = oTable.getBinding("items") as ListBinding;
+        oBinding.filter(aFilters);
+    }
 }

@@ -6,7 +6,8 @@
     xmlns:f="sap.f"
     xmlns:card="sap.f.cards"
     xmlns:cssgrid="sap.ui.layout.cssgrid"
-    xmlns:core="sap.ui.core"> 
+    xmlns:core="sap.ui.core"
+    xmlns:mc="sap.suite.ui.microchart">
     
     <Page id="dashboardPage" showHeader="false">
         <content>
@@ -23,6 +24,51 @@
                     <f:Card><f:header><card:NumericHeader title="Critical Bugs" number="{kpiModel>/CriticalCount}" scale="Bugs" state="Error"/></f:header></f:Card>
                     <f:Card><f:header><card:NumericHeader title="SLA Compliance" number="{kpiModel>/SLACompliance}" scale="%" state="Good"/></f:header></f:Card>
                 </cssgrid:CSSGrid>
+
+        <!-- Charts -->
+        <cssgrid:CSSGrid gridTemplateColumns="repeat(auto-fit, minmax(400px, 1fr))" gridGap="1rem" class="sapUiSmallMargin">
+            
+            <!-- Card 1: Donut Chart -->
+            <f:Card>
+                <f:header>
+                    <card:Header title="Severity Distribution" iconSrc="sap-icon://donut-chart" />
+                </f:header>
+                <f:content>
+                    <!-- ĐÃ SỬA: Dùng VBox, xóa lệnh Center, thêm width="100%" -->
+                    <VBox width="100%" height="250px" class="sapUiSmallMargin">
+                        <mc:InteractiveDonutChart id="severityChart" displayedSegments="4" selectionChanged=".onChartSelect">
+                            <mc:segments>
+                                <!-- ĐÃ SỬA: Bỏ hết các thuộc tính color="..." để dóng hàng thẳng tắp -->
+                                <mc:InteractiveDonutChartSegment label="Critical" value="3" />
+                                <mc:InteractiveDonutChartSegment label="High" value="5" />
+                                <mc:InteractiveDonutChartSegment label="Medium" value="4" />
+                                <mc:InteractiveDonutChartSegment label="Low" value="2" />
+                            </mc:segments>
+                        </mc:InteractiveDonutChart>
+                    </VBox>
+                </f:content>
+            </f:Card>
+
+            <!-- Card 2: Bar Chart -->
+            <f:Card>
+                <f:header>
+                    <card:Header title="Module Analysis" iconSrc="sap-icon://horizontal-bar-chart" />
+                </f:header>
+                <f:content>
+                    <!-- ĐÃ SỬA: Tương tự, gỡ lệnh Center và thêm width="100%" -->
+                    <VBox width="100%" height="250px" class="sapUiSmallMargin">
+                        <mc:InteractiveBarChart id="moduleChart" selectionChanged=".onModuleChartSelect">
+                            <mc:bars>
+                                <mc:InteractiveBarChartBar label="FI" value="2" color="Error" />
+                                <mc:InteractiveBarChartBar label="MM" value="1" color="Critical" />
+                                <mc:InteractiveBarChartBar label="SD" value="2" color="Good" />
+                            </mc:bars>
+                        </mc:InteractiveBarChart>
+                    </VBox>
+                </f:content>
+            </f:Card>
+            
+        </cssgrid:CSSGrid>
 
                 <Table id="defectTable" items="{path: 'defectModel>/'}" class="sapUiTopMargin">
                     <headerToolbar>
