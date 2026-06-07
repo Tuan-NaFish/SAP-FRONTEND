@@ -16,6 +16,7 @@ import SearchField from "sap/m/SearchField";
 import Table from "sap/m/Table";
 import MessageBox from "sap/m/MessageBox";
 import UploadSet from "sap/m/upload/UploadSet";
+import BusyDialog from "sap/m/BusyDialog";
 
 /**
  * @namespace sap.defectmgmt.controller
@@ -37,33 +38,27 @@ export default class Dashboard extends Controller {
         }
     }
 
-    // --- LOGIC CHO SEARCH & FILTER ---
     public onFilter(): void {
         const aFilters: Filter[] = [];
         
-        // 1. Lấy giá trị người dùng đang gõ trong ô Search
         const sQuery = (this.byId("searchField") as SearchField).getValue();
         if (sQuery) {
             aFilters.push(new Filter("TITLE", FilterOperator.Contains, sQuery));
         }
 
-        // 2. Lấy giá trị đang chọn trong ô Dropdown (Module)
         const sModule = (this.byId("filterModule") as Select).getSelectedKey();
         if (sModule) {
             aFilters.push(new Filter("MODULE", FilterOperator.EQ, sModule));
         }
 
-        // 3. Đã sửa: Ép kiểu bằng class Table vừa import
         const oTable = this.byId("defectTable") as Table;
         const oBinding = oTable.getBinding("items") as ListBinding;
         oBinding.filter(aFilters);
     }
-    // --- LOGIC CHO NÚT CREATE ISSUE ---
 
     public onCreateIssuePress(): void {
         const oView = this.getView();
 
-        // Khởi tạo và mở Dialog từ file Fragment
         if (!this._pDialog) {
             this._pDialog = Fragment.load({
                 id: oView?.getId(),
@@ -85,7 +80,8 @@ export default class Dashboard extends Controller {
             oDialog.close();
         });
     }
-public onEnvChange(): void {
+
+    public onEnvChange(): void {
         const sEnv = (this.byId("selectEnv") as Select).getSelectedKey();
         if (sEnv === "PROD") {
             MessageBox.warning("Attention: You are creating a ticket in the Production (PROD) environment. Please ensure all details are highly accurate!");
@@ -98,10 +94,10 @@ public onEnvChange(): void {
     }
 
     public onFileSizeExceed(oEvent: Event): void {
-        // Đã thêm ép kiểu (oEvent as any)
         const sFileSize = (oEvent as any).getParameter("fileSize") as string;
         MessageToast.show(`The file is too big. Maximum allowed size is 5 MB.`);
     }
+
     public onSaveIssue(): void {
         this._pDialog.then((oDialog) => {
             const oInputTitle = this.byId("inputTitle") as Input;
@@ -114,7 +110,6 @@ public onEnvChange(): void {
             const sSeverity = (this.byId("selectSeverity") as Select).getSelectedKey();
             const sTCode = (this.byId("inputTCode") as Input).getValue();
 
-            // --- LOGIC VALIDATION BÔI ĐỎ ---
             let bValidationError = false;
 
             if (!sTitle) {
@@ -133,79 +128,80 @@ public onEnvChange(): void {
                 oInputDesc.setValueState("None");
             }
 
-            // Nếu có lỗi thì dừng lại, không cho lưu
             if (bValidationError) {
                 MessageToast.show("Please fill in all required fields!");
                 return;
             }
 
             // --- LƯU DỮ LIỆU NẾU HỢP LỆ ---
-            const oModel = this.getView()?.getModel("defectModel") as JSONModel;
-            const aData = oModel.getData();
+            // 1. Bật vòng xoay chờ tải
+            const oBusyDialog = new BusyDialog({
+                text: "Saving issue data..."
+            });
+            oBusyDialog.open();
 
-            const newTicket = {
-                ISSUE_ID: "DEF-" + (1000 + aData.length + 1).toString(),
-                TITLE: sTitle,
-                MODULE: sModule,
-                ENVIRONMENT: sEnv,
-                SEVERITY: sSeverity,
-                TCODE: sTCode,
-                DESCRIPTION: sDesc,
-                STATUS: "NEW",
-                ASSIGNED_TO: "Unassigned"
-            };
+            // 2. Giả lập gọi API 1.5s
+            setTimeout(() => {
+                const oModel = this.getView()?.getModel("defectModel") as JSONModel;
+                const aData = oModel.getData();
 
-            aData.unshift(newTicket);
-            oModel.setData(aData);
+                const newTicket = {
+                    ISSUE_ID: "DEF-" + (1000 + aData.length + 1).toString(),
+                    TITLE: sTitle,
+                    MODULE: sModule,
+                    ENVIRONMENT: sEnv,
+                    SEVERITY: sSeverity,
+                    TCODE: sTCode,
+                    DESCRIPTION: sDesc,
+                    STATUS: "NEW",
+                    ASSIGNED_TO: "Unassigned"
+                };
 
-            // Reset form
-            // Reset form
-            oInputTitle.setValue("");
-            oInputTitle.setValueState("None");
-            oInputDesc.setValue("");
-            oInputDesc.setValueState("None");
-            (this.byId("inputTCode") as Input).setValue("");
-            (this.byId("selectEnv") as Select).setSelectedKey("DEV");
-            
-            // Xóa sạch danh sách file đính kèm vừa tải lên
-            const oUploadSet = this.byId("uploadSet") as UploadSet;
-            if (oUploadSet) {
-                oUploadSet.removeAllIncompleteItems();
-            }
+                aData.unshift(newTicket);
+                oModel.setData(aData);
 
-            oDialog.close();
-            MessageToast.show("Ticket created successfully! Table updated.");
+                oInputTitle.setValue("");
+                oInputTitle.setValueState("None");
+                oInputDesc.setValue("");
+                oInputDesc.setValueState("None");
+                (this.byId("inputTCode") as Input).setValue("");
+                (this.byId("selectEnv") as Select).setSelectedKey("DEV");
+                
+                const oUploadSet = this.byId("uploadSet") as UploadSet;
+                if (oUploadSet) {
+                    oUploadSet.removeAllIncompleteItems();
+                }
+
+                oBusyDialog.close();
+                oDialog.close();
+                MessageToast.show("Ticket created successfully!");
+            }, 1500);
         });
     }
-    // --- LOGIC CHO BIỂU ĐỒ TƯƠNG TÁC ---
+
     public onChartSelect(oEvent: Event): void {
         const oSegment = (oEvent as any).getParameter("segment");
-        const aFilters: Filter[] = []; // (Lưu ý: Bạn đã có import Filter từ trước rồi)
+        const aFilters: Filter[] = [];
         
         if (oSegment) {
-            // Lấy tên của miếng biểu đồ vừa bấm (Critical, High, Medium, Low)
             const sSeverity = oSegment.getLabel();
-            
-            // Tạo bộ lọc theo cột SEVERITY
             aFilters.push(new Filter("SEVERITY", FilterOperator.EQ, sSeverity));
             MessageToast.show("Filtering tickets by: " + sSeverity);
         } else {
-            // Nếu bấm lần nữa để bỏ chọn miếng đó -> Hiển thị lại toàn bộ bảng
             MessageToast.show("Showing all tickets");
         }
 
-        // Áp dụng bộ lọc vào bảng
         const oTable = this.byId("defectTable") as Table;
         const oBinding = oTable.getBinding("items") as ListBinding;
         oBinding.filter(aFilters);
     }
+
     public onModuleChartSelect(oEvent: Event): void {
         const oBar = (oEvent as any).getParameter("bar");
         const aFilters: Filter[] = [];
         
         if (oBar) {
             const sModule = oBar.getLabel();
-            // Lọc tuyệt đối (EQ) theo cột MODULE
             aFilters.push(new Filter("MODULE", FilterOperator.EQ, sModule));
             MessageToast.show("Filtering tickets by Module: " + sModule);
         } else {
