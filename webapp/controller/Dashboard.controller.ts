@@ -212,4 +212,20 @@ export default class Dashboard extends Controller {
         const oBinding = oTable.getBinding("items") as ListBinding;
         oBinding.filter(aFilters);
     }
+    // --- LOGIC CHUYỂN TRANG CHI TIẾT ---
+    public onTicketPress(oEvent: Event): void {
+        const oItem = oEvent.getSource() as ColumnListItem;   
+        const oBindingContext = oItem.getBindingContext("defectModel");
+        
+        if (oBindingContext) {
+            // Lấy ID của cái vé (Ví dụ: DEF-1001)
+            const sIssueId = oBindingContext.getProperty("ISSUE_ID");
+            
+            // Lấy Router ra và ra lệnh chuyển hướng
+            const oRouter = (this.getOwnerComponent() as any).getRouter();
+            oRouter.navTo("IssueDetail", {
+                issuePath: sIssueId // Truyền ID này sang trang kia
+            });
+        }
+    }
 }

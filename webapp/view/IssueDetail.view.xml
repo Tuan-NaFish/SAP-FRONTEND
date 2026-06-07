@@ -16,53 +16,58 @@
                 showNavButton="true"
                 navButtonPressed=".onNavBack" />
         </customHeader>
+
         <content>
             <uxap:ObjectPageLayout id="ObjectPageLayout" showTitleInHeaderContent="true" alwaysShowContentHeader="false" preserveHeaderStateOnScroll="false" headerContentPinnable="true" isChildPage="true">
+                
                 <uxap:headerTitle>
                     <uxap:ObjectPageDynamicHeaderTitle>
                         <uxap:expandedHeading>
-                            <Title text="{defectModel>TITLE}" wrapping="true" class="sapUiSmallMarginEnd"/>
+                            <Title text="{defectModel>ISSUE_ID} - {defectModel>TITLE}" wrapping="true" class="sapUiSmallMarginEnd"/>
                         </uxap:expandedHeading>
                         <uxap:snappedHeading>
-                            <Title text="{defectModel>TITLE}" wrapping="true"/>
+                            <Title text="{defectModel>ISSUE_ID}" wrapping="true"/>
                         </uxap:snappedHeading>
+                        <uxap:actions>
+                            <Button text="Start Progress" type="Emphasized" />
+                            <Button text="Resolve" type="Success" />
+                            <Button text="Edit" />
+                        </uxap:actions>
                     </uxap:ObjectPageDynamicHeaderTitle>
                 </uxap:headerTitle>
 
                 <uxap:headerContent>
-                    <FlexBox wrap="Wrap" fitContainer="true" alignItems="Stretch">
-                        <layout:VerticalLayout class="sapUiLargeMarginEnd">
-                            <Label text="Ticket ID"/>
-                            <Text text="{defectModel>ISSUE_ID}"/>
+                    <FlexBox wrap="Wrap" fitContainer="true">
+                        <layout:VerticalLayout class="sapUiMediumMarginEnd sapUiSmallMarginBottom">
+                            <Label text="Status" />
+                            <ObjectStatus text="{defectModel>STATUS}" state="{= ${defectModel>STATUS} === 'NEW' ? 'Information' : ${defectModel>STATUS} === 'IN_PROGRESS' ? 'Warning' : ${defectModel>STATUS} === 'RESOLVED' ? 'Success' : 'None' }" inverted="true" />
                         </layout:VerticalLayout>
-                        <layout:VerticalLayout class="sapUiLargeMarginEnd">
-                            <Label text="Status"/>
-                            <ObjectStatus text="{defectModel>STATUS}" state="Information"/>
+                        <layout:VerticalLayout class="sapUiMediumMarginEnd sapUiSmallMarginBottom">
+                            <Label text="Severity" />
+                            <ObjectStatus text="{defectModel>SEVERITY}" state="{= ${defectModel>SEVERITY} === 'Critical' ? 'Error' : ${defectModel>SEVERITY} === 'High' ? 'Warning' : ${defectModel>SEVERITY} === 'Medium' ? 'Success' : 'None' }" inverted="true" />
                         </layout:VerticalLayout>
-                        <layout:VerticalLayout class="sapUiLargeMarginEnd">
-                            <Label text="Severity"/>
-                            <ObjectStatus text="{defectModel>SEVERITY}" state="{= ${defectModel>SEVERITY} === 'Critical' ? 'Error' : ${defectModel>SEVERITY} === 'High' ? 'Warning' : 'Success' }"/>
+                        <layout:VerticalLayout class="sapUiMediumMarginEnd sapUiSmallMarginBottom">
+                            <Label text="Assignee" />
+                            <Text text="{defectModel>ASSIGNED_TO}" />
                         </layout:VerticalLayout>
                     </FlexBox>
                 </uxap:headerContent>
 
                 <uxap:sections>
-                    <uxap:ObjectPageSection title="General Information">
+                    <uxap:ObjectPageSection titleUppercase="false" title="Overview">
                         <uxap:subSections>
-                            <uxap:ObjectPageSubSection>
+                            <uxap:ObjectPageSubSection title="General Information">
                                 <uxap:blocks>
-                                    <form:SimpleForm editable="false" layout="ColumnLayout" columnsM="2" columnsL="3" columnsXL="4">
+                                    <form:SimpleForm layout="ColumnLayout" columnsM="2" columnsL="2" columnsXL="2">
                                         <form:content>
                                             <Label text="Module"/>
                                             <Text text="{defectModel>MODULE}"/>
-                                            <Label text="T-Code"/>
-                                            <Text text="{defectModel>TCODE}"/>
                                             <Label text="Environment"/>
                                             <Text text="{defectModel>ENVIRONMENT}"/>
-                                            <Label text="Assigned To"/>
-                                            <Text text="{defectModel>ASSIGNED_TO}"/>
-                                            <Label text="Due Date"/>
-                                            <Text text="{defectModel>DUE_DATE}"/>
+                                            <Label text="T-Code"/>
+                                            <Text text="{defectModel>TCODE}"/>
+                                            <Label text="Description"/>
+                                            <Text text="{defectModel>DESCRIPTION}"/>
                                         </form:content>
                                     </form:SimpleForm>
                                 </uxap:blocks>
@@ -70,17 +75,26 @@
                         </uxap:subSections>
                     </uxap:ObjectPageSection>
 
-                    <uxap:ObjectPageSection title="Description">
+                    <uxap:ObjectPageSection titleUppercase="false" title="Attachments">
                         <uxap:subSections>
-                            <uxap:ObjectPageSubSection>
+                            <uxap:ObjectPageSubSection title="Uploaded Files">
                                 <uxap:blocks>
-                                    <VBox class="sapUiSmallMargin">
-                                        <Text text="{defectModel>DESCRIPTION}"/>
-                                    </VBox>
+                                    <Text text="(Member 2 will put UploadSet here)" class="sapUiSmallMargin"/>
                                 </uxap:blocks>
                             </uxap:ObjectPageSubSection>
                         </uxap:subSections>
                     </uxap:ObjectPageSection>
+
+                    <uxap:ObjectPageSection titleUppercase="false" title="History">
+                        <uxap:subSections>
+                            <uxap:ObjectPageSubSection title="Activity Timeline">
+                                <uxap:blocks>
+                                    <Text text="(Member 2 will put Timeline control here)" class="sapUiSmallMargin"/>
+                                </uxap:blocks>
+                            </uxap:ObjectPageSubSection>
+                        </uxap:subSections>
+                    </uxap:ObjectPageSection>
+
                 </uxap:sections>
             </uxap:ObjectPageLayout>
         </content>
