@@ -13,7 +13,10 @@
         <content>
             <f:ShellBar 
                 title="SAP Defect Management System" 
-                homeIcon="https://ui5.sap.com/resources/sap/ui/documentation/sdk/images/logo_sap.png" />
+                homeIcon="https://ui5.sap.com/resources/sap/ui/documentation/sdk/images/logo_sap.png"
+                showNotifications="true"
+                notificationsNumber="2"
+                notificationsPressed=".onNotificationPress" />
             
             <VBox class="sapUiMediumMargin">
                 <Title text="Dashboard &amp; Defect Metrics" level="H2" class="sapUiBottomMargin"/>
@@ -79,6 +82,8 @@
                         <Toolbar>
                             <Title text="Open Defects" level="H2"/>
                             <ToolbarSpacer/>
+                            
+                            <Button icon="sap-icon://sort" press=".onSortPress" type="Transparent" tooltip="Sort Tickets" class="sapUiSmallMarginEnd" />
                             
                             <Select id="filterModule" change=".onFilter" width="150px" class="sapUiSmallMarginEnd">
                                 <core:Item key="" text="All Modules" />

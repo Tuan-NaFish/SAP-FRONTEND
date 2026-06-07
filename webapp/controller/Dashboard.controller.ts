@@ -17,7 +17,10 @@ import Table from "sap/m/Table";
 import MessageBox from "sap/m/MessageBox";
 import UploadSet from "sap/m/upload/UploadSet";
 import BusyDialog from "sap/m/BusyDialog";
-
+import Popover from "sap/m/Popover";
+import Sorter from "sap/ui/model/Sorter";
+import ActionSheet from "sap/m/ActionSheet";
+import Button from "sap/m/Button";
 /**
  * @namespace sap.defectmgmt.controller
  */
@@ -212,20 +215,60 @@ export default class Dashboard extends Controller {
         const oBinding = oTable.getBinding("items") as ListBinding;
         oBinding.filter(aFilters);
     }
-    // --- LOGIC CHUYỂN TRANG CHI TIẾT ---
-    public onTicketPress(oEvent: Event): void {
-        const oItem = oEvent.getSource() as ColumnListItem;   
-        const oBindingContext = oItem.getBindingContext("defectModel");
+  // Biến lưu trữ Popover để không bị load lại nhiều lần
+    private _pNotificationPopover: Promise<Popover>;
+
+    public onNotificationPress(oEvent: Event): void {
+        const oView = this.getView();
         
-        if (oBindingContext) {
-            // Lấy ID của cái vé (Ví dụ: DEF-1001)
-            const sIssueId = oBindingContext.getProperty("ISSUE_ID");
-            
-            // Lấy Router ra và ra lệnh chuyển hướng
-            const oRouter = (this.getOwnerComponent() as any).getRouter();
-            oRouter.navTo("IssueDetail", {
-                issuePath: sIssueId // Truyền ID này sang trang kia
+        // ĐÃ SỬA: Lấy chính xác cái nút chuông (ép kiểu any để lách luật TypeScript)
+        const oButton = (oEvent as any).getParameter("button");
+
+        if (!this._pNotificationPopover) {
+            this._pNotificationPopover = Fragment.load({
+                id: oView?.getId(),
+                name: "sap.defectmgmt.view.fragment.NotificationPopover",
+                controller: this
+            }).then((oPopover) => {
+                oView?.addDependent(oPopover as Popover);
+                return oPopover as Popover;
             });
         }
+
+        this._pNotificationPopover.then((oPopover) => {
+            // ĐÃ SỬA: Bám đúng vào tọa độ của cái nút chuông
+            oPopover.openBy(oButton);
+        });
+    }
+    // Biến lưu trữ ActionSheet
+    private _oSortActionSheet: ActionSheet;
+
+    public onSortPress(oEvent: Event): void {
+        const oButton = oEvent.getSource() as Button;
+        
+        // Nếu menu chưa được tạo thì tạo mới bằng code
+        if (!this._oSortActionSheet) {
+            this._oSortActionSheet = new ActionSheet({
+                title: "Sort By",
+                buttons: [
+                    new Button({ text: "ID (Newest First)", press: () => this._applySort("ISSUE_ID", true) }),
+                    new Button({ text: "ID (Oldest First)", press: () => this._applySort("ISSUE_ID", false) }),
+                    new Button({ text: "Status (A-Z)", press: () => this._applySort("STATUS", false) })
+                ]
+            });
+            this.getView()?.addDependent(this._oSortActionSheet);
+        }
+        
+        // Mở menu ngay dưới nút Sort
+        this._oSortActionSheet.openBy(oButton);
+    }
+
+    private _applySort(sProperty: string, bDescending: boolean): void {
+        const oTable = this.byId("defectTable") as Table;
+        const oBinding = oTable.getBinding("items") as ListBinding;
+        
+        // Lệnh thần thánh của UI5: tự động sắp xếp lại cái bảng
+        oBinding.sort(new Sorter(sProperty, bDescending));
+        MessageToast.show("List sorted by " + sProperty);
     }
 }

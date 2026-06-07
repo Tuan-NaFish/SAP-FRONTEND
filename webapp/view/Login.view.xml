@@ -1,0 +1,30 @@
+<mvc:View controllerName="sap.defectmgmt.controller.Login"
+    xmlns:mvc="sap.ui.core.mvc" 
+    xmlns="sap.m" 
+    xmlns:core="sap.ui.core"
+    displayBlock="true">
+    
+    <Page showHeader="false">
+        <FlexBox height="100%" alignItems="Center" justifyContent="Center">
+            
+            <Panel width="350px" backgroundDesign="Solid" class="sapUiElevationElevation4 sapUiContentPadding">
+                
+                <FlexBox justifyContent="Center" class="sapUiSmallMarginBottom">
+                    <Image src="https://ui5.sap.com/resources/sap/ui/documentation/sdk/images/logo_sap.png" height="3.5rem" />
+                </FlexBox>
+
+                <Title text="SAP Defect Management" level="H2" class="sapUiMediumMarginBottom" textAlign="Center" width="100%"/>
+                
+                <Label text="Username" required="true"/>
+                <Input id="usernameInput" placeholder="Enter your username" class="sapUiSmallMarginBottom" />
+                
+                <Label text="Password" required="true"/>
+                <Input id="passwordInput" type="Password" placeholder="Enter your password" class="sapUiMediumMarginBottom" />
+                
+                <Button text="Log In" type="Emphasized" press=".onLogin" width="100%" />
+                
+            </Panel>
+
+        </FlexBox>
+    </Page>
+</mvc:View>

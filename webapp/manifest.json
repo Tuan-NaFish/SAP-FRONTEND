@@ -20,16 +20,16 @@
   "sap.ui5": {
     "flexEnabled": false,
     "dependencies": {
-            "minUI5Version": "1.120.0",
-            "libs": {
-                "sap.ui.core": {},
-                "sap.m": {},
-                "sap.f": {},
-                "sap.ui.layout": {},
-                "sap.ui.unified": {},
-                "sap.suite.ui.microchart": {} 
-            }
-        },
+      "minUI5Version": "1.120.0",
+      "libs": {
+        "sap.ui.core": {},
+        "sap.m": {},
+        "sap.f": {},
+        "sap.ui.layout": {},
+        "sap.ui.unified": {},
+        "sap.suite.ui.microchart": {}
+      }
+    },
     "contentDensities": {
       "compact": true,
       "cozy": true
@@ -59,8 +59,13 @@
       },
       "routes": [
         {
-          "name": "Dashboard",
+          "name": "Login",
           "pattern": "",
+          "target": ["TargetLogin"]
+        },
+        {
+          "name": "Dashboard",
+          "pattern": "dashboard",
           "target": ["TargetDashboard"]
         },
         {
@@ -70,6 +75,12 @@
         }
       ],
       "targets": {
+        "TargetLogin": {
+          "viewType": "XML",
+          "transition": "fade",
+          "viewId": "Login",
+          "viewName": "Login"
+        },
         "TargetDashboard": {
           "viewType": "XML",
           "transition": "slide",
