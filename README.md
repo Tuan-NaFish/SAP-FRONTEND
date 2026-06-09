@@ -2,8 +2,7 @@
   <img src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExMjR6NGozNXRzcHEweTVwMGwwZmV2OGFkbTVyNmlxeWlveXBsaDdwbiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/12vVAGkaqHUqCQ/giphy.webp" width="180" alt="Magic Wizard" />
   <br/>
   
-  <!-- Animated Title -->
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=800&size=30&pause=1000&color=0FFA00&center=true&vCenter=true&width=600&lines=🧙‍♂️+SAP-FRONTEND;ENTERPRISE+MAGIC;POWERED+BY+SPIRITUAL+ENERGY" alt="Animated Title" />
+ 
 
   <p><i>Standard SAP Fiori system. Technological excellence. Chạy bằng tâm linh.</i></p>
 
