@@ -19,64 +19,72 @@
                 notificationsPressed=".onNotificationPress" />
             
             <VBox class="sapUiMediumMargin">
-                <Title text="Dashboard &amp; Defect Metrics" level="H2" class="sapUiBottomMargin"/>
-                
-                <cssgrid:CSSGrid gridTemplateColumns="repeat(auto-fit, minmax(250px, 1fr))" gridGap="1rem">
-                    <f:Card><f:header><card:NumericHeader title="Total Open Defects" number="{kpiModel>/TotalOpen}" scale="Tickets" state="Error"/></f:header></f:Card>
-                    <f:Card><f:header><card:NumericHeader title="Mean Time To Resolve" number="{kpiModel>/MTTR}" state="Critical"/></f:header></f:Card>
-                    <f:Card><f:header><card:NumericHeader title="Critical Bugs" number="{kpiModel>/CriticalCount}" scale="Bugs" state="Error"/></f:header></f:Card>
-                    <f:Card><f:header><card:NumericHeader title="SLA Compliance" number="{kpiModel>/SLACompliance}" scale="%" state="Good"/></f:header></f:Card>
-                </cssgrid:CSSGrid>
 
-        <!-- Charts -->
-        <cssgrid:CSSGrid gridTemplateColumns="repeat(auto-fit, minmax(400px, 1fr))" gridGap="1rem" class="sapUiSmallMargin">
-            
-            <f:Card>
-                <f:header>
-                    <card:Header title="Severity Distribution" iconSrc="sap-icon://donut-chart" />
-                </f:header>
-                <f:content>
-                    <VBox width="100%" height="250px" class="sapUiSmallMargin">
-                        <mc:InteractiveDonutChart id="severityChart" displayedSegments="4" selectionChanged=".onChartSelect">
-                            <mc:segments>
-                                <mc:InteractiveDonutChartSegment label="Critical" value="3" />
-                                <mc:InteractiveDonutChartSegment label="High" value="5" />
-                                <mc:InteractiveDonutChartSegment label="Medium" value="4" />
-                                <mc:InteractiveDonutChartSegment label="Low" value="2" />
-                            </mc:segments>
-                        </mc:InteractiveDonutChart>
-                    </VBox>
-                </f:content>
-            </f:Card>
+                <!-- ✅ CHỈ MANAGER MỚI THẤY DASHBOARD -->
+                <VBox visible="{= ${userModel>/role} === 'Manager' }">
 
-            <f:Card>
-                <f:header>
-                    <card:Header title="Module Analysis" iconSrc="sap-icon://horizontal-bar-chart" />
-                </f:header>
-                <f:content>
-                    <VBox width="100%" height="250px" class="sapUiSmallMargin">
-                        <mc:InteractiveBarChart id="moduleChart" selectionChanged=".onModuleChartSelect">
-                            <mc:bars>
-                                <mc:InteractiveBarChartBar label="FI" value="2" color="Error" />
-                                <mc:InteractiveBarChartBar label="MM" value="1" color="Critical" />
-                                <mc:InteractiveBarChartBar label="SD" value="2" color="Good" />
-                            </mc:bars>
-                        </mc:InteractiveBarChart>
-                    </VBox>
-                </f:content>
-            </f:Card>
-            
-        </cssgrid:CSSGrid>
+                    <Title text="Dashboard &amp; Defect Metrics" level="H2" class="sapUiBottomMargin"/>
+                    
+                    <!-- KPI -->
+                    <cssgrid:CSSGrid gridTemplateColumns="repeat(auto-fit, minmax(250px, 1fr))" gridGap="1rem">
+                        <f:Card><f:header><card:NumericHeader title="Total Open Defects" number="{kpiModel>/TotalOpen}" scale="Tickets" state="Error"/></f:header></f:Card>
+                        <f:Card><f:header><card:NumericHeader title="Mean Time To Resolve" number="{kpiModel>/MTTR}" state="Critical"/></f:header></f:Card>
+                        <f:Card><f:header><card:NumericHeader title="Critical Bugs" number="{kpiModel>/CriticalCount}" scale="Bugs" state="Error"/></f:header></f:Card>
+                        <f:Card><f:header><card:NumericHeader title="SLA Compliance" number="{kpiModel>/SLACompliance}" scale="%" state="Good"/></f:header></f:Card>
+                    </cssgrid:CSSGrid>
+
+                    <!-- Charts -->
+                    <cssgrid:CSSGrid gridTemplateColumns="repeat(auto-fit, minmax(400px, 1fr))" gridGap="1rem" class="sapUiSmallMargin">
+                        
+                        <f:Card>
+                            <f:header>
+                                <card:Header title="Severity Distribution" iconSrc="sap-icon://donut-chart" />
+                            </f:header>
+                            <f:content>
+                                <VBox width="100%" height="250px" class="sapUiSmallMargin">
+                                    <mc:InteractiveDonutChart id="severityChart" displayedSegments="4" selectionChanged=".onChartSelect">
+                                        <mc:segments>
+                                            <mc:InteractiveDonutChartSegment label="Critical" value="3" />
+                                            <mc:InteractiveDonutChartSegment label="High" value="5" />
+                                            <mc:InteractiveDonutChartSegment label="Medium" value="4" />
+                                            <mc:InteractiveDonutChartSegment label="Low" value="2" />
+                                        </mc:segments>
+                                    </mc:InteractiveDonutChart>
+                                </VBox>
+                            </f:content>
+                        </f:Card>
+
+                        <f:Card>
+                            <f:header>
+                                <card:Header title="Module Analysis" iconSrc="sap-icon://horizontal-bar-chart" />
+                            </f:header>
+                            <f:content>
+                                <VBox width="100%" height="250px" class="sapUiSmallMargin">
+                                    <mc:InteractiveBarChart id="moduleChart" selectionChanged=".onModuleChartSelect">
+                                        <mc:bars>
+                                            <mc:InteractiveBarChartBar label="FI" value="2" color="Error" />
+                                            <mc:InteractiveBarChartBar label="MM" value="1" color="Critical" />
+                                            <mc:InteractiveBarChartBar label="SD" value="2" color="Good" />
+                                        </mc:bars>
+                                    </mc:InteractiveBarChart>
+                                </VBox>
+                            </f:content>
+                        </f:Card>
+                        
+                    </cssgrid:CSSGrid>
+
+                </VBox>
+                <!-- END MANAGER BLOCK -->
 
                 <Table id="defectTable" items="{path: 'defectModel>/'}" class="sapUiTopMargin">
                     
                     <noData>
-                <VBox alignItems="Center" justifyContent="Center" class="sapUiLargeMargin">
-                    <core:Icon src="sap-icon://search" size="4rem" color="#8a97a1" class="sapUiSmallMarginBottom" />
-                    <Title text="No defects found" level="H4" class="sapUiTinyMarginBottom" />
-                    <Text text="Try adjusting your search keyword or module filter." />
-                </VBox>
-            </noData>
+                        <VBox alignItems="Center" justifyContent="Center" class="sapUiLargeMargin">
+                            <core:Icon src="sap-icon://search" size="4rem" color="#8a97a1" class="sapUiSmallMarginBottom" />
+                            <Title text="No defects found" level="H4" class="sapUiTinyMarginBottom" />
+                            <Text text="Try adjusting your search keyword or module filter." />
+                        </VBox>
+                    </noData>
 
                     <headerToolbar>
                         <Toolbar>
@@ -94,7 +102,10 @@
                             
                             <SearchField id="searchField" width="250px" class="sapUiSmallMarginEnd" liveChange=".onFilter" placeholder="Search by Title..." />
                             
-                            <Button text="Create Issue" icon="sap-icon://add" type="Emphasized" press=".onCreateIssuePress" />
+                            <!-- ✅ CHỈ TESTER THẤY -->
+                            <Button text="Create Issue" icon="sap-icon://add" type="Emphasized"
+                                press=".onCreateIssuePress"
+                                visible="{= ${userModel>/role} === 'Tester' }" />
                         </Toolbar>
                     </headerToolbar>
 
