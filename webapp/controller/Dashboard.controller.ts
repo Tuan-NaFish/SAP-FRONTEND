@@ -8,7 +8,7 @@ import MessageToast from "sap/m/MessageToast";
 import Input from "sap/m/Input";
 import Select from "sap/m/Select";
 import TextArea from "sap/m/TextArea";
-import JSONModel from "sap/ui/model/json/JSONModel";
+import DatePicker from "sap/m/DatePicker"; // Đã thêm DatePicker
 import Filter from "sap/ui/model/Filter";
 import FilterOperator from "sap/ui/model/FilterOperator";
 import ListBinding from "sap/ui/model/ListBinding";
@@ -21,11 +21,17 @@ import Popover from "sap/m/Popover";
 import Sorter from "sap/ui/model/Sorter";
 import ActionSheet from "sap/m/ActionSheet";
 import Button from "sap/m/Button";
+import ODataModel from "sap/ui/model/odata/v2/ODataModel"; // Đã thêm ODataModel
+
 /**
  * @namespace sap.defectmgmt.controller
  */
 export default class Dashboard extends Controller {
     private _pDialog: Promise<Dialog>;
+    private _pNotificationPopover: Promise<Popover>;
+    private _oSortActionSheet: ActionSheet;
+
+    public onInit(): void {}
 
     public onIssuePress(oEvent: Event): void {
         const oItem = oEvent.getSource() as ColumnListItem;
@@ -84,13 +90,6 @@ export default class Dashboard extends Controller {
         });
     }
 
-    public onEnvChange(): void {
-        const sEnv = (this.byId("selectEnv") as Select).getSelectedKey();
-        if (sEnv === "PROD") {
-            MessageBox.warning("Attention: You are creating a ticket in the Production (PROD) environment. Please ensure all details are highly accurate!");
-        }
-    }
-
     public onTypeMissmatch(oEvent: Event): void {
         const sFileType = (oEvent as any).getParameter("fileType") as string;
         MessageToast.show(`File type '*${sFileType}' is not supported. Please use: JPG, PNG, PDF, DOCX`);
@@ -103,18 +102,26 @@ export default class Dashboard extends Controller {
 
     public onSaveIssue(): void {
         this._pDialog.then((oDialog) => {
+            // Lấy các component từ giao diện mới
             const oInputTitle = this.byId("inputTitle") as Input;
             const oInputDesc = this.byId("inputDesc") as TextArea;
+            const oSelectModule = this.byId("selectModule") as Select;
+            const oSelectDeveloper = this.byId("selectDeveloper") as Select;
+            const oSelectSeverity = this.byId("selectSeverity") as Select;
+            const oInputDueDate = this.byId("inputDueDate") as DatePicker;
+            const oInputVersion = this.byId("inputVersion") as Input;
             
             const sTitle = oInputTitle.getValue();
             const sDesc = oInputDesc.getValue();
-            const sModule = (this.byId("selectModule") as Select).getSelectedKey();
-            const sEnv = (this.byId("selectEnv") as Select).getSelectedKey();
-            const sSeverity = (this.byId("selectSeverity") as Select).getSelectedKey();
-            const sTCode = (this.byId("inputTCode") as Input).getValue();
+            const sModule = oSelectModule.getSelectedKey();
+            const sDeveloper = oSelectDeveloper.getSelectedKey();
+            const sSeverity = oSelectSeverity.getSelectedKey();
+            const dDueDate = oInputDueDate.getDateValue();
+            const sVersion = oInputVersion.getValue();
 
             let bValidationError = false;
 
+            // Bắt lỗi Validate cơ bản
             if (!sTitle) {
                 oInputTitle.setValueState("Error");
                 oInputTitle.setValueStateText("Title is required");
@@ -131,97 +138,71 @@ export default class Dashboard extends Controller {
                 oInputDesc.setValueState("None");
             }
 
+            if (!dDueDate) {
+                oInputDueDate.setValueState("Error");
+                oInputDueDate.setValueStateText("Due Date is required");
+                bValidationError = true;
+            } else {
+                oInputDueDate.setValueState("None");
+            }
+
             if (bValidationError) {
                 MessageToast.show("Please fill in all required fields!");
                 return;
             }
 
-            // --- LƯU DỮ LIỆU NẾU HỢP LỆ ---
-            // 1. Bật vòng xoay chờ tải
             const oBusyDialog = new BusyDialog({
-                text: "Saving issue data..."
+                text: "Saving issue data to SAP..."
             });
             oBusyDialog.open();
 
-            // 2. Giả lập gọi API 1.5s
-            setTimeout(() => {
-                const oModel = this.getView()?.getModel("defectModel") as JSONModel;
-                const aData = oModel.getData();
+            // GỌI API ODATA ĐỂ LƯU DỮ LIỆU THẬT
+            const oModel = this.getView()?.getModel("defectModel") as ODataModel;
 
-                const newTicket = {
-                    ISSUE_ID: "DEF-" + (1000 + aData.length + 1).toString(),
-                    TITLE: sTitle,
-                    MODULE: sModule,
-                    ENVIRONMENT: sEnv,
-                    SEVERITY: sSeverity,
-                    TCODE: sTCode,
-                    DESCRIPTION: sDesc,
-                    STATUS: "NEW",
-                    ASSIGNED_TO: "Unassigned"
-                };
+            // Chuẩn bị payload theo đúng yêu cầu API OData
+            const payload = {
+                title: sTitle,
+                description: sDesc,
+                modulename: sModule,
+                severity: sSeverity.toUpperCase(), // Backend SAP thường lưu in hoa
+                affected_version: sVersion,
+                assigned_to: sDeveloper || "",
+                due_date: dDueDate,
+                status: "ASSIGNED"
+            };
 
-                aData.unshift(newTicket);
-                oModel.setData(aData);
-
-                oInputTitle.setValue("");
-                oInputTitle.setValueState("None");
-                oInputDesc.setValue("");
-                oInputDesc.setValueState("None");
-                (this.byId("inputTCode") as Input).setValue("");
-                (this.byId("selectEnv") as Select).setSelectedKey("DEV");
-                
-                const oUploadSet = this.byId("uploadSet") as UploadSet;
-                if (oUploadSet) {
-                    oUploadSet.removeAllIncompleteItems();
+            // Thực thi lệnh POST tới Entity "/Issue"
+            oModel.create("/Issue", payload, {
+                success: (oData: any) => {
+                    oBusyDialog.close();
+                    oDialog.close();
+                    MessageToast.show("Ticket created successfully! ID: " + oData.issue_id);
+                    
+                    // Reset form sau khi tạo thành công
+                    oInputTitle.setValue("");
+                    oInputTitle.setValueState("None");
+                    oInputDesc.setValue("");
+                    oInputDesc.setValueState("None");
+                    oInputDueDate.setValue("");
+                    oInputDueDate.setValueState("None");
+                    
+                    const oUploadSet = this.byId("uploadSet") as UploadSet;
+                    if (oUploadSet) {
+                        oUploadSet.removeAllIncompleteItems();
+                        // Nâng cao (Member 2 sẽ làm): Đẩy file lên API Attachment bằng issue_id vừa nhận được
+                    }
+                },
+                error: (oError: any) => {
+                    oBusyDialog.close();
+                    MessageBox.error("Failed to create ticket. Please check your SAP connection.");
+                    console.error("OData Error:", oError);
                 }
-
-                oBusyDialog.close();
-                oDialog.close();
-                MessageToast.show("Ticket created successfully!");
-            }, 1500);
+            });
         });
     }
 
-    public onChartSelect(oEvent: Event): void {
-        const oSegment = (oEvent as any).getParameter("segment");
-        const aFilters: Filter[] = [];
-        
-        if (oSegment) {
-            const sSeverity = oSegment.getLabel();
-            aFilters.push(new Filter("SEVERITY", FilterOperator.EQ, sSeverity));
-            MessageToast.show("Filtering tickets by: " + sSeverity);
-        } else {
-            MessageToast.show("Showing all tickets");
-        }
-
-        const oTable = this.byId("defectTable") as Table;
-        const oBinding = oTable.getBinding("items") as ListBinding;
-        oBinding.filter(aFilters);
-    }
-
-    public onModuleChartSelect(oEvent: Event): void {
-        const oBar = (oEvent as any).getParameter("bar");
-        const aFilters: Filter[] = [];
-        
-        if (oBar) {
-            const sModule = oBar.getLabel();
-            aFilters.push(new Filter("MODULE", FilterOperator.EQ, sModule));
-            MessageToast.show("Filtering tickets by Module: " + sModule);
-        } else {
-            MessageToast.show("Showing all tickets");
-        }
-
-        const oTable = this.byId("defectTable") as Table;
-        const oBinding = oTable.getBinding("items") as ListBinding;
-        oBinding.filter(aFilters);
-    }
-  // Biến lưu trữ Popover để không bị load lại nhiều lần
-    private _pNotificationPopover: Promise<Popover>;
-
     public onNotificationPress(oEvent: Event): void {
         const oView = this.getView();
-        
-        // ĐÃ SỬA: Lấy chính xác cái nút chuông (ép kiểu any để lách luật TypeScript)
         const oButton = (oEvent as any).getParameter("button");
 
         if (!this._pNotificationPopover) {
@@ -236,17 +217,13 @@ export default class Dashboard extends Controller {
         }
 
         this._pNotificationPopover.then((oPopover) => {
-            // ĐÃ SỬA: Bám đúng vào tọa độ của cái nút chuông
             oPopover.openBy(oButton);
         });
     }
-    // Biến lưu trữ ActionSheet
-    private _oSortActionSheet: ActionSheet;
 
     public onSortPress(oEvent: Event): void {
         const oButton = oEvent.getSource() as Button;
         
-        // Nếu menu chưa được tạo thì tạo mới bằng code
         if (!this._oSortActionSheet) {
             this._oSortActionSheet = new ActionSheet({
                 title: "Sort By",
@@ -259,15 +236,12 @@ export default class Dashboard extends Controller {
             this.getView()?.addDependent(this._oSortActionSheet);
         }
         
-        // Mở menu ngay dưới nút Sort
         this._oSortActionSheet.openBy(oButton);
     }
 
     private _applySort(sProperty: string, bDescending: boolean): void {
         const oTable = this.byId("defectTable") as Table;
         const oBinding = oTable.getBinding("items") as ListBinding;
-        
-        // Lệnh thần thánh của UI5: tự động sắp xếp lại cái bảng
         oBinding.sort(new Sorter(sProperty, bDescending));
         MessageToast.show("List sorted by " + sProperty);
     }

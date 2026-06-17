@@ -17,11 +17,10 @@
                         <core:Item key="SD" text="SD - Sales &amp; Distribution" />
                     </Select>
 
-                    <Label text="Environment"/>
-                    <Select id="selectEnv" change=".onEnvChange">
-                        <core:Item key="DEV" text="Development (DEV)" />
-                        <core:Item key="QA" text="Testing (QA/UAT)" />
-                        <core:Item key="PROD" text="Production (PROD)" />
+                    <!-- ĐÃ THÊM: Dropdown chọn Developer lấy từ OData -->
+                    <Label text="Assign Developer"/>
+                    <Select id="selectDeveloper" items="{path: 'defectModel>/Developer'}" forceSelection="false">
+                        <core:Item key="{defectModel>developer_id}" text="{defectModel>developer_id} - Workload: {defectModel>workload_score}" />
                     </Select>
 
                     <Label text="Severity" required="true"/>
@@ -32,8 +31,12 @@
                         <core:Item key="Critical" text="Critical" />
                     </Select>
 
-                    <Label text="T-Code"/>
-                    <Input id="inputTCode" placeholder="e.g., MIRO, FB60..." />
+                    <!-- ĐÃ THÊM: Due Date và Affected Version -->
+                    <Label text="Due Date" required="true"/>
+                    <DatePicker id="inputDueDate" valueFormat="yyyy-MM-dd" displayFormat="yyyy-MM-dd" placeholder="Select due date..." />
+
+                    <Label text="Affected Version"/>
+                    <Input id="inputVersion" value="1.0" editable="false" />
 
                     <Label text="Steps to Reproduce / Description" required="true"/>
                     <TextArea id="inputDesc" rows="4" placeholder="1. Open T-Code...&#10;2. Enter data...&#10;3. System dumps..." />

@@ -25,6 +25,15 @@ server:
         debug: true
         transformModulesToUI5:
           autoConvertAllExtendClasses: true
+    # --- ĐÃ THÊM: Cấu hình Proxy để lách luật CORS gọi API ---
+    - name: fiori-tools-proxy
+      afterMiddleware: compression
+      configuration:
+        ignoreCertError: false # Nếu backend dùng HTTPS tự cấp, đổi thành true
+        backend:
+          - path: /sap
+            url: http://localhost:8000 # THAY ĐỔI URL NÀY THÀNH ĐỊA CHỈ SERVER SAP THỰC TẾ CỦA NHÓM BẠN
+            client: "100" # Tùy chọn: Nhập Client ID của hệ thống SAP nếu cần
 builder:
   customTasks:
     - name: ui5-tooling-transpile-task

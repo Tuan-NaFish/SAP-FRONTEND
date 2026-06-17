@@ -1,14 +1,22 @@
 {
   "_version": "1.49.0",
   "sap.app": {
-    "id": "sap.defectmgmt",
-    "type": "application",
-    "title": "Defect Management",
-    "description": "Defect Management System",
-    "applicationVersion": {
-      "version": "1.0.0"
-    }
-  },
+      "id": "sap.defectmgmt",
+      "type": "application",
+      "i18n": "i18n/i18n.properties",
+      "applicationVersion": {
+        "version": "1.0.0"
+      },
+      "dataSources": {
+        "issueService": {
+          "uri": "/sap/opu/odata/sap/ZUI_ISSUE_SRVDEF/",
+          "type": "OData",
+          "settings": {
+            "odataVersion": "2.0"
+          }
+        }
+      }
+    },
   "sap.ui": {
     "technology": "UI5",
     "deviceTypes": {
@@ -42,13 +50,18 @@
         "type": "sap.ui.model.json.JSONModel"
       },
       "defectModel": {
-        "type": "sap.ui.model.json.JSONModel",
-        "uri": "localService/mockdata/issues.json"
+        "dataSource": "issueService",
+        "type": "sap.ui.model.odata.v2.ODataModel",
+        "settings": {
+          "defaultBindingMode": "TwoWay",
+          "useBatch": false
+        }
       },
       "kpiModel": {
         "type": "sap.ui.model.json.JSONModel",
         "uri": "localService/mockdata/dashboard.json"
       }
+    
     },
     "routing": {
       "config": {

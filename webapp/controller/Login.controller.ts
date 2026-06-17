@@ -57,7 +57,7 @@ export default class Login extends Controller {
             // Nhập sai tài khoản
             oUserInput.setValueState("Error");
             oPassInput.setValueState("Error");
-            MessageToast.show("Invalid credentials. Use tester/123, dev/123, or manager/123.");
+            MessageToast.show("Invalid credentials. Please try again.");
         }
     }
 }

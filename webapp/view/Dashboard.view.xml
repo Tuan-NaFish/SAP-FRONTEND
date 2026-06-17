@@ -20,7 +20,7 @@
             
             <VBox class="sapUiMediumMargin">
 
-                <!-- ✅ CHỈ MANAGER MỚI THẤY DASHBOARD -->
+                <!-- ✅ MANAGER VIEW -->
                 <VBox visible="{= ${userModel>/role} === 'Manager' }">
 
                     <Title text="Dashboard &amp; Defect Metrics" level="H2" class="sapUiBottomMargin"/>
@@ -33,9 +33,9 @@
                         <f:Card><f:header><card:NumericHeader title="SLA Compliance" number="{kpiModel>/SLACompliance}" scale="%" state="Good"/></f:header></f:Card>
                     </cssgrid:CSSGrid>
 
-                    <!-- Charts -->
+                    <!-- CHARTS -->
                     <cssgrid:CSSGrid gridTemplateColumns="repeat(auto-fit, minmax(400px, 1fr))" gridGap="1rem" class="sapUiSmallMargin">
-                        
+
                         <f:Card>
                             <f:header>
                                 <card:Header title="Severity Distribution" iconSrc="sap-icon://donut-chart" />
@@ -70,18 +70,44 @@
                                 </VBox>
                             </f:content>
                         </f:Card>
-                        
+
                     </cssgrid:CSSGrid>
 
-                </VBox>
-                <!-- END MANAGER BLOCK -->
+                    <!-- ✅ WORKLOAD TABLE (ĐÚNG VỊ TRÍ) -->
+                    <Table id="workloadTable" items="{path: 'defectModel>/Developer'}" class="sapUiSmallMarginTop">
+                        <headerToolbar>
+                            <Toolbar>
+                                <Title text="Developer Workload" level="H3"/>
+                            </Toolbar>
+                        </headerToolbar>
+                        <columns>
+                            <Column><Text text="Developer ID"/></Column>
+                            <Column><Text text="Module"/></Column>
+                            <Column><Text text="Workload Score"/></Column>
+                        </columns>
+                        <items>
+                            <ColumnListItem>
+                                <cells>
+                                    <Text text="{defectModel>developer_id}" />
+                                    <Text text="{defectModel>modulename}" />
+                                    <ObjectNumber 
+                                        number="{defectModel>workload_score}" 
+                                        state="{= ${defectModel>workload_score} > 3 ? 'Error' : 'Success' }" />
+                                </cells>
+                            </ColumnListItem>
+                        </items>
+                    </Table>
 
-                <Table id="defectTable" items="{path: 'defectModel>/'}" class="sapUiTopMargin">
+                </VBox>
+                <!-- END MANAGER -->
+
+                <!-- DEFECT TABLE -->
+                <Table id="defectTable" items="{path: 'defectModel>/IssueSet'}" class="sapUiTopMargin">
                     
                     <noData>
                         <VBox alignItems="Center" justifyContent="Center" class="sapUiLargeMargin">
                             <core:Icon src="sap-icon://search" size="4rem" color="#8a97a1" class="sapUiSmallMarginBottom" />
-                            <Title text="No defects found" level="H4" class="sapUiTinyMarginBottom" />
+                            <Title text="No defects found" level="H4"/>
                             <Text text="Try adjusting your search keyword or module filter." />
                         </VBox>
                     </noData>
@@ -91,24 +117,26 @@
                             <Title text="Open Defects" level="H2"/>
                             <ToolbarSpacer/>
                             
-                            <Button icon="sap-icon://sort" press=".onSortPress" type="Transparent" tooltip="Sort Tickets" class="sapUiSmallMarginEnd" />
+                            <Button icon="sap-icon://sort" press=".onSortPress" type="Transparent"/>
                             
-                            <Select id="filterModule" change=".onFilter" width="150px" class="sapUiSmallMarginEnd">
+                            <Select id="filterModule" change=".onFilter" width="150px">
                                 <core:Item key="" text="All Modules" />
                                 <core:Item key="FI" text="FI" />
                                 <core:Item key="MM" text="MM" />
                                 <core:Item key="SD" text="SD" />
                             </Select>
                             
-                            <SearchField id="searchField" width="250px" class="sapUiSmallMarginEnd" liveChange=".onFilter" placeholder="Search by Title..." />
+                            <SearchField width="250px" liveChange=".onFilter" placeholder="Search by Title..." />
                             
-                            <!-- ✅ CHỈ TESTER THẤY -->
-                            <Button text="Create Issue" icon="sap-icon://add" type="Emphasized"
+                            <Button text="Create Issue"
+                                icon="sap-icon://add"
+                                type="Emphasized"
                                 press=".onCreateIssuePress"
                                 visible="{= ${userModel>/role} === 'Tester' }" />
                         </Toolbar>
                     </headerToolbar>
 
+                    <!-- ✅ FIXED COLUMNS -->
                     <columns>
                         <Column><Text text="ID"/></Column>
                         <Column><Text text="Title"/></Column>
@@ -116,8 +144,12 @@
                         <Column><Text text="Severity"/></Column>
                         <Column><Text text="Status"/></Column>
                         <Column><Text text="Assignee"/></Column>
+                        <Column><Text text="Due Date"/></Column>
+                        <Column><Text text="Created By"/></Column>
+                        <Column><Text text="Created At"/></Column>
                     </columns>
 
+                    <!-- ✅ MATCHED CELLS -->
                     <items>
                         <ColumnListItem type="Navigation" press=".onIssuePress">
                             <cells>
@@ -136,11 +168,15 @@
                                     inverted="true" />
 
                                 <Text text="{defectModel>ASSIGNED_TO}" />
+                                <Text text="{defectModel>DUE_DATE}" />
+                                <Text text="{defectModel>CREATED_BY}" />
+                                <Text text="{defectModel>CREATED_AT}" />
                             </cells>
                         </ColumnListItem>
                     </items>
 
                 </Table>
+
             </VBox>
         </content>
     </Page>
