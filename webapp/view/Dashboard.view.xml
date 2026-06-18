@@ -73,7 +73,7 @@
 
                     </cssgrid:CSSGrid>
 
-                    <!-- ✅ WORKLOAD TABLE (ĐÚNG VỊ TRÍ) -->
+                    <!-- WORKLOAD TABLE -->
                     <Table id="workloadTable" items="{path: 'defectModel>/Developer'}" class="sapUiSmallMarginTop">
                         <headerToolbar>
                             <Toolbar>
@@ -102,7 +102,7 @@
                 <!-- END MANAGER -->
 
                 <!-- DEFECT TABLE -->
-                <Table id="defectTable" items="{path: 'defectModel>/IssueSet'}" class="sapUiTopMargin">
+                <Table id="defectTable" items="{path: 'defectModel>/Issue'}" class="sapUiTopMargin">
                     
                     <noData>
                         <VBox alignItems="Center" justifyContent="Center" class="sapUiLargeMargin">
@@ -136,7 +136,7 @@
                         </Toolbar>
                     </headerToolbar>
 
-                    <!-- ✅ FIXED COLUMNS -->
+                    <!-- COLUMNS -->
                     <columns>
                         <Column><Text text="ID"/></Column>
                         <Column><Text text="Title"/></Column>
@@ -149,28 +149,28 @@
                         <Column><Text text="Created At"/></Column>
                     </columns>
 
-                    <!-- ✅ MATCHED CELLS -->
+                    <!-- ✅ UPDATED CELLS -->
                     <items>
                         <ColumnListItem type="Navigation" press=".onIssuePress">
                             <cells>
-                                <Text text="{defectModel>ISSUE_ID}" />
-                                <Text text="{defectModel>TITLE}" />
-                                <Text text="{defectModel>MODULE}" />
+                                <Text text="{defectModel>issue_id}" />
+                                <Text text="{defectModel>title}" />
+                                <Text text="{defectModel>modulename}" />
 
                                 <ObjectStatus 
-                                    text="{defectModel>SEVERITY}" 
-                                    state="{= ${defectModel>SEVERITY} === 'Critical' ? 'Error' : ${defectModel>SEVERITY} === 'High' ? 'Warning' : ${defectModel>SEVERITY} === 'Medium' ? 'Success' : 'None' }" 
+                                    text="{defectModel>severity}" 
+                                    state="{= ${defectModel>severity} === 'Critical' ? 'Error' : ${defectModel>severity} === 'High' ? 'Warning' : ${defectModel>severity} === 'Medium' ? 'Success' : 'None' }" 
                                     inverted="true" />
 
                                 <ObjectStatus 
-                                    text="{defectModel>STATUS}" 
-                                    state="{= ${defectModel>STATUS} === 'NEW' ? 'Information' : ${defectModel>STATUS} === 'IN_PROGRESS' ? 'Warning' : ${defectModel>STATUS} === 'RESOLVED' ? 'Success' : 'None' }" 
+                                    text="{defectModel>status}" 
+                                    state="{= ${defectModel>status} === 'NEW' ? 'Information' : ${defectModel>status} === 'IN_PROGRESS' ? 'Warning' : ${defectModel>status} === 'RESOLVED' ? 'Success' : 'None' }" 
                                     inverted="true" />
 
-                                <Text text="{defectModel>ASSIGNED_TO}" />
-                                <Text text="{defectModel>DUE_DATE}" />
-                                <Text text="{defectModel>CREATED_BY}" />
-                                <Text text="{defectModel>CREATED_AT}" />
+                                <Text text="{defectModel>assigned_to}" />
+                                <Text text="{defectModel>due_date}" />
+                                <Text text="{defectModel>created_by}" />
+                                <Text text="{defectModel>created_at}" />
                             </cells>
                         </ColumnListItem>
                     </items>
