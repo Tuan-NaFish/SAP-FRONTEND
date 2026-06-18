@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAP Fiori — Defect Management System</title>
+
+    <!--
+        SAPUI5 Bootstrap
+        - Loads SAPUI5 1.120 from the SAP CDN
+        - Uses sap_horizon theme (latest SAP Fiori visual design)
+        - Sets resource roots so SAPUI5 can find our app modules
+        - ComponentSupport enables declarative component loading in HTML
+    -->
+    <script
+        id="sap-ui-bootstrap"
+        src="https://sapui5.hana.ondemand.com/1.120.0/resources/sap-ui-core.js"
+        data-sap-ui-theme="sap_horizon"
+        data-sap-ui-resourceroots='{"com.sap490.defectmgmt": "./"}'
+        data-sap-ui-compatVersion="edge"
+        data-sap-ui-async="true"
+        data-sap-ui-frameOptions="trusted"
+        data-sap-ui-oninit="module:sap/ui/core/ComponentSupport">
+    </script>
+</head>
+
+<body class="sapUiBody sapUiSizeCompact" id="content">
+    <!--
+        Declarative ComponentContainer
+        - Loads the Component defined in manifest.json
+        - The "data-name" must match the Component namespace
+        - Height 100% ensures the app fills the viewport
+    -->
+    <div data-sap-ui-component
+         data-name="com.sap490.defectmgmt"
+         data-id="container"
+         data-settings='{"id" : "defectmgmt"}'
+         style="height: 100%">
+    </div>
+</body>
+</html>

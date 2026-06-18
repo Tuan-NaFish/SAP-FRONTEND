@@ -1,0 +1,12 @@
+# Ignore everything by default
+/*
+
+# Do not ignore the webapp directory and this gitignore file
+!/webapp/
+!.gitignore
+
+# Node modules and build files (if any are created later)
+node_modules/
+dist/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,167 @@
+[
+  {
+    "history_id": "hist-001-001",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440001",
+    "action_type": "CREATE",
+    "field_name": "STATUS",
+    "old_value": "",
+    "new_value": "ASSIGNED",
+    "changed_by": "TESTER01",
+    "changed_at": "2026-06-12T08:00:00",
+    "notes": "Ticket created and assigned to DEV_MM_01"
+  },
+  {
+    "history_id": "hist-001-002",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440001",
+    "action_type": "CREATE",
+    "field_name": "ASSIGNED_TO",
+    "old_value": "",
+    "new_value": "DEV_MM_01",
+    "changed_by": "TESTER01",
+    "changed_at": "2026-06-12T08:00:00",
+    "notes": ""
+  },
+  {
+    "history_id": "hist-001-003",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440001",
+    "action_type": "CREATE",
+    "field_name": "DUE_DATE",
+    "old_value": "",
+    "new_value": "2026-06-19T17:00:00",
+    "changed_by": "TESTER01",
+    "changed_at": "2026-06-12T08:00:00",
+    "notes": ""
+  },
+  {
+    "history_id": "hist-002-001",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440002",
+    "action_type": "CREATE",
+    "field_name": "STATUS",
+    "old_value": "",
+    "new_value": "ASSIGNED",
+    "changed_by": "TESTER02",
+    "changed_at": "2026-06-11T10:30:00",
+    "notes": "Ticket created and assigned to DEV_SD_01"
+  },
+  {
+    "history_id": "hist-002-002",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440002",
+    "action_type": "UPDATE",
+    "field_name": "STATUS",
+    "old_value": "ASSIGNED",
+    "new_value": "IN_PROGRESS",
+    "changed_by": "DEV_SD_01",
+    "changed_at": "2026-06-12T09:00:00",
+    "notes": "Developer started work: DEV_SD_01"
+  },
+  {
+    "history_id": "hist-003-001",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440003",
+    "action_type": "CREATE",
+    "field_name": "STATUS",
+    "old_value": "",
+    "new_value": "ASSIGNED",
+    "changed_by": "TESTER01",
+    "changed_at": "2026-06-10T08:00:00",
+    "notes": "Ticket created and assigned to DEV_FI_01"
+  },
+  {
+    "history_id": "hist-003-002",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440003",
+    "action_type": "UPDATE",
+    "field_name": "STATUS",
+    "old_value": "ASSIGNED",
+    "new_value": "IN_PROGRESS",
+    "changed_by": "DEV_FI_01",
+    "changed_at": "2026-06-11T10:30:00",
+    "notes": "Developer started work: DEV_FI_01"
+  },
+  {
+    "history_id": "hist-003-003",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440003",
+    "action_type": "UPDATE",
+    "field_name": "ROOT_CAUSE",
+    "old_value": "",
+    "new_value": "Missing LOCK_IND validation in Z_FI_CHECK_CC",
+    "changed_by": "DEV_FI_01",
+    "changed_at": "2026-06-15T11:00:00",
+    "notes": ""
+  },
+  {
+    "history_id": "hist-003-004",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440003",
+    "action_type": "UPDATE",
+    "field_name": "STATUS",
+    "old_value": "IN_PROGRESS",
+    "new_value": "RESOLVED",
+    "changed_by": "DEV_FI_01",
+    "changed_at": "2026-06-15T11:00:00",
+    "notes": ""
+  },
+  {
+    "history_id": "hist-003-005",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440003",
+    "action_type": "UPDATE",
+    "field_name": "FIX_VERSION",
+    "old_value": "",
+    "new_value": "1.1",
+    "changed_by": "DEV_FI_01",
+    "changed_at": "2026-06-15T11:00:00",
+    "notes": "Auto-incremented from affected version 1.0"
+  },
+  {
+    "history_id": "hist-004-001",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440004",
+    "action_type": "CREATE",
+    "field_name": "STATUS",
+    "old_value": "",
+    "new_value": "ASSIGNED",
+    "changed_by": "TESTER02",
+    "changed_at": "2026-06-11T10:30:00",
+    "notes": "Ticket created and assigned to DEV_QM_01"
+  },
+  {
+    "history_id": "hist-004-002",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440004",
+    "action_type": "UPDATE",
+    "field_name": "STATUS",
+    "old_value": "ASSIGNED",
+    "new_value": "IN_PROGRESS",
+    "changed_by": "DEV_QM_01",
+    "changed_at": "2026-06-12T09:00:00",
+    "notes": "Developer started work: DEV_QM_01"
+  },
+  {
+    "history_id": "hist-004-003",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440004",
+    "action_type": "UPDATE",
+    "field_name": "STATUS",
+    "old_value": "IN_PROGRESS",
+    "new_value": "RESOLVED",
+    "changed_by": "DEV_QM_01",
+    "changed_at": "2026-06-14T16:00:00",
+    "notes": ""
+  },
+  {
+    "history_id": "hist-004-004",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440004",
+    "action_type": "UPDATE",
+    "field_name": "FIX_VERSION",
+    "old_value": "",
+    "new_value": "1.1",
+    "changed_by": "DEV_QM_01",
+    "changed_at": "2026-06-14T16:00:00",
+    "notes": "Auto-incremented from affected version 1.0"
+  },
+  {
+    "history_id": "hist-004-005",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440004",
+    "action_type": "UPDATE",
+    "field_name": "STATUS",
+    "old_value": "RESOLVED",
+    "new_value": "TESTING",
+    "changed_by": "TESTER02",
+    "changed_at": "2026-06-16T09:30:00",
+    "notes": "Sent for testing by: TESTER02"
+  }
+]

@@ -1,0 +1,570 @@
+<!--
+    IssueDetail.view.xml — Issue Detail Page (PRIMARY DELIVERABLE)
+    
+    Enterprise-grade ObjectPageLayout displaying comprehensive
+    defect ticket information following SAP Fiori Design Guidelines.
+    
+    Layout uses sap.uxap.ObjectPageLayout with:
+      - Dynamic Header: Issue number, title, status badge, severity badge
+      - Header Content: Key attributes at a glance (status, severity, module, developer, dates)
+      - 7 Sections:
+        1. General Information — Description, Steps to Reproduce
+        2. Assignment — Developer, timestamps
+        3. Version & SLA — Version info + SLA progress bar
+        4. Resolution — Root cause, fix description (visible only when resolved+)
+        5. Attachments — File list with icons, size, uploader
+        6. Comments — Feed-style comment display
+        7. Audit History — Timeline of all changes
+    
+    Data binding:
+      - Main entity: OData /Issue('{issueId}') via element binding
+      - Related entities: attachments, comments, history via local JSON models
+        loaded by the controller using OData.read() with $filter
+-->
+<mvc:View
+    controllerName="com.sap490.defectmgmt.controller.IssueDetail"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:uxap="sap.uxap"
+    xmlns:form="sap.ui.layout.form">
+    
+    <!-- ============================================================ -->
+    <!-- OBJECT PAGE LAYOUT                                            -->
+    <!-- SAP Fiori standard for detail/object pages                    -->
+    <!-- ============================================================ -->
+    <uxap:ObjectPageLayout
+        id="issueObjectPage"
+        upperCaseAnchorBar="false"
+        enableLazyLoading="true"
+        showHeaderContent="true"
+        headerContentPinnable="true">
+        
+        <!-- ======================================================== -->
+        <!-- HEADER TITLE — Issue Identity (always visible)            -->
+        <!-- Shows issue number + title, with status/severity          -->
+        <!-- ======================================================== -->
+        <uxap:headerTitle>
+            <uxap:ObjectPageDynamicHeaderTitle>
+                
+                <!-- Main heading: Issue # and Title -->
+                <uxap:heading>
+                    <Title
+                        text="#{issue_num}: {title}"
+                        wrapping="true"/>
+                </uxap:heading>
+                
+                <!-- Subheading: Module name -->
+                <uxap:subheading>
+                    <Text text="{i18n>moduleLabel}: {modulename}"/>
+                </uxap:subheading>
+                
+                <!-- Snapped content (visible when header is collapsed) -->
+                <uxap:snappedContent>
+                    <HBox alignItems="Center">
+                        <ObjectStatus
+                            text="{path: 'status', formatter: '.formatter.formatStatusText'}"
+                            state="{path: 'status', formatter: '.formatter.formatStatusState'}"
+                            inverted="true"
+                            class="sapUiSmallMarginEnd"/>
+                        <ObjectStatus
+                            text="{severity}"
+                            state="{path: 'severity', formatter: '.formatter.formatSeverityState'}"
+                            icon="{path: 'severity', formatter: '.formatter.formatSeverityIcon'}"/>
+                    </HBox>
+                </uxap:snappedContent>
+                
+                <!-- Expanded content (visible when header is expanded) -->
+                <uxap:expandedContent>
+                    <HBox alignItems="Center">
+                        <ObjectStatus
+                            text="{path: 'status', formatter: '.formatter.formatStatusText'}"
+                            state="{path: 'status', formatter: '.formatter.formatStatusState'}"
+                            inverted="true"
+                            class="sapUiSmallMarginEnd"/>
+                        <ObjectStatus
+                            text="{severity}"
+                            state="{path: 'severity', formatter: '.formatter.formatSeverityState'}"
+                            icon="{path: 'severity', formatter: '.formatter.formatSeverityIcon'}"/>
+                    </HBox>
+                </uxap:expandedContent>
+                
+                <!-- Back button in the header navigation area -->
+                <uxap:navigationActions>
+                    <uxap:ObjectPageHeaderActionButton
+                        icon="sap-icon://nav-back"
+                        text="{i18n>backButton}"
+                        press=".onNavBack"
+                        importance="High"/>
+                </uxap:navigationActions>
+                
+            </uxap:ObjectPageDynamicHeaderTitle>
+        </uxap:headerTitle>
+        
+        <!-- ======================================================== -->
+        <!-- HEADER CONTENT — Key Attributes at a Glance              -->
+        <!-- Visible below the title when the header is expanded       -->
+        <!-- ======================================================== -->
+        <uxap:headerContent>
+            <HBox wrap="Wrap">
+                
+                <!-- Status Badge -->
+                <VBox class="sapUiMediumMarginEnd">
+                    <Label text="{i18n>statusLabel}" design="Bold"/>
+                    <ObjectStatus
+                        text="{path: 'status', formatter: '.formatter.formatStatusText'}"
+                        state="{path: 'status', formatter: '.formatter.formatStatusState'}"
+                        inverted="true"/>
+                </VBox>
+                
+                <!-- Severity Badge -->
+                <VBox class="sapUiMediumMarginEnd">
+                    <Label text="{i18n>severityLabel}" design="Bold"/>
+                    <ObjectStatus
+                        text="{severity}"
+                        state="{path: 'severity', formatter: '.formatter.formatSeverityState'}"
+                        icon="{path: 'severity', formatter: '.formatter.formatSeverityIcon'}"/>
+                </VBox>
+                
+                <!-- Module -->
+                <VBox class="sapUiMediumMarginEnd">
+                    <Label text="{i18n>moduleLabel}" design="Bold"/>
+                    <ObjectStatus text="{modulename}" inverted="true" state="Information"/>
+                </VBox>
+                
+                <!-- Assigned Developer -->
+                <VBox class="sapUiMediumMarginEnd">
+                    <Label text="{i18n>assignedToLabel}" design="Bold"/>
+                    <HBox alignItems="Center">
+                        <core:Icon src="sap-icon://employee" class="sapUiTinyMarginEnd"/>
+                        <Text text="{assigned_to}"/>
+                    </HBox>
+                </VBox>
+                
+                <!-- Due Date -->
+                <VBox class="sapUiMediumMarginEnd">
+                    <Label text="{i18n>dueDateLabel}" design="Bold"/>
+                    <HBox alignItems="Center">
+                        <core:Icon src="sap-icon://date-time" class="sapUiTinyMarginEnd"/>
+                        <Text text="{path: 'due_date', formatter: '.formatter.formatDateTime'}"/>
+                    </HBox>
+                </VBox>
+                
+                <!-- Created By -->
+                <VBox class="sapUiMediumMarginEnd">
+                    <Label text="{i18n>createdByLabel}" design="Bold"/>
+                    <Text text="{created_by}"/>
+                </VBox>
+                
+                <!-- Created At -->
+                <VBox>
+                    <Label text="{i18n>createdAtLabel}" design="Bold"/>
+                    <Text text="{path: 'created_at', formatter: '.formatter.formatDateTime'}"/>
+                </VBox>
+                
+            </HBox>
+        </uxap:headerContent>
+        
+        <!-- ======================================================== -->
+        <!-- SECTIONS — Detailed information organized by category     -->
+        <!-- ======================================================== -->
+        <uxap:sections>
+            
+            <!-- ==================================================== -->
+            <!-- SECTION 1: General Information                        -->
+            <!-- Displays: Issue ID, full description                  -->
+            <!-- ==================================================== -->
+            <uxap:ObjectPageSection
+                id="generalInfoSection"
+                title="{i18n>sectionGeneralInfo}">
+                <uxap:subSections>
+                    <uxap:ObjectPageSubSection title="{i18n>sectionDescription}">
+                        <uxap:blocks>
+                            <form:SimpleForm
+                                editable="false"
+                                layout="ResponsiveGridLayout"
+                                labelSpanXL="3" labelSpanL="3" labelSpanM="3" labelSpanS="12"
+                                emptySpanXL="4" emptySpanL="4" emptySpanM="4" emptySpanS="0"
+                                columnsXL="1" columnsL="1" columnsM="1">
+                                
+                                <form:toolbar>
+                                    <Toolbar>
+                                        <Title text="{i18n>descriptionDetails}" level="H4"/>
+                                    </Toolbar>
+                                </form:toolbar>
+                                
+                                <!-- Issue ID (GUID) — useful for backend reference -->
+                                <Label text="{i18n>issueIdLabel}"/>
+                                <Text text="{issue_id}"/>
+                                
+                                <!-- Description / Steps to Reproduce -->
+                                <!-- renderWhitespace preserves line breaks from the tester -->
+                                <Label text="{i18n>descriptionLabel}"/>
+                                <Text text="{description}" renderWhitespace="true"/>
+                                
+                            </form:SimpleForm>
+                        </uxap:blocks>
+                    </uxap:ObjectPageSubSection>
+                </uxap:subSections>
+            </uxap:ObjectPageSection>
+            
+            <!-- ==================================================== -->
+            <!-- SECTION 2: Assignment Details                         -->
+            <!-- Displays: Assigned developer, timestamps, creator     -->
+            <!-- ==================================================== -->
+            <uxap:ObjectPageSection
+                id="assignmentSection"
+                title="{i18n>sectionAssignment}">
+                <uxap:subSections>
+                    <uxap:ObjectPageSubSection title="{i18n>sectionAssignment}">
+                        <uxap:blocks>
+                            <form:SimpleForm
+                                editable="false"
+                                layout="ResponsiveGridLayout"
+                                labelSpanXL="3" labelSpanL="3" labelSpanM="4" labelSpanS="12"
+                                emptySpanXL="1" emptySpanL="1" emptySpanM="0" emptySpanS="0"
+                                columnsXL="2" columnsL="2" columnsM="1">
+                                
+                                <!-- Assigned Developer -->
+                                <Label text="{i18n>assignedToLabel}"/>
+                                <HBox alignItems="Center">
+                                    <core:Icon src="sap-icon://employee" class="sapUiTinyMarginEnd"/>
+                                    <Text text="{assigned_to}"/>
+                                </HBox>
+                                
+                                <!-- Assignment Timestamp -->
+                                <Label text="{i18n>assignedAtLabel}"/>
+                                <Text text="{path: 'assigned_at', formatter: '.formatter.formatDateTime'}"/>
+                                
+                                <!-- Created By (tester who reported) -->
+                                <Label text="{i18n>createdByLabel}"/>
+                                <Text text="{created_by}"/>
+                                
+                                <!-- Creation Timestamp -->
+                                <Label text="{i18n>createdAtLabel}"/>
+                                <Text text="{path: 'created_at', formatter: '.formatter.formatDateTime'}"/>
+                                
+                                <!-- Last Updated By -->
+                                <Label text="{i18n>lastUpdatedByLabel}"/>
+                                <Text text="{last_updated_by}"/>
+                                
+                                <!-- Last Updated Timestamp -->
+                                <Label text="{i18n>lastUpdatedAtLabel}"/>
+                                <Text text="{path: 'last_updated_at', formatter: '.formatter.formatDateTime'}"/>
+                                
+                            </form:SimpleForm>
+                        </uxap:blocks>
+                    </uxap:ObjectPageSubSection>
+                </uxap:subSections>
+            </uxap:ObjectPageSection>
+            
+            <!-- ==================================================== -->
+            <!-- SECTION 3: Version & SLA                              -->
+            <!-- Displays: Version info + SLA progress indicator       -->
+            <!-- ==================================================== -->
+            <uxap:ObjectPageSection
+                id="versionSlaSection"
+                title="{i18n>sectionVersionSla}">
+                <uxap:subSections>
+                    
+                    <!-- Sub-Section: Version Information -->
+                    <uxap:ObjectPageSubSection title="{i18n>sectionVersionInfo}">
+                        <uxap:blocks>
+                            <form:SimpleForm
+                                editable="false"
+                                layout="ResponsiveGridLayout"
+                                labelSpanXL="3" labelSpanL="3" labelSpanM="4" labelSpanS="12"
+                                emptySpanXL="1" emptySpanL="1" emptySpanM="0" emptySpanS="0"
+                                columnsXL="2" columnsL="2" columnsM="1">
+                                
+                                <!-- Affected Version (set at creation, e.g., "1.0") -->
+                                <Label text="{i18n>affectedVersionLabel}"/>
+                                <Text text="{affected_version}"/>
+                                
+                                <!-- Fix Version (auto-set when resolved, e.g., "1.1") -->
+                                <Label text="{i18n>fixVersionLabel}"/>
+                                <Text text="{path: 'fix_version', formatter: '.formatter.formatOptionalField'}"/>
+                                
+                                <!-- Reopen Count (highlighted if > 0) -->
+                                <Label text="{i18n>reopenCountLabel}"/>
+                                <ObjectNumber
+                                    number="{reopen_count}"
+                                    state="{path: 'reopen_count', formatter: '.formatter.formatReopenState'}"/>
+                                
+                                <!-- Due Date -->
+                                <Label text="{i18n>dueDateLabel}"/>
+                                <Text text="{path: 'due_date', formatter: '.formatter.formatDateTime'}"/>
+                                
+                            </form:SimpleForm>
+                        </uxap:blocks>
+                    </uxap:ObjectPageSubSection>
+                    
+                    <!-- Sub-Section: SLA Progress Display -->
+                    <uxap:ObjectPageSubSection title="{i18n>sectionSlaProgress}">
+                        <uxap:blocks>
+                            <VBox class="sapUiSmallMargin" id="slaContainer">
+                                
+                                <!-- SLA Remaining Time Header -->
+                                <HBox alignItems="Center" class="sapUiSmallMarginBottom">
+                                    <core:Icon
+                                        src="sap-icon://time-overtime"
+                                        color="{slaModel>/slaIconColor}"
+                                        class="sapUiSmallMarginEnd"
+                                        size="1.5rem"/>
+                                    <Title
+                                        text="{slaModel>/slaRemainingText}"
+                                        titleStyle="H4"/>
+                                </HBox>
+                                
+                                <!-- SLA Progress Bar -->
+                                <!-- Green = on track, Yellow = warning (>75%), Red = overdue -->
+                                <ProgressIndicator
+                                    id="slaProgressBar"
+                                    percentValue="{slaModel>/slaPercent}"
+                                    displayValue="{slaModel>/slaDisplayValue}"
+                                    state="{slaModel>/slaState}"
+                                    showValue="true"
+                                    class="sapUiMediumMarginBottom"/>
+                                
+                                <!-- SLA Info Labels -->
+                                <HBox wrap="Wrap">
+                                    <VBox class="sapUiMediumMarginEnd">
+                                        <Label text="{i18n>slaSeverityLabel}" design="Bold"/>
+                                        <Text text="{severity}"/>
+                                    </VBox>
+                                    <VBox class="sapUiMediumMarginEnd">
+                                        <Label text="{i18n>slaTotalTimeLabel}" design="Bold"/>
+                                        <Text text="{slaModel>/slaTotalTime}"/>
+                                    </VBox>
+                                    <VBox>
+                                        <Label text="{i18n>slaOverdueLabel}" design="Bold"/>
+                                        <ObjectStatus
+                                            text="{slaModel>/slaOverdueText}"
+                                            state="{slaModel>/slaOverdueState}"/>
+                                    </VBox>
+                                </HBox>
+                                
+                            </VBox>
+                        </uxap:blocks>
+                    </uxap:ObjectPageSubSection>
+                    
+                </uxap:subSections>
+            </uxap:ObjectPageSection>
+            
+            <!-- ==================================================== -->
+            <!-- SECTION 4: Resolution Details                         -->
+            <!-- VISIBLE ONLY when status is RESOLVED/TESTING/CLOSED   -->
+            <!-- Displays: Root Cause, Fix Description, Resolution Note -->
+            <!-- ==================================================== -->
+            <uxap:ObjectPageSection
+                id="resolutionSection"
+                title="{i18n>sectionResolution}"
+                visible="{path: 'status', formatter: '.formatter.isResolutionVisible'}">
+                <uxap:subSections>
+                    <uxap:ObjectPageSubSection title="{i18n>sectionResolution}">
+                        <uxap:blocks>
+                            <form:SimpleForm
+                                editable="false"
+                                layout="ResponsiveGridLayout"
+                                labelSpanXL="3" labelSpanL="3" labelSpanM="3" labelSpanS="12"
+                                emptySpanXL="4" emptySpanL="4" emptySpanM="4" emptySpanS="0"
+                                columnsXL="1" columnsL="1" columnsM="1">
+                                
+                                <!-- Root Cause (mandatory for resolve) -->
+                                <Label text="{i18n>rootCauseLabel}" design="Bold"/>
+                                <Text text="{root_cause}" renderWhitespace="true"/>
+                                
+                                <!-- Fix Description (mandatory for resolve) -->
+                                <Label text="{i18n>fixDescriptionLabel}" design="Bold"/>
+                                <Text text="{fix_description}" renderWhitespace="true"/>
+                                
+                                <!-- Resolution Note (optional) -->
+                                <Label text="{i18n>resolutionNoteLabel}"/>
+                                <Text text="{path: 'resolution_note', formatter: '.formatter.formatOptionalField'}" renderWhitespace="true"/>
+                                
+                                <!-- Fixed By (developer who resolved) -->
+                                <Label text="{i18n>fixedByLabel}"/>
+                                <HBox alignItems="Center">
+                                    <core:Icon src="sap-icon://employee" class="sapUiTinyMarginEnd"/>
+                                    <Text text="{fixed_by}"/>
+                                </HBox>
+                                
+                                <!-- Fixed At timestamp -->
+                                <Label text="{i18n>fixedAtLabel}"/>
+                                <Text text="{path: 'fixed_at', formatter: '.formatter.formatDateTime'}"/>
+                                
+                            </form:SimpleForm>
+                        </uxap:blocks>
+                    </uxap:ObjectPageSubSection>
+                </uxap:subSections>
+            </uxap:ObjectPageSection>
+            
+            <!-- ==================================================== -->
+            <!-- SECTION 5: Attachments                                -->
+            <!-- Displays: File list with icons, size, uploader info   -->
+            <!-- Data source: "attachments" JSON model (loaded by ctrl) -->
+            <!-- ==================================================== -->
+            <uxap:ObjectPageSection
+                id="attachmentsSection"
+                title="{i18n>sectionAttachments}">
+                <uxap:subSections>
+                    <uxap:ObjectPageSubSection title="{i18n>sectionAttachments}">
+                        <uxap:blocks>
+                            <List
+                                id="attachmentList"
+                                items="{attachments>/}"
+                                noDataText="{i18n>noAttachments}"
+                                class="sapUiSmallMargin">
+                                
+                                <!-- List Header: Title + file count -->
+                                <headerToolbar>
+                                    <Toolbar>
+                                        <Title text="{i18n>attachmentsTitle}" level="H4"/>
+                                        <ToolbarSpacer/>
+                                        <Label text="{
+                                            parts: ['attachments>/'],
+                                            formatter: '.formatter.formatAttachmentCount'
+                                        }"/>
+                                    </Toolbar>
+                                </headerToolbar>
+                                
+                                <!-- Attachment list items -->
+                                <items>
+                                    <ObjectListItem
+                                        title="{attachments>file_name}"
+                                        number="{path: 'attachments>file_size', formatter: '.formatter.formatFileSize'}"
+                                        icon="{path: 'attachments>mime_type', formatter: '.formatter.formatFileIcon'}"
+                                        type="Active">
+                                        <attributes>
+                                            <ObjectAttribute
+                                                text="{i18n>uploadedByPrefix} {attachments>uploaded_by}"/>
+                                            <ObjectAttribute
+                                                text="{path: 'attachments>uploaded_at', formatter: '.formatter.formatDateTime'}"/>
+                                        </attributes>
+                                        <firstStatus>
+                                            <ObjectStatus
+                                                text="{attachments>mime_type}"
+                                                state="Information"/>
+                                        </firstStatus>
+                                    </ObjectListItem>
+                                </items>
+                            </List>
+                        </uxap:blocks>
+                    </uxap:ObjectPageSubSection>
+                </uxap:subSections>
+            </uxap:ObjectPageSection>
+            
+            <!-- ==================================================== -->
+            <!-- SECTION 6: Comments                                   -->
+            <!-- Displays: Feed-style comment list                     -->
+            <!-- Data source: "comments" JSON model (loaded by ctrl)   -->
+            <!-- ==================================================== -->
+            <uxap:ObjectPageSection
+                id="commentsSection"
+                title="{i18n>sectionComments}">
+                <uxap:subSections>
+                    <uxap:ObjectPageSubSection title="{i18n>sectionComments}">
+                        <uxap:blocks>
+                            <VBox class="sapUiSmallMargin">
+                                <List
+                                    id="commentList"
+                                    items="{comments>/}"
+                                    noDataText="{i18n>noComments}">
+                                    
+                                    <!-- FeedListItem: comment display as a feed -->
+                                    <FeedListItem
+                                        sender="{comments>comment_by}"
+                                        text="{comments>comment_text}"
+                                        timestamp="{path: 'comments>comment_at', formatter: '.formatter.formatDateTime'}"
+                                        info="{path: 'comments>comment_type', formatter: '.formatter.formatCommentType'}"
+                                        icon="sap-icon://employee"/>
+                                </List>
+                            </VBox>
+                        </uxap:blocks>
+                    </uxap:ObjectPageSubSection>
+                </uxap:subSections>
+            </uxap:ObjectPageSection>
+            
+            <!-- ==================================================== -->
+            <!-- SECTION 7: Audit History Timeline                     -->
+            <!-- Displays: Chronological change log with icons         -->
+            <!-- Data source: "history" JSON model (loaded by ctrl)    -->
+            <!-- ==================================================== -->
+            <uxap:ObjectPageSection
+                id="historySection"
+                title="{i18n>sectionHistory}">
+                <uxap:subSections>
+                    <uxap:ObjectPageSubSection title="{i18n>sectionAuditTrail}">
+                        <uxap:blocks>
+                            <List
+                                id="historyList"
+                                items="{history>/}"
+                                noDataText="{i18n>noHistory}"
+                                class="sapUiSmallMargin">
+                                
+                                <headerToolbar>
+                                    <Toolbar>
+                                        <Title text="{i18n>auditTrailTitle}" level="H4"/>
+                                    </Toolbar>
+                                </headerToolbar>
+                                
+                                <!-- Custom timeline-style list items -->
+                                <items>
+                                    <CustomListItem>
+                                        <HBox alignItems="Start" class="sapUiSmallMargin">
+                                            
+                                            <!-- Timeline Icon (color-coded by action type) -->
+                                            <core:Icon
+                                                src="{path: 'history>action_type', formatter: '.formatter.formatHistoryIcon'}"
+                                                color="{path: 'history>action_type', formatter: '.formatter.formatHistoryIconColor'}"
+                                                size="1.25rem"
+                                                class="sapUiSmallMarginEnd sapUiSmallMarginTop"/>
+                                            
+                                            <!-- Timeline Content -->
+                                            <VBox class="sapUiTinyMarginTop">
+                                                
+                                                <!-- Change summary: FIELD changed from OLD → NEW -->
+                                                <HBox alignItems="Center" wrap="Wrap">
+                                                    <Text
+                                                        text="{history>field_name}"
+                                                        class="sapUiTinyMarginEnd sapMTextBold"/>
+                                                    <Text text="{i18n>changedFromText}" class="sapUiTinyMarginEnd"/>
+                                                    <ObjectStatus
+                                                        text="{path: 'history>old_value', formatter: '.formatter.formatOptionalField'}"
+                                                        state="None"
+                                                        class="sapUiTinyMarginEnd"/>
+                                                    <core:Icon src="sap-icon://arrow-right" size="0.75rem" class="sapUiTinyMarginEnd"/>
+                                                    <ObjectStatus
+                                                        text="{history>new_value}"
+                                                        state="Information"/>
+                                                </HBox>
+                                                
+                                                <!-- Notes (shown only if present) -->
+                                                <Text
+                                                    text="{history>notes}"
+                                                    visible="{= !!${history>notes} }"
+                                                    class="sapUiTinyMarginTop"/>
+                                                
+                                                <!-- Who + When -->
+                                                <HBox alignItems="Center" class="sapUiTinyMarginTop">
+                                                    <core:Icon src="sap-icon://employee" size="0.75rem" class="sapUiTinyMarginEnd"/>
+                                                    <Label text="{history>changed_by}" class="sapUiTinyMarginEnd"/>
+                                                    <core:Icon src="sap-icon://date-time" size="0.75rem" class="sapUiTinyMarginEnd"/>
+                                                    <Label text="{path: 'history>changed_at', formatter: '.formatter.formatDateTime'}"/>
+                                                </HBox>
+                                                
+                                            </VBox>
+                                        </HBox>
+                                    </CustomListItem>
+                                </items>
+                            </List>
+                        </uxap:blocks>
+                    </uxap:ObjectPageSubSection>
+                </uxap:subSections>
+            </uxap:ObjectPageSection>
+            
+        </uxap:sections>
+        
+    </uxap:ObjectPageLayout>
+    
+</mvc:View>

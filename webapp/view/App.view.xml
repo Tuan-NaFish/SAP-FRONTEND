@@ -1,0 +1,27 @@
+<!--
+    App.view.xml — Root View
+    
+    The top-level view that wraps the entire application.
+    Contains a sap.m.App control which acts as a NavContainer
+    for page routing defined in manifest.json.
+    
+    The router inserts pages (IssueList, IssueDetail) into
+    the "pages" aggregation of the App control (id="app").
+-->
+<mvc:View
+    controllerName="com.sap490.defectmgmt.controller.App"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    displayBlock="true">
+    
+    <!-- 
+        sap.m.App: Root container for all pages.
+        The router's controlId="app" and controlAggregation="pages"
+        in manifest.json point to this control.
+    -->
+    <App id="app"
+         busy="{appView>/busy}"
+         busyIndicatorDelay="{appView>/delay}">
+    </App>
+    
+</mvc:View>

@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    OData V2 EDMX Metadata
+    
+    Describes the entity types and entity sets exposed by the
+    ZUI_ISSUE_SRVDEF OData service. This file is consumed by
+    the SAPUI5 MockServer to simulate the backend locally.
+    
+    Entity Types:
+      - Issue        : Main defect ticket record (from Z_I_ISSUE CDS view)
+      - Attachment   : File attachments linked to issues (from Z_I_ATTACHMENT)
+      - Comment      : Issue comments/notes (from Z_I_COMMENT)
+      - History      : Audit trail / change log (from Z_I_ISSUE_HISTORY)
+      - Developer    : Developer-module assignment with workload (from Z_I_DEVELOPER)
+    
+    NOTE: action_type and notes fields are included in History even though
+    the current CDS view Z_I_ISSUE_HISTORY does not expose them. The
+    backend CDS view should be updated to include these fields.
+-->
+<edmx:Edmx Version="1.0" xmlns:edmx="http://schemas.microsoft.com/ado/2007/06/edmx">
+  <edmx:DataServices m:DataServiceVersion="2.0" xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata">
+    <Schema Namespace="ZUI_ISSUE_SRVDEF" xmlns="http://schemas.microsoft.com/ado/2008/09/edm">
+
+      <!-- ================================================ -->
+      <!-- ENTITY TYPE: Issue (Main Defect Ticket)           -->
+      <!-- Source: CDS View Z_I_ISSUE → Table ZISSUE         -->
+      <!-- ================================================ -->
+      <EntityType Name="Issue">
+        <Key>
+          <PropertyRef Name="issue_id"/>
+        </Key>
+        <Property Name="issue_id" Type="Edm.String" Nullable="false" MaxLength="36"/>
+        <Property Name="issue_num" Type="Edm.Int32"/>
+        <Property Name="title" Type="Edm.String" MaxLength="80"/>
+        <Property Name="description" Type="Edm.String"/>
+        <Property Name="modulename" Type="Edm.String" MaxLength="10"/>
+        <Property Name="severity" Type="Edm.String" MaxLength="10"/>
+        <Property Name="status" Type="Edm.String" MaxLength="15"/>
+        <Property Name="created_by" Type="Edm.String" MaxLength="12"/>
+        <Property Name="created_at" Type="Edm.DateTime" Precision="7"/>
+        <Property Name="assigned_to" Type="Edm.String" MaxLength="12"/>
+        <Property Name="assigned_at" Type="Edm.DateTime" Precision="7"/>
+        <Property Name="due_date" Type="Edm.DateTime" Precision="7"/>
+        <Property Name="affected_version" Type="Edm.String" MaxLength="20"/>
+        <Property Name="fix_version" Type="Edm.String" MaxLength="20"/>
+        <Property Name="root_cause" Type="Edm.String"/>
+        <Property Name="fix_description" Type="Edm.String"/>
+        <Property Name="resolution_note" Type="Edm.String"/>
+        <Property Name="fixed_by" Type="Edm.String" MaxLength="12"/>
+        <Property Name="fixed_at" Type="Edm.DateTime" Precision="7"/>
+        <Property Name="closed_by" Type="Edm.String" MaxLength="12"/>
+        <Property Name="closed_at" Type="Edm.DateTime" Precision="7"/>
+        <Property Name="last_updated_by" Type="Edm.String" MaxLength="12"/>
+        <Property Name="last_updated_at" Type="Edm.DateTime" Precision="7"/>
+        <Property Name="reopen_count" Type="Edm.Int32"/>
+      </EntityType>
+
+      <!-- ================================================ -->
+      <!-- ENTITY TYPE: Attachment (Issue File Attachments)   -->
+      <!-- Source: CDS View Z_I_ATTACHMENT → Table ZATTACHMENTS -->
+      <!-- ================================================ -->
+      <EntityType Name="Attachment">
+        <Key>
+          <PropertyRef Name="file_id"/>
+        </Key>
+        <Property Name="file_id" Type="Edm.String" Nullable="false" MaxLength="36"/>
+        <Property Name="issue_id" Type="Edm.String" MaxLength="36"/>
+        <Property Name="file_name" Type="Edm.String" MaxLength="255"/>
+        <Property Name="mime_type" Type="Edm.String" MaxLength="50"/>
+        <Property Name="file_size" Type="Edm.Int64"/>
+        <Property Name="uploaded_by" Type="Edm.String" MaxLength="12"/>
+        <Property Name="uploaded_at" Type="Edm.DateTime" Precision="7"/>
+      </EntityType>
+
+      <!-- ================================================ -->
+      <!-- ENTITY TYPE: Comment (Issue Comments/Notes)       -->
+      <!-- Source: CDS View Z_I_COMMENT → Table ZCOMMENT     -->
+      <!-- ================================================ -->
+      <EntityType Name="Comment">
+        <Key>
+          <PropertyRef Name="comment_id"/>
+        </Key>
+        <Property Name="comment_id" Type="Edm.String" Nullable="false" MaxLength="36"/>
+        <Property Name="issue_id" Type="Edm.String" MaxLength="36"/>
+        <Property Name="comment_type" Type="Edm.String" MaxLength="10"/>
+        <Property Name="comment_text" Type="Edm.String"/>
+        <Property Name="comment_by" Type="Edm.String" MaxLength="12"/>
+        <Property Name="comment_at" Type="Edm.DateTime" Precision="7"/>
+        <Property Name="edited_by" Type="Edm.String" MaxLength="12"/>
+        <Property Name="edited_at" Type="Edm.DateTime" Precision="7"/>
+      </EntityType>
+
+      <!-- ================================================ -->
+      <!-- ENTITY TYPE: History (Audit Trail / Change Log)   -->
+      <!-- Source: CDS View Z_I_ISSUE_HISTORY → ZISSUE_HISTORY -->
+      <!-- NOTE: action_type and notes are from the table     -->
+      <!-- but missing in the current CDS view                -->
+      <!-- ================================================ -->
+      <EntityType Name="History">
+        <Key>
+          <PropertyRef Name="history_id"/>
+        </Key>
+        <Property Name="history_id" Type="Edm.String" Nullable="false" MaxLength="36"/>
+        <Property Name="issue_id" Type="Edm.String" MaxLength="36"/>
+        <Property Name="action_type" Type="Edm.String" MaxLength="20"/>
+        <Property Name="field_name" Type="Edm.String" MaxLength="30"/>
+        <Property Name="old_value" Type="Edm.String" MaxLength="200"/>
+        <Property Name="new_value" Type="Edm.String" MaxLength="200"/>
+        <Property Name="changed_by" Type="Edm.String" MaxLength="12"/>
+        <Property Name="changed_at" Type="Edm.DateTime" Precision="7"/>
+        <Property Name="notes" Type="Edm.String" MaxLength="1000"/>
+      </EntityType>
+
+      <!-- ================================================ -->
+      <!-- ENTITY TYPE: Developer (Module Assignment)        -->
+      <!-- Source: CDS View Z_I_DEVELOPER → ZDEVELOPER_MODULE -->
+      <!-- Composite key: developer_id + modulename          -->
+      <!-- ================================================ -->
+      <EntityType Name="Developer">
+        <Key>
+          <PropertyRef Name="developer_id"/>
+          <PropertyRef Name="modulename"/>
+        </Key>
+        <Property Name="developer_id" Type="Edm.String" Nullable="false" MaxLength="12"/>
+        <Property Name="modulename" Type="Edm.String" Nullable="false" MaxLength="10"/>
+        <Property Name="is_active" Type="Edm.String" MaxLength="1"/>
+        <Property Name="workload_score" Type="Edm.Int32"/>
+        <Property Name="last_updated_by" Type="Edm.String" MaxLength="12"/>
+        <Property Name="last_updated_at" Type="Edm.DateTime" Precision="7"/>
+      </EntityType>
+
+      <!-- ================================================ -->
+      <!-- ENTITY CONTAINER                                  -->
+      <!-- ================================================ -->
+      <EntityContainer Name="ZUI_ISSUE_SRVDEF_Entities" m:IsDefaultEntityContainer="true">
+        <EntitySet Name="Issue" EntityType="ZUI_ISSUE_SRVDEF.Issue"/>
+        <EntitySet Name="Attachment" EntityType="ZUI_ISSUE_SRVDEF.Attachment"/>
+        <EntitySet Name="Comment" EntityType="ZUI_ISSUE_SRVDEF.Comment"/>
+        <EntitySet Name="History" EntityType="ZUI_ISSUE_SRVDEF.History"/>
+        <EntitySet Name="Developer" EntityType="ZUI_ISSUE_SRVDEF.Developer"/>
+      </EntityContainer>
+
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>

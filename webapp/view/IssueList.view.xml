@@ -1,0 +1,138 @@
+<!--
+    IssueList.view.xml — Issue List Page
+    
+    Navigation entry point: displays a table of all defect tickets.
+    Users click a row to navigate to the Issue Detail page.
+    
+    Features:
+      - sap.m.Table bound to /Issue OData entity set
+      - Column headers: Issue #, Title, Module, Severity, Status, Assigned To, Due Date
+      - Status and Severity columns use ObjectStatus with color coding (via formatter)
+      - Search bar filters by title or module
+      - Growing (lazy loading) enabled for performance
+-->
+<mvc:View
+    controllerName="com.sap490.defectmgmt.controller.IssueList"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core">
+    
+    <Page
+        id="issueListPage"
+        title="{i18n>issueListTitle}"
+        showNavButton="false">
+        
+        <!-- Page Header: App title -->
+        <headerContent>
+            <Title text="{i18n>appTitle}" titleStyle="H4"/>
+        </headerContent>
+        
+        <content>
+            <!-- ================================================ -->
+            <!-- ISSUE TABLE                                       -->
+            <!-- Bound to /Issue entity set from OData model       -->
+            <!-- Growing enabled: loads 20 items at a time          -->
+            <!-- ================================================ -->
+            <Table
+                id="issueTable"
+                items="{/Issue}"
+                growing="true"
+                growingThreshold="20"
+                sticky="ColumnHeaders,HeaderToolbar"
+                class="sapUiSmallMargin">
+                
+                <!-- Table Toolbar: Title + Search -->
+                <headerToolbar>
+                    <OverflowToolbar>
+                        <Title text="{i18n>issueListTableTitle}" level="H3"/>
+                        <ToolbarSpacer/>
+                        <SearchField
+                            id="searchField"
+                            width="300px"
+                            placeholder="{i18n>searchPlaceholder}"
+                            search=".onSearch"/>
+                    </OverflowToolbar>
+                </headerToolbar>
+                
+                <!-- Column Definitions -->
+                <columns>
+                    <Column width="5.5rem" hAlign="Center">
+                        <Text text="{i18n>columnIssueNum}"/>
+                    </Column>
+                    <Column>
+                        <Text text="{i18n>columnTitle}"/>
+                    </Column>
+                    <Column width="5.5rem" hAlign="Center" demandPopin="true" minScreenWidth="Tablet">
+                        <Text text="{i18n>columnModule}"/>
+                    </Column>
+                    <Column width="7rem" hAlign="Center" demandPopin="true" minScreenWidth="Tablet">
+                        <Text text="{i18n>columnSeverity}"/>
+                    </Column>
+                    <Column width="8rem" hAlign="Center">
+                        <Text text="{i18n>columnStatus}"/>
+                    </Column>
+                    <Column width="8rem" demandPopin="true" minScreenWidth="Desktop">
+                        <Text text="{i18n>columnAssignedTo}"/>
+                    </Column>
+                    <Column width="7rem" hAlign="Center" demandPopin="true" minScreenWidth="Desktop">
+                        <Text text="{i18n>columnDueDate}"/>
+                    </Column>
+                </columns>
+                
+                <!-- Row Template — each row navigates to detail on press -->
+                <items>
+                    <ColumnListItem type="Navigation" press=".onIssuePress">
+                        <cells>
+                            <!-- Issue Number (formatted as #1001) -->
+                            <ObjectIdentifier title="#{issue_num}"/>
+                            
+                            <!-- Title (truncated to 2 lines) -->
+                            <Text text="{title}" maxLines="2"/>
+                            
+                            <!-- Module badge (inverted blue) -->
+                            <ObjectStatus
+                                text="{modulename}"
+                                inverted="true"
+                                state="Information"/>
+                            
+                            <!-- Severity with icon and color -->
+                            <ObjectStatus
+                                text="{severity}"
+                                state="{
+                                    path: 'severity',
+                                    formatter: '.formatter.formatSeverityState'
+                                }"
+                                icon="{
+                                    path: 'severity',
+                                    formatter: '.formatter.formatSeverityIcon'
+                                }"/>
+                            
+                            <!-- Status with color coding (inverted pill) -->
+                            <ObjectStatus
+                                text="{
+                                    path: 'status',
+                                    formatter: '.formatter.formatStatusText'
+                                }"
+                                state="{
+                                    path: 'status',
+                                    formatter: '.formatter.formatStatusState'
+                                }"
+                                inverted="true"/>
+                            
+                            <!-- Assigned Developer -->
+                            <Text text="{assigned_to}"/>
+                            
+                            <!-- Due Date (formatted DD.MM.YYYY) -->
+                            <Text text="{
+                                path: 'due_date',
+                                formatter: '.formatter.formatDate'
+                            }"/>
+                        </cells>
+                    </ColumnListItem>
+                </items>
+            </Table>
+        </content>
+        
+    </Page>
+    
+</mvc:View>
