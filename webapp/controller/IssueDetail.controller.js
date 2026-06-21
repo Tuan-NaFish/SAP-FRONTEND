@@ -102,8 +102,8 @@ sap.ui.define([
             );
 
             // Bind the entire view to the Issue entity by key
-            // Example path: /Issue('550e8400-e29b-41d4-a716-446655440001')
-            var sPath = "/Issue('" + sIssueId + "')";
+            // OData V4 GUID key format: /Issue(550e8400-e29b-41d4-a716-446655440001)
+            var sPath = "/Issue(" + sIssueId + ")";
             this.getView().bindElement({
                 path: sPath,
                 events: {
@@ -141,9 +141,9 @@ sap.ui.define([
         },
 
         // ============================================================
-        // RELATED ENTITY LOADING
-        // Each method reads from OData with a filter on issue_id
-        // and stores results in a local JSON model for view binding.
+        // RELATED ENTITY LOADING (ODATA V4 COMPLIANT)
+        // Since OData V4 ODataModel does not support .read(), we create
+        // list bindings and request their contexts programmatically.
         // ============================================================
 
         /**
@@ -156,16 +156,18 @@ sap.ui.define([
             var oModel = this.getModel();
             var that = this;
 
-            oModel.read("/Attachment", {
-                filters: [
-                    new Filter("issue_id", FilterOperator.EQ, sIssueId)
-                ],
-                success: function (oData) {
-                    that.getModel("attachments").setData(oData.results);
-                },
-                error: function () {
-                    that.getModel("attachments").setData([]);
-                }
+            var oListBinding = oModel.bindList("/Attachment", null, null, [
+                new Filter("issue_id", FilterOperator.EQ, sIssueId)
+            ]);
+
+            oListBinding.requestContexts().then(function (aContexts) {
+                var aData = aContexts.map(function (oContext) {
+                    return oContext.getObject();
+                });
+                that.getModel("attachments").setData(aData);
+            }).catch(function (oError) {
+                jQuery.sap.log.error("Failed to load attachments: " + oError.message);
+                that.getModel("attachments").setData([]);
             });
         },
 
@@ -179,19 +181,20 @@ sap.ui.define([
             var oModel = this.getModel();
             var that = this;
 
-            oModel.read("/Comment", {
-                filters: [
-                    new Filter("issue_id", FilterOperator.EQ, sIssueId)
-                ],
-                sorters: [
-                    new Sorter("comment_at", true) // descending
-                ],
-                success: function (oData) {
-                    that.getModel("comments").setData(oData.results);
-                },
-                error: function () {
-                    that.getModel("comments").setData([]);
-                }
+            var oListBinding = oModel.bindList("/Comment", null, [
+                new Sorter("comment_at", true) // descending
+            ], [
+                new Filter("issue_id", FilterOperator.EQ, sIssueId)
+            ]);
+
+            oListBinding.requestContexts().then(function (aContexts) {
+                var aData = aContexts.map(function (oContext) {
+                    return oContext.getObject();
+                });
+                that.getModel("comments").setData(aData);
+            }).catch(function (oError) {
+                jQuery.sap.log.error("Failed to load comments: " + oError.message);
+                that.getModel("comments").setData([]);
             });
         },
 
@@ -205,19 +208,20 @@ sap.ui.define([
             var oModel = this.getModel();
             var that = this;
 
-            oModel.read("/History", {
-                filters: [
-                    new Filter("issue_id", FilterOperator.EQ, sIssueId)
-                ],
-                sorters: [
-                    new Sorter("changed_at", true) // descending
-                ],
-                success: function (oData) {
-                    that.getModel("history").setData(oData.results);
-                },
-                error: function () {
-                    that.getModel("history").setData([]);
-                }
+            var oListBinding = oModel.bindList("/History", null, [
+                new Sorter("changed_at", true) // descending
+            ], [
+                new Filter("issue_id", FilterOperator.EQ, sIssueId)
+            ]);
+
+            oListBinding.requestContexts().then(function (aContexts) {
+                var aData = aContexts.map(function (oContext) {
+                    return oContext.getObject();
+                });
+                that.getModel("history").setData(aData);
+            }).catch(function (oError) {
+                jQuery.sap.log.error("Failed to load history: " + oError.message);
+                that.getModel("history").setData([]);
             });
         },
 

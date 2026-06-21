@@ -13,10 +13,10 @@
 
     "dataSources": {
       "mainService": {
-        "uri": "/sap/opu/odata/sap/ZUI_ISSUE_SRVDEF/",
+        "uri": "/sap/opu/odata4/sap/zui_issue_srvbind/srvd/sap/zui_issue_srvdef/0001/",
         "type": "OData",
         "settings": {
-          "odataVersion": "2.0",
+          "odataVersion": "4.0",
           "localUri": "localService/metadata.xml"
         }
       }
@@ -73,9 +73,9 @@
         "dataSource": "mainService",
         "preload": true,
         "settings": {
-          "defaultBindingMode": "TwoWay",
-          "defaultCountMode": "Inline",
-          "useBatch": false
+          "autoExpandSelect": true,
+          "operationMode": "Server",
+          "synchronizationMode": "None"
         }
       }
     },
