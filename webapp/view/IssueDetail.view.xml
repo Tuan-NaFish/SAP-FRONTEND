@@ -89,6 +89,46 @@
                     </HBox>
                 </uxap:expandedContent>
                 
+                <!-- Action buttons for workflow transitions -->
+                <uxap:actions>
+                    <uxap:ObjectPageHeaderActionButton
+                        text="{i18n>btnStartProgress}"
+                        type="Emphasized"
+                        press=".onStartProgress"
+                        visible="{= ${status} === 'ASSIGNED' }"
+                        importance="High"/>
+                    <uxap:ObjectPageHeaderActionButton
+                        text="{i18n>btnResolve}"
+                        type="Emphasized"
+                        press=".onResolve"
+                        visible="{= ${status} === 'IN_PROGRESS' }"
+                        importance="High"/>
+                    <uxap:ObjectPageHeaderActionButton
+                        text="{i18n>btnStartTesting}"
+                        type="Emphasized"
+                        press=".onStartTesting"
+                        visible="{= ${status} === 'RESOLVED' }"
+                        importance="High"/>
+                    <uxap:ObjectPageHeaderActionButton
+                        text="{i18n>btnClose}"
+                        type="Accept"
+                        press=".onClose"
+                        visible="{= ${status} === 'TESTING' }"
+                        importance="High"/>
+                    <uxap:ObjectPageHeaderActionButton
+                        text="{i18n>btnReopen}"
+                        type="Reject"
+                        press=".onReopen"
+                        visible="{= ${status} === 'TESTING' || ${status} === 'CLOSED' }"
+                        importance="Medium"/>
+                    <uxap:ObjectPageHeaderActionButton
+                        text="{i18n>btnReassign}"
+                        type="Emphasized"
+                        press=".onReassign"
+                        visible="{= ${status} === 'REOPEN' }"
+                        importance="High"/>
+                </uxap:actions>
+
                 <!-- Back button in the header navigation area -->
                 <uxap:navigationActions>
                     <uxap:ObjectPageHeaderActionButton

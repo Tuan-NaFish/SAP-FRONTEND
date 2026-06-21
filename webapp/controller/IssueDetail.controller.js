@@ -29,8 +29,10 @@ sap.ui.define([
     "sap/ui/model/json/JSONModel",
     "sap/ui/model/Filter",
     "sap/ui/model/FilterOperator",
-    "sap/ui/model/Sorter"
-], function (BaseController, formatter, JSONModel, Filter, FilterOperator, Sorter) {
+    "sap/ui/model/Sorter",
+    "sap/m/MessageToast",
+    "sap/m/MessageBox"
+], function (BaseController, formatter, JSONModel, Filter, FilterOperator, Sorter, MessageToast, MessageBox) {
     "use strict";
 
     // ================================================================
@@ -334,6 +336,260 @@ sap.ui.define([
                 slaOverdueState:  iRemainingMs <= 0 ? "Error" : "Success",
                 slaIconColor:     sIconColor
             });
+        },
+
+        // ============================================================
+        // PHASE 2: WORKFLOW HANDLERS (ODATA V4 COMPLIANT)
+        // ============================================================
+
+        /**
+         * Generic status update helper
+         */
+        _updateIssueStatus: function (sNewStatus, mAdditionalProperties, sSuccessMsg) {
+            var oView = this.getView();
+            var oContext = oView.getBindingContext();
+            if (!oContext) {
+                return;
+            }
+
+            var oModel = this.getModel();
+            var sIssueId = oContext.getProperty("issue_id");
+            var that = this;
+
+            oView.setBusy(true);
+
+            // Set new status and other properties
+            oContext.setProperty("status", sNewStatus);
+            if (mAdditionalProperties) {
+                Object.keys(mAdditionalProperties).forEach(function (key) {
+                    oContext.setProperty(key, mAdditionalProperties[key]);
+                });
+            }
+
+            // Submit OData V4 patch batch group
+            oModel.submitBatch("$auto").then(function () {
+                oView.setBusy(false);
+                if (sSuccessMsg) {
+                    MessageToast.show(sSuccessMsg);
+                }
+                // Reload history
+                that._loadHistory(sIssueId);
+            }).catch(function (oError) {
+                oView.setBusy(false);
+                MessageBox.error("Failed to update status: " + oError.message);
+            });
+        },
+
+        /**
+         * Start progress action (ASSIGNED -> IN_PROGRESS)
+         */
+        onStartProgress: function () {
+            this._updateIssueStatus("IN_PROGRESS", null, "Status updated to In Progress");
+        },
+
+        /**
+         * Start testing action (RESOLVED -> TESTING)
+         */
+        onStartTesting: function () {
+            this._updateIssueStatus("TESTING", null, "Status updated to Testing");
+        },
+
+        /**
+         * Close action (TESTING -> CLOSED)
+         */
+        onClose: function () {
+            var that = this;
+            MessageBox.confirm(this.getResourceBundle().getText("dialogCloseConfirm"), {
+                onClose: function (sAction) {
+                    if (sAction === MessageBox.Action.OK) {
+                        that._updateIssueStatus("CLOSED", {
+                            closed_by: "DEVELOPER",
+                            closed_at: new Date()
+                        }, "Issue closed successfully");
+                    }
+                }
+            });
+        },
+
+        /**
+         * Reopen action (TESTING/CLOSED -> REOPEN)
+         */
+        onReopen: function () {
+            var that = this;
+            MessageBox.confirm(this.getResourceBundle().getText("dialogReopenConfirm"), {
+                onClose: function (sAction) {
+                    if (sAction === MessageBox.Action.OK) {
+                        var oContext = that.getView().getBindingContext();
+                        var iCurrentReopenCount = oContext.getProperty("reopen_count") || 0;
+                        var sFixVersion = oContext.getProperty("fix_version");
+
+                        var mProps = {
+                            reopen_count: iCurrentReopenCount + 1
+                        };
+                        if (sFixVersion) {
+                            mProps.affected_version = sFixVersion;
+                        }
+
+                        that._updateIssueStatus("REOPEN", mProps, "Issue reopened successfully");
+                    }
+                }
+            });
+        },
+
+        /**
+         * Open Resolve dialog
+         */
+        onResolve: function () {
+            var oView = this.getView();
+            var that = this;
+
+            if (!this._oResolveDialog) {
+                this.loadFragment({
+                    name: "com.sap490.defectmgmt.view.fragment.ResolveDialog"
+                }).then(function (oDialog) {
+                    that._oResolveDialog = oDialog;
+                    oView.addDependent(that._oResolveDialog);
+                    that._oResolveDialog.open();
+                });
+            } else {
+                this._oResolveDialog.open();
+            }
+        },
+
+        onResolveCancel: function () {
+            if (this._oResolveDialog) {
+                this._oResolveDialog.close();
+            }
+        },
+
+        onResolveSubmit: function () {
+            var oRootCauseInput = this.byId("txtRootCause");
+            var oFixDescInput   = this.byId("txtFixDescription");
+            var oNoteInput      = this.byId("txtResolutionNote");
+
+            var sRootCause = oRootCauseInput.getValue().trim();
+            var sFixDesc   = oFixDescInput.getValue().trim();
+            var sNote      = oNoteInput.getValue().trim();
+
+            var bValid = true;
+            if (!sRootCause) {
+                oRootCauseInput.setValueState("Error");
+                oRootCauseInput.setValueStateText(this.getResourceBundle().getText("dialogRootCauseRequired"));
+                bValid = false;
+            } else {
+                oRootCauseInput.setValueState("None");
+            }
+
+            if (!sFixDesc) {
+                oFixDescInput.setValueState("Error");
+                oFixDescInput.setValueStateText(this.getResourceBundle().getText("dialogFixDescRequired"));
+                bValid = false;
+            } else {
+                oFixDescInput.setValueState("None");
+            }
+
+            if (!bValid) {
+                return;
+            }
+
+            this._oResolveDialog.close();
+
+            // Clear form fields
+            oRootCauseInput.setValue("");
+            oFixDescInput.setValue("");
+            oNoteInput.setValue("");
+
+            var oContext = this.getView().getBindingContext();
+            var sAffectedVersion = oContext.getProperty("affected_version") || "1.0";
+            var sNextVersion = this._calculateNextVersion(sAffectedVersion);
+            var sCurrentUser = oContext.getProperty("assigned_to") || "DEVELOPER";
+
+            this._updateIssueStatus("RESOLVED", {
+                root_cause: sRootCause,
+                fix_description: sFixDesc,
+                resolution_note: sNote,
+                fixed_by: sCurrentUser,
+                fixed_at: new Date(),
+                fix_version: sNextVersion
+            }, "Issue resolved. Fix Version: " + sNextVersion);
+        },
+
+        _calculateNextVersion: function (sVersion) {
+            if (!sVersion) {
+                return "1.0";
+            }
+            var aParts = sVersion.split(".");
+            var iLastIndex = aParts.length - 1;
+            var iLastNum = parseInt(aParts[iLastIndex], 10);
+            if (!isNaN(iLastNum)) {
+                aParts[iLastIndex] = String(iLastNum + 1);
+            } else {
+                aParts.push("1");
+            }
+            return aParts.join(".");
+        },
+
+        /**
+         * Open Reassign dialog
+         */
+        onReassign: function () {
+            var oView = this.getView();
+            var oContext = oView.getBindingContext();
+            if (!oContext) { return; }
+
+            var sModule = oContext.getProperty("modulename");
+            var that = this;
+
+            if (!this._oReassignDialog) {
+                this.loadFragment({
+                    name: "com.sap490.defectmgmt.view.fragment.ReassignDialog"
+                }).then(function (oDialog) {
+                    that._oReassignDialog = oDialog;
+                    oView.addDependent(that._oReassignDialog);
+                    that._filterReassignDeveloperList(sModule);
+                    that._oReassignDialog.open();
+                });
+            } else {
+                this._filterReassignDeveloperList(sModule);
+                this._oReassignDialog.open();
+            }
+        },
+
+        onReassignCancel: function () {
+            if (this._oReassignDialog) {
+                this._oReassignDialog.close();
+            }
+        },
+
+        onReassignSubmit: function () {
+            var oSelect = this.byId("selDeveloper");
+            var sDeveloperId = oSelect.getSelectedKey();
+
+            if (!sDeveloperId) {
+                MessageToast.show(this.getResourceBundle().getText("dialogSelectDevRequired"));
+                return;
+            }
+
+            this._oReassignDialog.close();
+
+            this._updateIssueStatus("ASSIGNED", {
+                assigned_to: sDeveloperId,
+                assigned_at: new Date()
+            }, "Issue reassigned to " + sDeveloperId);
+        },
+
+        _filterReassignDeveloperList: function (sModule) {
+            var oSelect = this.byId("selDeveloper");
+            if (oSelect) {
+                var oBinding = oSelect.getBinding("items");
+                if (oBinding) {
+                    var aFilters = [
+                        new Filter("modulename", FilterOperator.EQ, sModule),
+                        new Filter("is_active", FilterOperator.EQ, "X")
+                    ];
+                    oBinding.filter(aFilters);
+                }
+            }
         }
     });
 });
