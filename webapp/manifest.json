@@ -107,6 +107,16 @@
           "name": "IssueDetail",
           "pattern": "issue/{issueId}",
           "target": ["IssueDetail"]
+        },
+        {
+          "name": "CreateIssue",
+          "pattern": "create",
+          "target": ["CreateIssue"]
+        },
+        {
+          "name": "Dashboard",
+          "pattern": "dashboard",
+          "target": ["Dashboard"]
         }
       ],
       "targets": {
@@ -118,6 +128,16 @@
         "IssueDetail": {
           "viewType": "XML",
           "viewName": "IssueDetail",
+          "viewLevel": 2
+        },
+        "CreateIssue": {
+          "viewType": "XML",
+          "viewName": "CreateIssue",
+          "viewLevel": 2
+        },
+        "Dashboard": {
+          "viewType": "XML",
+          "viewName": "Dashboard",
           "viewLevel": 2
         }
       }

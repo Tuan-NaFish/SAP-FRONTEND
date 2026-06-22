@@ -95,37 +95,37 @@
                         text="{i18n>btnStartProgress}"
                         type="Emphasized"
                         press=".onStartProgress"
-                        visible="{= ${status} === 'ASSIGNED' }"
+                        visible="{= ${status} === 'ASSIGNED' &amp;&amp; (${userRole>/role} === 'DEVELOPER' || ${userRole>/role} === 'MANAGER') }"
                         importance="High"/>
                     <uxap:ObjectPageHeaderActionButton
                         text="{i18n>btnResolve}"
                         type="Emphasized"
                         press=".onResolve"
-                        visible="{= ${status} === 'IN_PROGRESS' }"
+                        visible="{= ${status} === 'IN_PROGRESS' &amp;&amp; (${userRole>/role} === 'DEVELOPER' || ${userRole>/role} === 'MANAGER') }"
                         importance="High"/>
                     <uxap:ObjectPageHeaderActionButton
                         text="{i18n>btnStartTesting}"
                         type="Emphasized"
                         press=".onStartTesting"
-                        visible="{= ${status} === 'RESOLVED' }"
+                        visible="{= ${status} === 'RESOLVED' &amp;&amp; (${userRole>/role} === 'TESTER' || ${userRole>/role} === 'MANAGER') }"
                         importance="High"/>
                     <uxap:ObjectPageHeaderActionButton
                         text="{i18n>btnClose}"
                         type="Accept"
                         press=".onClose"
-                        visible="{= ${status} === 'TESTING' }"
+                        visible="{= ${status} === 'TESTING' &amp;&amp; (${userRole>/role} === 'TESTER' || ${userRole>/role} === 'MANAGER') }"
                         importance="High"/>
                     <uxap:ObjectPageHeaderActionButton
                         text="{i18n>btnReopen}"
                         type="Reject"
                         press=".onReopen"
-                        visible="{= ${status} === 'TESTING' || ${status} === 'CLOSED' }"
+                        visible="{= (${status} === 'TESTING' || ${status} === 'CLOSED') &amp;&amp; (${userRole>/role} === 'TESTER' || ${userRole>/role} === 'MANAGER') }"
                         importance="Medium"/>
                     <uxap:ObjectPageHeaderActionButton
                         text="{i18n>btnReassign}"
                         type="Emphasized"
                         press=".onReassign"
-                        visible="{= ${status} === 'REOPEN' }"
+                        visible="{= ${status} === 'REOPEN' &amp;&amp; (${userRole>/role} === 'TESTER' || ${userRole>/role} === 'MANAGER') }"
                         importance="High"/>
                 </uxap:actions>
 
@@ -456,11 +456,19 @@
                                 noDataText="{i18n>noAttachments}"
                                 class="sapUiSmallMargin">
                                 
-                                <!-- List Header: Title + file count -->
+                                <!-- List Header: Title + file count + upload button -->
                                 <headerToolbar>
                                     <Toolbar>
                                         <Title text="{i18n>attachmentsTitle}" level="H4"/>
                                         <ToolbarSpacer/>
+                                        <unified:FileUploader
+                                            xmlns:unified="sap.ui.unified"
+                                            id="fileUploader"
+                                            buttonOnly="true"
+                                            buttonText="Upload File"
+                                            icon="sap-icon://upload"
+                                            change=".onUploadFile"
+                                            class="sapUiTinyMarginEnd"/>
                                         <Label text="{
                                             parts: ['attachments>/'],
                                             formatter: '.formatter.formatAttachmentCount'
@@ -506,6 +514,9 @@
                     <uxap:ObjectPageSubSection title="{i18n>sectionComments}">
                         <uxap:blocks>
                             <VBox class="sapUiSmallMargin">
+                                <FeedInput
+                                    post=".onPostComment"
+                                    class="sapUiSmallMarginBottom"/>
                                 <List
                                     id="commentList"
                                     items="{comments>/}"

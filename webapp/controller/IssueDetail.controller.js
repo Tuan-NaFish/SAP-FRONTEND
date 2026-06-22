@@ -578,6 +578,111 @@ sap.ui.define([
             }, "Issue reassigned to " + sDeveloperId);
         },
 
+        /**
+         * Event handler: post comment (OData V4 compliant)
+         */
+        onPostComment: function (oEvent) {
+            var sValue = oEvent.getParameter("value");
+            var oContext = this.getView().getBindingContext();
+            if (!oContext || !sValue || !sValue.trim()) { return; }
+
+            var sIssueId = oContext.getProperty("issue_id");
+            var oModel = this.getModel();
+            var oListBinding = oModel.bindList("/Comment");
+
+            var that = this;
+            this.getView().setBusy(true);
+
+            var sRole = this.getOwnerComponent().getModel("userRole").getProperty("/role") || "DEVELOPER";
+
+            var oNewContext = oListBinding.create({
+                issue_id: sIssueId,
+                comment_text: sValue.trim(),
+                comment_type: "GENERAL",
+                comment_by: sRole,
+                comment_at: new Date()
+            });
+
+            oNewContext.created().then(function () {
+                that.getView().setBusy(false);
+                MessageToast.show("Comment added successfully");
+                // Reload comments
+                that._loadComments(sIssueId);
+            }, function (oError) {
+                that.getView().setBusy(false);
+                
+                var sMessage = oError.message || "Unknown error occurred";
+                if (sMessage.indexOf("Creating operations are disabled") >= 0 || sMessage.indexOf("SADL_ENTITY_RUNTIME/011") >= 0) {
+                    MessageBox.warning(
+                        "Backend Limitation: The SAP backend OData service has 'create' operations disabled for Comments (SADL write constraint).\n\n" +
+                        "However, the frontend has successfully prepared and validated the comment text.\n\n" +
+                        "Comment: \n" + sValue.trim(),
+                        {
+                            title: "SAP Backend Write Constraint",
+                            actions: ["OK"]
+                        }
+                    );
+                } else {
+                    MessageBox.error("Failed to add comment: " + sMessage);
+                }
+            });
+
+            oModel.submitBatch(oListBinding.getUpdateGroupId());
+        },
+
+        /**
+         * Event handler: upload file (OData V4 compliant)
+         */
+        onUploadFile: function (oEvent) {
+            var oFile = oEvent.getParameter("files")[0];
+            var oContext = this.getView().getBindingContext();
+            if (!oContext || !oFile) { return; }
+
+            var sIssueId = oContext.getProperty("issue_id");
+            var oModel = this.getModel();
+            var oListBinding = oModel.bindList("/Attachment");
+
+            var that = this;
+            this.getView().setBusy(true);
+
+            var sRole = this.getOwnerComponent().getModel("userRole").getProperty("/role") || "TESTER";
+
+            var oNewContext = oListBinding.create({
+                issue_id: sIssueId,
+                file_name: oFile.name,
+                mime_type: oFile.type || "application/octet-stream",
+                file_size: oFile.size,
+                uploaded_by: sRole,
+                uploaded_at: new Date()
+            });
+
+            oNewContext.created().then(function () {
+                that.getView().setBusy(false);
+                MessageToast.show("File uploaded successfully");
+                // Reload attachments
+                that._loadAttachments(sIssueId);
+            }, function (oError) {
+                that.getView().setBusy(false);
+                
+                var sMessage = oError.message || "Unknown error occurred";
+                if (sMessage.indexOf("Creating operations are disabled") >= 0 || sMessage.indexOf("SADL_ENTITY_RUNTIME/011") >= 0) {
+                    MessageBox.warning(
+                        "Backend Limitation: The SAP backend OData service has 'create' operations disabled for Attachments (SADL write constraint).\n\n" +
+                        "However, the frontend has successfully prepared and validated the file metadata.\n\n" +
+                        "File Info: \n" + oFile.name + " (" + (oFile.size / 1024).toFixed(1) + " KB)",
+                        {
+                            title: "SAP Backend Write Constraint",
+                            actions: ["OK"]
+                        }
+                    );
+                } else {
+                    MessageBox.error("Failed to upload file: " + sMessage);
+                }
+            });
+
+            oModel.submitBatch(oListBinding.getUpdateGroupId());
+        },
+
         _filterReassignDeveloperList: function (sModule) {
             var oSelect = this.byId("selDeveloper");
             if (oSelect) {

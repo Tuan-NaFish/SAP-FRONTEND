@@ -71,6 +71,20 @@ sap.ui.define([
             var oTable = this.byId("issueTable");
             var oBinding = oTable.getBinding("items");
             oBinding.filter(aFilters);
+        },
+
+        /**
+         * Event handler: navigate to Create Issue page.
+         */
+        onGoToCreate: function () {
+            this.getRouter().navTo("CreateIssue");
+        },
+
+        /**
+         * Event handler: navigate to Manager Dashboard page.
+         */
+        onGoToDashboard: function () {
+            this.getRouter().navTo("Dashboard");
         }
     });
 });

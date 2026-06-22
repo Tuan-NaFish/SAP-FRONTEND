@@ -1,0 +1,302 @@
+<mvc:View
+    controllerName="com.sap490.defectmgmt.controller.Dashboard"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:layout="sap.ui.layout"
+    xmlns:f="sap.f"
+    xmlns:cssgrid="sap.ui.layout.cssgrid">
+    
+    <Page
+        id="dashboardPage"
+        title="Manager KPI Dashboard"
+        showNavButton="true"
+        navButtonPress=".onNavBack">
+        
+        <headerContent>
+            <!-- Refresh button -->
+            <Button icon="sap-icon://refresh" tooltip="Refresh Data" press=".onRefreshData"/>
+        </headerContent>
+        
+        <content>
+            <!-- ======================================================== -->
+            <!-- 1. KPI TILES CONTAINER                                   -->
+            <!-- ======================================================== -->
+            <layout:VerticalLayout width="100%" class="sapUiSmallMargin">
+                <Title text="Key Performance Indicators" level="H2" class="sapUiSmallMarginBottom"/>
+                
+                <HBox wrap="Wrap" class="sapUiTinyMarginBottom">
+                    <!-- Total Open KPI -->
+                    <GenericTile header="Total Open Defects" frameType="OneByOne" class="sapUiTinyMarginEnd sapUiTinyMarginBottom" press=".onFilterListByStatus" valueColor="Critical">
+                        <TileContent>
+                            <NumericContent value="{dashboardData>/totalOpen}" valueColor="Critical" icon="sap-icon://active-folder"/>
+                        </TileContent>
+                    </GenericTile>
+                    
+                    <!-- Overdue KPI -->
+                    <GenericTile header="Overdue Defects" frameType="OneByOne" class="sapUiTinyMarginEnd sapUiTinyMarginBottom" press=".onFilterListByOverdue">
+                        <TileContent>
+                            <NumericContent value="{dashboardData>/totalOverdue}" valueColor="Error" icon="sap-icon://alert"/>
+                        </TileContent>
+                    </GenericTile>
+                    
+                    <!-- Critical SLA KPI -->
+                    <GenericTile header="Critical Severity" frameType="OneByOne" class="sapUiTinyMarginEnd sapUiTinyMarginBottom">
+                        <TileContent>
+                            <NumericContent value="{dashboardData>/totalCritical}" valueColor="Error" icon="sap-icon://warning2"/>
+                        </TileContent>
+                    </GenericTile>
+                    
+                    <!-- Resolved (Waiting Test) KPI -->
+                    <GenericTile header="Waiting Testing" frameType="OneByOne" class="sapUiTinyMarginEnd sapUiTinyMarginBottom">
+                        <TileContent>
+                            <NumericContent value="{dashboardData>/totalTesting}" valueColor="Neutral" icon="sap-icon://user-settings"/>
+                        </TileContent>
+                    </GenericTile>
+
+                    <!-- Closed KPI -->
+                    <GenericTile header="Closed Defects" frameType="OneByOne" class="sapUiTinyMarginBottom">
+                        <TileContent>
+                            <NumericContent value="{dashboardData>/totalClosed}" valueColor="Good" icon="sap-icon://accept"/>
+                        </TileContent>
+                    </GenericTile>
+                </HBox>
+                
+                <core:HTML content="&lt;hr style='border: none; border-top: 1px solid #e5e5e5; margin: 1.5rem 0;' /&gt;"/>
+                
+                <!-- ======================================================== -->
+                <!-- 2. DEFECT BREAKDOWNS (PROGRESS BARS)                     -->
+                <!-- ======================================================== -->
+                <Title text="Defect Distribution" level="H2" class="sapUiSmallMarginBottom"/>
+                
+                <HBox wrap="Wrap" justify="SpaceBetween">
+                    <!-- Status Distribution Panel -->
+                    <Panel width="100%" class="sapUiResponsiveMargin sapUiNoContentPadding" headerText="Status Distribution" expandable="true" expanded="true">
+                        <layout:Grid defaultSpan="XL4 L4 M6 S12" class="sapUiSmallMargin">
+                            <VBox class="sapUiSmallMarginBottom">
+                                <HBox justify="SpaceBetween">
+                                    <Label text="Assigned"/>
+                                    <Text text="{dashboardData>/status/ASSIGNED} / {dashboardData>/totalTickets}"/>
+                                </HBox>
+                                <ProgressIndicator
+                                    percentValue="{dashboardData>/statusPercent/ASSIGNED}"
+                                    displayValue="{dashboardData>/statusPercent/ASSIGNED}%"
+                                    state="Information"/>
+                            </VBox>
+                            
+                            <VBox class="sapUiSmallMarginBottom">
+                                <HBox justify="SpaceBetween">
+                                    <Label text="In Progress"/>
+                                    <Text text="{dashboardData>/status/IN_PROGRESS} / {dashboardData>/totalTickets}"/>
+                                </HBox>
+                                <ProgressIndicator
+                                    percentValue="{dashboardData>/statusPercent/IN_PROGRESS}"
+                                    displayValue="{dashboardData>/statusPercent/IN_PROGRESS}%"
+                                    state="Warning"/>
+                            </VBox>
+                            
+                            <VBox class="sapUiSmallMarginBottom">
+                                <HBox justify="SpaceBetween">
+                                    <Label text="Resolved"/>
+                                    <Text text="{dashboardData>/status/RESOLVED} / {dashboardData>/totalTickets}"/>
+                                </HBox>
+                                <ProgressIndicator
+                                    percentValue="{dashboardData>/statusPercent/RESOLVED}"
+                                    displayValue="{dashboardData>/statusPercent/RESOLVED}%"
+                                    state="Success"/>
+                            </VBox>
+                            
+                            <VBox class="sapUiSmallMarginBottom">
+                                <HBox justify="SpaceBetween">
+                                    <Label text="Testing"/>
+                                    <Text text="{dashboardData>/status/TESTING} / {dashboardData>/totalTickets}"/>
+                                </HBox>
+                                <ProgressIndicator
+                                    percentValue="{dashboardData>/statusPercent/TESTING}"
+                                    displayValue="{dashboardData>/statusPercent/TESTING}%"
+                                    state="None"/>
+                            </VBox>
+                            
+                            <VBox class="sapUiSmallMarginBottom">
+                                <HBox justify="SpaceBetween">
+                                    <Label text="Reopened"/>
+                                    <Text text="{dashboardData>/status/REOPEN} / {dashboardData>/totalTickets}"/>
+                                </HBox>
+                                <ProgressIndicator
+                                    percentValue="{dashboardData>/statusPercent/REOPEN}"
+                                    displayValue="{dashboardData>/statusPercent/REOPEN}%"
+                                    state="Error"/>
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginBottom">
+                                <HBox justify="SpaceBetween">
+                                    <Label text="Closed"/>
+                                    <Text text="{dashboardData>/status/CLOSED} / {dashboardData>/totalTickets}"/>
+                                </HBox>
+                                <ProgressIndicator
+                                    percentValue="{dashboardData>/statusPercent/CLOSED}"
+                                    displayValue="{dashboardData>/statusPercent/CLOSED}%"
+                                    state="Success"/>
+                            </VBox>
+                        </layout:Grid>
+                    </Panel>
+                </HBox>
+                
+                <HBox wrap="Wrap" justify="SpaceBetween">
+                    <!-- Severity Distribution Panel -->
+                    <Panel width="100%" class="sapUiResponsiveMargin sapUiNoContentPadding" headerText="Severity Distribution" expandable="true" expanded="true">
+                        <layout:Grid defaultSpan="XL3 L3 M6 S12" class="sapUiSmallMargin">
+                            <VBox class="sapUiSmallMarginBottom">
+                                <HBox justify="SpaceBetween">
+                                    <Label text="Critical"/>
+                                    <Text text="{dashboardData>/severity/CRITICAL} / {dashboardData>/totalTickets}"/>
+                                </HBox>
+                                <ProgressIndicator
+                                    percentValue="{dashboardData>/severityPercent/CRITICAL}"
+                                    displayValue="{dashboardData>/severityPercent/CRITICAL}%"
+                                    state="Error"/>
+                            </VBox>
+                            
+                            <VBox class="sapUiSmallMarginBottom">
+                                <HBox justify="SpaceBetween">
+                                    <Label text="High"/>
+                                    <Text text="{dashboardData>/severity/HIGH} / {dashboardData>/totalTickets}"/>
+                                </HBox>
+                                <ProgressIndicator
+                                    percentValue="{dashboardData>/severityPercent/HIGH}"
+                                    displayValue="{dashboardData>/severityPercent/HIGH}%"
+                                    state="Warning"/>
+                            </VBox>
+                            
+                            <VBox class="sapUiSmallMarginBottom">
+                                <HBox justify="SpaceBetween">
+                                    <Label text="Medium"/>
+                                    <Text text="{dashboardData>/severity/MEDIUM} / {dashboardData>/totalTickets}"/>
+                                </HBox>
+                                <ProgressIndicator
+                                    percentValue="{dashboardData>/severityPercent/MEDIUM}"
+                                    displayValue="{dashboardData>/severityPercent/MEDIUM}%"
+                                    state="None"/>
+                            </VBox>
+                            
+                            <VBox class="sapUiSmallMarginBottom">
+                                <HBox justify="SpaceBetween">
+                                    <Label text="Low"/>
+                                    <Text text="{dashboardData>/severity/LOW} / {dashboardData>/totalTickets}"/>
+                                </HBox>
+                                <ProgressIndicator
+                                    percentValue="{dashboardData>/severityPercent/LOW}"
+                                    displayValue="{dashboardData>/severityPercent/LOW}%"
+                                    state="Success"/>
+                            </VBox>
+                        </layout:Grid>
+                    </Panel>
+                </HBox>
+
+                <HBox wrap="Wrap" justify="SpaceBetween">
+                    <!-- Module Distribution Panel -->
+                    <Panel width="100%" class="sapUiResponsiveMargin sapUiNoContentPadding" headerText="Module Area Distribution" expandable="true" expanded="true">
+                        <layout:Grid defaultSpan="XL2 L2 M4 S12" class="sapUiSmallMargin">
+                            <VBox class="sapUiSmallMarginBottom">
+                                <HBox justify="SpaceBetween">
+                                    <Label text="FI"/>
+                                    <Text text="{dashboardData>/module/FI}"/>
+                                </HBox>
+                                <ProgressIndicator percentValue="{dashboardData>/modulePercent/FI}" displayValue="{dashboardData>/modulePercent/FI}%" state="Information"/>
+                            </VBox>
+                            <VBox class="sapUiSmallMarginBottom">
+                                <HBox justify="SpaceBetween">
+                                    <Label text="MM"/>
+                                    <Text text="{dashboardData>/module/MM}"/>
+                                </HBox>
+                                <ProgressIndicator percentValue="{dashboardData>/modulePercent/MM}" displayValue="{dashboardData>/modulePercent/MM}%" state="Information"/>
+                            </VBox>
+                            <VBox class="sapUiSmallMarginBottom">
+                                <HBox justify="SpaceBetween">
+                                    <Label text="SD"/>
+                                    <Text text="{dashboardData>/module/SD}"/>
+                                </HBox>
+                                <ProgressIndicator percentValue="{dashboardData>/modulePercent/SD}" displayValue="{dashboardData>/modulePercent/SD}%" state="Information"/>
+                            </VBox>
+                            <VBox class="sapUiSmallMarginBottom">
+                                <HBox justify="SpaceBetween">
+                                    <Label text="HCM"/>
+                                    <Text text="{dashboardData>/module/HCM}"/>
+                                </HBox>
+                                <ProgressIndicator percentValue="{dashboardData>/modulePercent/HCM}" displayValue="{dashboardData>/modulePercent/HCM}%" state="Information"/>
+                            </VBox>
+                            <VBox class="sapUiSmallMarginBottom">
+                                <HBox justify="SpaceBetween">
+                                    <Label text="PP"/>
+                                    <Text text="{dashboardData>/module/PP}"/>
+                                </HBox>
+                                <ProgressIndicator percentValue="{dashboardData>/modulePercent/PP}" displayValue="{dashboardData>/modulePercent/PP}%" state="Information"/>
+                            </VBox>
+                            <VBox class="sapUiSmallMarginBottom">
+                                <HBox justify="SpaceBetween">
+                                    <Label text="QM"/>
+                                    <Text text="{dashboardData>/module/QM}"/>
+                                </HBox>
+                                <ProgressIndicator percentValue="{dashboardData>/modulePercent/QM}" displayValue="{dashboardData>/modulePercent/QM}%" state="Information"/>
+                            </VBox>
+                        </layout:Grid>
+                    </Panel>
+                </HBox>
+                
+                <core:HTML content="&lt;hr style='border: none; border-top: 1px solid #e5e5e5; margin: 1.5rem 0;' /&gt;"/>
+                
+                <!-- ======================================================== -->
+                <!-- 3. DEVELOPER WORKLOAD TABLE                              -->
+                <!-- ======================================================== -->
+                <Table
+                    id="developerWorkloadTable"
+                    items="{
+                        path: '/Developer',
+                        sorters: [{path: 'workload_score', descending: true}]
+                    }"
+                    sticky="ColumnHeaders"
+                    class="sapUiResponsiveMargin">
+                    
+                    <headerToolbar>
+                        <OverflowToolbar>
+                            <Title text="Developer Workload Tracker" level="H2"/>
+                            <ToolbarSpacer/>
+                            <Text text="Note: Sorted by highest workload first" class="sapUiSubTemplates"/>
+                        </OverflowToolbar>
+                    </headerToolbar>
+                    
+                    <columns>
+                        <Column>
+                            <Text text="Developer ID"/>
+                        </Column>
+                        <Column hAlign="Center">
+                            <Text text="Module Area"/>
+                        </Column>
+                        <Column hAlign="Center" width="8rem">
+                            <Text text="Status"/>
+                        </Column>
+                        <Column hAlign="Center" width="18rem">
+                            <Text text="Workload Level (0 - 10)"/>
+                        </Column>
+                    </columns>
+                    
+                    <items>
+                        <ColumnListItem>
+                            <cells>
+                                <ObjectIdentifier title="{developer_id}"/>
+                                <ObjectStatus text="{modulename}" state="Information" inverted="true"/>
+                                <ObjectStatus 
+                                    text="{= ${is_active} === 'X' ? 'Active' : 'Inactive'}" 
+                                    state="{= ${is_active} === 'X' ? 'Success' : 'Error'}"/>
+                                <ProgressIndicator
+                                    percentValue="{= ${workload_score} * 10 }"
+                                    displayValue="{workload_score} / 10"
+                                    state="{= ${workload_score} &gt; 6 ? 'Error' : (${workload_score} &gt; 3 ? 'Warning' : 'Success')}"/>
+                            </cells>
+                        </ColumnListItem>
+                    </items>
+                </Table>
+            </layout:VerticalLayout>
+        </content>
+    </Page>
+</mvc:View>

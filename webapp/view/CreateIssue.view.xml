@@ -1,0 +1,127 @@
+<mvc:View
+    controllerName="com.sap490.defectmgmt.controller.CreateIssue"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:form="sap.ui.layout.form"
+    xmlns:layout="sap.ui.layout">
+    
+    <Page
+        id="createIssuePage"
+        title="Create Defect Ticket"
+        showNavButton="true"
+        navButtonPress=".onNavBack">
+        
+        <content>
+            <layout:VerticalLayout width="100%" class="sapUiContentPadding">
+                <form:SimpleForm
+                    id="createIssueForm"
+                    editable="true"
+                    layout="ResponsiveGridLayout"
+                    title="Defect Details"
+                    labelSpanXL="3"
+                    labelSpanL="3"
+                    labelSpanM="4"
+                    labelSpanS="12"
+                    adjustLabelSpan="false"
+                    emptySpanXL="4"
+                    emptySpanL="4"
+                    emptySpanM="4"
+                    emptySpanS="0"
+                    columnsXL="1"
+                    columnsL="1"
+                    columnsM="1"
+                    singleContainerFullWidth="false">
+                    
+                    <form:content>
+                        <!-- Title Field -->
+                        <Label text="Title" required="true"/>
+                        <Input
+                            id="inpTitle"
+                            placeholder="Enter a brief, descriptive title"
+                            maxLength="100"
+                            liveChange=".onFieldChange"/>
+                        
+                        <!-- Description Field -->
+                        <Label text="Description / Steps to Reproduce" required="true"/>
+                        <TextArea
+                            id="txtDescription"
+                            placeholder="Describe the defect, steps to reproduce, and expected vs actual behavior"
+                            rows="8"
+                            maxLength="1000"
+                            liveChange=".onFieldChange"/>
+                        
+                        <!-- Module Selection -->
+                        <Label text="Module" required="true"/>
+                        <Select
+                            id="selModule"
+                            change=".onModuleChange">
+                            <core:Item key="" text="-- Select Module --"/>
+                            <core:Item key="FI" text="FI - Financial Accounting"/>
+                            <core:Item key="MM" text="MM - Material Management"/>
+                            <core:Item key="SD" text="SD - Sales &amp; Distribution"/>
+                            <core:Item key="HCM" text="HCM - Human Capital Management"/>
+                            <core:Item key="PP" text="PP - Production Planning"/>
+                            <core:Item key="QM" text="QM - Quality Management"/>
+                        </Select>
+                        
+                        <!-- Severity Selection -->
+                        <Label text="Severity" required="true"/>
+                        <Select
+                            id="selSeverity">
+                            <core:Item key="LOW" text="Low"/>
+                            <core:Item key="MEDIUM" text="Medium"/>
+                            <core:Item key="HIGH" text="High"/>
+                            <core:Item key="CRITICAL" text="Critical"/>
+                        </Select>
+                        
+                        <!-- Affected Version -->
+                        <Label text="Affected Version"/>
+                        <Input
+                            id="inpAffectedVersion"
+                            value="1.0"
+                            placeholder="e.g. 1.0"/>
+                        
+                        <!-- Due Date -->
+                        <Label text="Due Date" required="true"/>
+                        <DatePicker
+                            id="dpDueDate"
+                            valueFormat="yyyy-MM-dd"
+                            displayFormat="dd.MM.yyyy"
+                            change=".onFieldChange"/>
+                        
+                        <!-- Developer Assignment -->
+                        <Label text="Assign Developer" required="false"/>
+                        <Select
+                            id="selDeveloper"
+                            enabled="false"
+                            items="{
+                                path: '/Developer',
+                                sorters: [{path: 'workload_score', descending: false}]
+                            }">
+                            <!-- Placeholder item to display if empty -->
+                            <core:Item key="" text="Select Module First / Auto-Assign"/>
+                        </Select>
+                        <Text id="txtDeveloperWorkloadInfo" text="" class="sapUiTinyMarginTop sapUiSubTemplates"/>
+                    </form:content>
+                </form:SimpleForm>
+            </layout:VerticalLayout>
+        </content>
+        
+        <!-- Action Buttons Footer -->
+        <footer>
+            <OverflowToolbar>
+                <ToolbarSpacer/>
+                <Button
+                    id="btnSubmit"
+                    text="Create Ticket"
+                    type="Emphasized"
+                    press=".onSubmit"/>
+                <Button
+                    id="btnCancel"
+                    text="Cancel"
+                    press=".onCancel"/>
+            </OverflowToolbar>
+        </footer>
+    </Page>
+</mvc:View>

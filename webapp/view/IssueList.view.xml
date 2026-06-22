@@ -22,9 +22,17 @@
         title="{i18n>issueListTitle}"
         showNavButton="false">
         
-        <!-- Page Header: App title -->
+        <!-- Page Header: App title & Action buttons & Role Selector -->
         <headerContent>
             <Title text="{i18n>appTitle}" titleStyle="H4"/>
+            <Text text="Simulated Role:"/>
+            <Select id="roleSelector" selectedKey="{userRole>/role}">
+                <core:Item key="TESTER" text="Tester"/>
+                <core:Item key="DEVELOPER" text="Developer"/>
+                <core:Item key="MANAGER" text="Manager"/>
+            </Select>
+            <Button icon="sap-icon://add" text="Create Ticket" press=".onGoToCreate" type="Emphasized"/>
+            <Button icon="sap-icon://manager-insight" text="KPI Dashboard" press=".onGoToDashboard"/>
         </headerContent>
         
         <content>
