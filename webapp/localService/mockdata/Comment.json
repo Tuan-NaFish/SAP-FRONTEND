@@ -1,0 +1,72 @@
+[
+  {
+    "comment_id": "cmt-001-001",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440001",
+    "comment_type": "GENERAL",
+    "comment_text": "This dump occurs only when posting with PO reference. Direct invoice posting (without PO) works fine. Might be related to the recent transport DEVK900041 for MM pricing changes.",
+    "comment_by": "TESTER01",
+    "comment_at": "2026-06-12T08:10:00",
+    "edited_by": "",
+    "edited_at": null
+  },
+  {
+    "comment_id": "cmt-001-002",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440001",
+    "comment_type": "NOTE",
+    "comment_text": "Confirmed: the dump is in function module ME_CHECK_INVOICE at line 1247. Looking at the call stack — seems like internal table lt_podmg overflows when PO has more than 500 line items. Investigating memory allocation.",
+    "comment_by": "DEV_MM_01",
+    "comment_at": "2026-06-12T14:30:00",
+    "edited_by": "",
+    "edited_at": null
+  },
+  {
+    "comment_id": "cmt-002-001",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440002",
+    "comment_type": "GENERAL",
+    "comment_text": "Pricing condition ZPR1 was working correctly before transport DEVK900045 was imported on June 10. Please check if condition table 501 was modified in that transport.",
+    "comment_by": "TESTER02",
+    "comment_at": "2026-06-11T10:45:00",
+    "edited_by": "",
+    "edited_at": null
+  },
+  {
+    "comment_id": "cmt-002-002",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440002",
+    "comment_type": "NOTE",
+    "comment_text": "Found it — the access sequence for ZPR1 was changed in transport DEVK900045. Customer group field (KDGRP) was removed from condition table 501. This breaks the pricing determination for all Z1 group customers. Working on restoring the original access sequence.",
+    "comment_by": "DEV_SD_01",
+    "comment_at": "2026-06-12T09:30:00",
+    "edited_by": "",
+    "edited_at": null
+  },
+  {
+    "comment_id": "cmt-003-001",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440003",
+    "comment_type": "ROOT_CAUSE",
+    "comment_text": "Root Cause: The cost center lock indicator validation was bypassed in the custom BAPI enhancement Z_FI_BAPI_EXIT. The standard SAP check for field LOCK_IND was deactivated by a previous developer (transport DEVK900032) to handle a special year-end posting scenario where temporarily locked cost centers needed to receive adjustment postings.",
+    "comment_by": "DEV_FI_01",
+    "comment_at": "2026-06-14T16:00:00",
+    "edited_by": "",
+    "edited_at": null
+  },
+  {
+    "comment_id": "cmt-003-002",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440003",
+    "comment_type": "RESOLUTION",
+    "comment_text": "Fix applied in transport DEVK900048: Re-enabled lock indicator check in Z_FI_CHECK_CC with a date-based exception for year-end period (Dec 28 - Jan 5). Normal postings are now correctly blocked for locked cost centers. Year-end adjustment postings still work within the exception window.",
+    "comment_by": "DEV_FI_01",
+    "comment_at": "2026-06-15T11:00:00",
+    "edited_by": "",
+    "edited_at": null
+  },
+  {
+    "comment_id": "cmt-004-001",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440004",
+    "comment_type": "GENERAL",
+    "comment_text": "This issue affects all batch-managed materials in plant 1000. Non-batch materials work correctly. Tested with materials BATCH-001, BATCH-002, BATCH-003 — all fail. Standard material STD-001 works fine.",
+    "comment_by": "TESTER02",
+    "comment_at": "2026-06-11T11:00:00",
+    "edited_by": "",
+    "edited_at": null
+  }
+]

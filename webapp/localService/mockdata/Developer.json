@@ -1,0 +1,66 @@
+[
+  {
+    "developer_id": "DEV_MM_01",
+    "modulename": "MM",
+    "is_active": "X",
+    "workload_score": 2,
+    "last_updated_by": "ADMIN",
+    "last_updated_at": "2026-06-01T00:00:00"
+  },
+  {
+    "developer_id": "DEV_MM_02",
+    "modulename": "MM",
+    "is_active": "X",
+    "workload_score": 5,
+    "last_updated_by": "ADMIN",
+    "last_updated_at": "2026-06-01T00:00:00"
+  },
+  {
+    "developer_id": "DEV_SD_01",
+    "modulename": "SD",
+    "is_active": "X",
+    "workload_score": 1,
+    "last_updated_by": "ADMIN",
+    "last_updated_at": "2026-06-01T00:00:00"
+  },
+  {
+    "developer_id": "DEV_FI_01",
+    "modulename": "FI",
+    "is_active": "X",
+    "workload_score": 3,
+    "last_updated_by": "ADMIN",
+    "last_updated_at": "2026-06-01T00:00:00"
+  },
+  {
+    "developer_id": "DEV_HCM_01",
+    "modulename": "HCM",
+    "is_active": "X",
+    "workload_score": 4,
+    "last_updated_by": "ADMIN",
+    "last_updated_at": "2026-06-01T00:00:00"
+  },
+  {
+    "developer_id": "DEV_PP_01",
+    "modulename": "PP",
+    "is_active": "X",
+    "workload_score": 2,
+    "last_updated_by": "ADMIN",
+    "last_updated_at": "2026-06-01T00:00:00"
+  },
+  {
+    "developer_id": "DEV_QM_01",
+    "modulename": "QM",
+    "is_active": "X",
+    "workload_score": 1,
+    "last_updated_by": "ADMIN",
+    "last_updated_at": "2026-06-01T00:00:00"
+  },
+  {
+    "developer_id": "DEV_MM_INACTIVE",
+    "modulename": "MM",
+    "is_active": "",
+    "workload_score": 0,
+    "last_updated_by": "ADMIN",
+    "last_updated_at": "2026-06-01T00:00:00"
+  }
+]

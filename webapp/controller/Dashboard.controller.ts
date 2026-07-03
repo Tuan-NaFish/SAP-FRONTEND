@@ -1,248 +1,229 @@
-import Controller from "sap/ui/core/mvc/Controller";
-import Event from "sap/ui/base/Event";
-import UIComponent from "sap/ui/core/UIComponent";
-import ColumnListItem from "sap/m/ColumnListItem";
-import Fragment from "sap/ui/core/Fragment";
-import Dialog from "sap/m/Dialog";
-import MessageToast from "sap/m/MessageToast";
-import Input from "sap/m/Input";
-import Select from "sap/m/Select";
-import TextArea from "sap/m/TextArea";
-import DatePicker from "sap/m/DatePicker"; // Đã thêm DatePicker
-import Filter from "sap/ui/model/Filter";
-import FilterOperator from "sap/ui/model/FilterOperator";
-import ListBinding from "sap/ui/model/ListBinding";
-import SearchField from "sap/m/SearchField";
-import Table from "sap/m/Table";
+import JSONModel from "sap/ui/model/json/JSONModel";
 import MessageBox from "sap/m/MessageBox";
-import UploadSet from "sap/m/upload/UploadSet";
-import BusyDialog from "sap/m/BusyDialog";
-import Popover from "sap/m/Popover";
-import Sorter from "sap/ui/model/Sorter";
-import ActionSheet from "sap/m/ActionSheet";
-import Button from "sap/m/Button";
-import ODataModel from "sap/ui/model/odata/v2/ODataModel"; // Đã thêm ODataModel
+import BaseController from "./BaseController";
+import Event from "sap/ui/base/Event";
+import Table from "sap/m/Table";
+import ListBinding from "sap/ui/model/ListBinding";
+import Context from "sap/ui/model/Context";
+import ODataListBinding from "sap/ui/model/odata/v4/ODataListBinding";
 
 /**
  * @namespace sap.defectmgmt.controller
+ *
+ * Dashboard Controller — Manager KPI Dashboard
+ *
+ * Handles aggregation of issue data for dashboard metrics:
+ *   - KPI tiles (Total Open, Overdue, Critical, Waiting Testing, Closed)
+ *   - Status, Severity, and Module distribution progress bars
+ *   - Developer workload table
  */
-export default class Dashboard extends Controller {
-    private _pDialog: Promise<Dialog>;
-    private _pNotificationPopover: Promise<Popover>;
-    private _oSortActionSheet: ActionSheet;
+export default class Dashboard extends BaseController {
 
-    public onInit(): void {}
+    /**
+     * Disposable dashboard data object structure.
+     */
+    private _oStatsTemplate = {
+        totalTickets: 0,
+        totalOpen: 0,
+        totalOverdue: 0,
+        totalCritical: 0,
+        totalTesting: 0,
+        totalClosed: 0,
+        status: {
+            ASSIGNED: 0,
+            IN_PROGRESS: 0,
+            RESOLVED: 0,
+            TESTING: 0,
+            REOPEN: 0,
+            CLOSED: 0
+        },
+        statusPercent: {
+            ASSIGNED: 0,
+            IN_PROGRESS: 0,
+            RESOLVED: 0,
+            TESTING: 0,
+            REOPEN: 0,
+            CLOSED: 0
+        },
+        severity: {
+            CRITICAL: 0,
+            HIGH: 0,
+            MEDIUM: 0,
+            LOW: 0
+        },
+        severityPercent: {
+            CRITICAL: 0,
+            HIGH: 0,
+            MEDIUM: 0,
+            LOW: 0
+        },
+        module: {
+            FI: 0,
+            MM: 0,
+            SD: 0,
+            HCM: 0,
+            PP: 0,
+            QM: 0
+        },
+        modulePercent: {
+            FI: 0,
+            MM: 0,
+            SD: 0,
+            HCM: 0,
+            PP: 0,
+            QM: 0
+        }
+    };
 
-    public onIssuePress(oEvent: Event): void {
-        const oItem = oEvent.getSource() as ColumnListItem;
-        const oCtx = oItem.getBindingContext("defectModel");
-        
-        if (oCtx) {
-            const sPath = oCtx.getPath().substring(1); 
-            const oRouter = UIComponent.getRouterFor(this);
-            
-            oRouter.navTo("IssueDetail", {
-                issuePath: sPath
-            });
+    /**
+     * Lifecycle hook — called when view is initialized.
+     */
+    public onInit(): void {
+        // Setup local JSON model for dashboard metrics
+        this.setModel(new JSONModel(), "dashboardData");
+
+        // Attach route matching handler
+        this.getRouter()
+            .getRoute("Dashboard")
+            .attachPatternMatched(this._onRouteMatched, this);
+    }
+
+    /**
+     * Triggered when Dashboard route is navigated to.
+     */
+    private _onRouteMatched(): void {
+        this._loadDashboardData();
+        this._refreshDeveloperWorkload();
+    }
+
+    /**
+     * Event handler: manual refresh button.
+     */
+    public onRefreshData(): void {
+        this._loadDashboardData();
+        this._refreshDeveloperWorkload();
+    }
+
+    /**
+     * Triggers a refresh on the developer table binding.
+     */
+    private _refreshDeveloperWorkload(): void {
+        const oTable = this.byId("developerWorkloadTable") as Table;
+        if (oTable) {
+            const oBinding = oTable.getBinding("items") as ListBinding;
+            if (oBinding) {
+                oBinding.refresh();
+            }
         }
     }
 
-    public onFilter(): void {
-        const aFilters: Filter[] = [];
-        
-        const sQuery = (this.byId("searchField") as SearchField).getValue();
-        if (sQuery) {
-            aFilters.push(new Filter("TITLE", FilterOperator.Contains, sQuery));
-        }
-
-        const sModule = (this.byId("filterModule") as Select).getSelectedKey();
-        if (sModule) {
-            aFilters.push(new Filter("MODULE", FilterOperator.EQ, sModule));
-        }
-
-        const oTable = this.byId("defectTable") as Table;
-        const oBinding = oTable.getBinding("items") as ListBinding;
-        oBinding.filter(aFilters);
-    }
-
-    public onCreateIssuePress(): void {
+    /**
+     * Fetches all issues from SAP OData service and aggregates status/severity/module details.
+     */
+    private _loadDashboardData(): void {
         const oView = this.getView();
+        oView!.setBusy(true);
 
-        if (!this._pDialog) {
-            this._pDialog = Fragment.load({
-                id: oView?.getId(),
-                name: "sap.defectmgmt.view.fragment.CreateIssueDialog",
-                controller: this
-            }).then((oDialog) => {
-                oView?.addDependent(oDialog as Dialog);
-                return oDialog as Dialog;
-            });
-        }
+        const oModel = this.getModel()!;
 
-        this._pDialog.then((oDialog) => {
-            oDialog.open();
-        });
-    }
+        // Create list binding to read up to 1000 issues for aggregation
+        const oListBinding = oModel.bindList("/Issue") as ODataListBinding;
+        const that = this;
 
-    public onCancelIssue(): void {
-        this._pDialog.then((oDialog) => {
-            oDialog.close();
-        });
-    }
+        oListBinding.requestContexts(0, 1000).then((aContexts: Context[]) => {
+            oView!.setBusy(false);
 
-    public onTypeMissmatch(oEvent: Event): void {
-        const sFileType = (oEvent as any).getParameter("fileType") as string;
-        MessageToast.show(`File type '*${sFileType}' is not supported. Please use: JPG, PNG, PDF, DOCX`);
-    }
+            // Deep clone the stats template
+            const oStats = JSON.parse(JSON.stringify(that._oStatsTemplate));
 
-    public onFileSizeExceed(oEvent: Event): void {
-        const sFileSize = (oEvent as any).getParameter("fileSize") as string;
-        MessageToast.show(`The file is too big. Maximum allowed size is 5 MB.`);
-    }
+            const oToday = new Date();
+            oToday.setHours(0, 0, 0, 0);
 
-    public onSaveIssue(): void {
-        this._pDialog.then((oDialog) => {
-            // Lấy các component từ giao diện mới
-            const oInputTitle = this.byId("inputTitle") as Input;
-            const oInputDesc = this.byId("inputDesc") as TextArea;
-            const oSelectModule = this.byId("selectModule") as Select;
-            const oSelectDeveloper = this.byId("selectDeveloper") as Select;
-            const oSelectSeverity = this.byId("selectSeverity") as Select;
-            const oInputDueDate = this.byId("inputDueDate") as DatePicker;
-            const oInputVersion = this.byId("inputVersion") as Input;
-            
-            const sTitle = oInputTitle.getValue();
-            const sDesc = oInputDesc.getValue();
-            const sModule = oSelectModule.getSelectedKey();
-            const sDeveloper = oSelectDeveloper.getSelectedKey();
-            const sSeverity = oSelectSeverity.getSelectedKey();
-            const dDueDate = oInputDueDate.getDateValue();
-            const sVersion = oInputVersion.getValue();
+            aContexts.forEach((oContext: Context) => {
+                const oIssue = oContext.getObject() as Record<string, any>;
+                oStats.totalTickets++;
 
-            let bValidationError = false;
+                // 1. Status aggregates
+                const sStatus: string = oIssue.status || "ASSIGNED";
+                if (oStats.status[sStatus] !== undefined) {
+                    oStats.status[sStatus]++;
+                }
 
-            // Bắt lỗi Validate cơ bản
-            if (!sTitle) {
-                oInputTitle.setValueState("Error");
-                oInputTitle.setValueStateText("Title is required");
-                bValidationError = true;
-            } else {
-                oInputTitle.setValueState("None");
-            }
+                if (sStatus !== "CLOSED") {
+                    oStats.totalOpen++;
+                } else {
+                    oStats.totalClosed++;
+                }
 
-            if (!sDesc) {
-                oInputDesc.setValueState("Error");
-                oInputDesc.setValueStateText("Description is required");
-                bValidationError = true;
-            } else {
-                oInputDesc.setValueState("None");
-            }
+                if (sStatus === "TESTING") {
+                    oStats.totalTesting++;
+                }
 
-            if (!dDueDate) {
-                oInputDueDate.setValueState("Error");
-                oInputDueDate.setValueStateText("Due Date is required");
-                bValidationError = true;
-            } else {
-                oInputDueDate.setValueState("None");
-            }
+                // 2. Severity aggregates
+                const sSeverity: string = oIssue.severity || "LOW";
+                if (oStats.severity[sSeverity] !== undefined) {
+                    oStats.severity[sSeverity]++;
+                }
+                if (sSeverity === "CRITICAL" && sStatus !== "CLOSED") {
+                    oStats.totalCritical++;
+                }
 
-            if (bValidationError) {
-                MessageToast.show("Please fill in all required fields!");
-                return;
-            }
+                // 3. Module aggregates
+                const sModule: string = oIssue.modulename || "MM";
+                if (oStats.module[sModule] !== undefined) {
+                    oStats.module[sModule]++;
+                }
 
-            const oBusyDialog = new BusyDialog({
-                text: "Saving issue data to SAP..."
-            });
-            oBusyDialog.open();
-
-            // GỌI API ODATA ĐỂ LƯU DỮ LIỆU THẬT
-            const oModel = this.getView()?.getModel("defectModel") as ODataModel;
-
-            // Chuẩn bị payload theo đúng yêu cầu API OData
-            const payload = {
-                title: sTitle,
-                description: sDesc,
-                modulename: sModule,
-                severity: sSeverity.toUpperCase(), // Backend SAP thường lưu in hoa
-                affected_version: sVersion,
-                assigned_to: sDeveloper || "",
-                due_date: dDueDate,
-                status: "ASSIGNED"
-            };
-
-            // Thực thi lệnh POST tới Entity "/Issue"
-            oModel.create("/Issue", payload, {
-                success: (oData: any) => {
-                    oBusyDialog.close();
-                    oDialog.close();
-                    MessageToast.show("Ticket created successfully! ID: " + oData.issue_id);
-                    
-                    // Reset form sau khi tạo thành công
-                    oInputTitle.setValue("");
-                    oInputTitle.setValueState("None");
-                    oInputDesc.setValue("");
-                    oInputDesc.setValueState("None");
-                    oInputDueDate.setValue("");
-                    oInputDueDate.setValueState("None");
-                    
-                    const oUploadSet = this.byId("uploadSet") as UploadSet;
-                    if (oUploadSet) {
-                        oUploadSet.removeAllIncompleteItems();
-                        // Nâng cao (Member 2 sẽ làm): Đẩy file lên API Attachment bằng issue_id vừa nhận được
+                // 4. Overdue calculations
+                if (sStatus !== "CLOSED" && oIssue.due_date) {
+                    const oDueDate = new Date(oIssue.due_date);
+                    if (oDueDate < oToday) {
+                        oStats.totalOverdue++;
                     }
-                },
-                error: (oError: any) => {
-                    oBusyDialog.close();
-                    MessageBox.error("Failed to create ticket. Please check your SAP connection.");
-                    console.error("OData Error:", oError);
                 }
             });
+
+            // Calculate percentage distribution for UI Progress Indicators
+            const iTotal = oStats.totalTickets || 1; // avoid division by zero if empty database
+
+            Object.keys(oStats.status).forEach((key: string) => {
+                oStats.statusPercent[key] = Math.round((oStats.status[key] / iTotal) * 100);
+            });
+
+            Object.keys(oStats.severity).forEach((key: string) => {
+                oStats.severityPercent[key] = Math.round((oStats.severity[key] / iTotal) * 100);
+            });
+
+            Object.keys(oStats.module).forEach((key: string) => {
+                oStats.modulePercent[key] = Math.round((oStats.module[key] / iTotal) * 100);
+            });
+
+            // Apply values to dashboard model
+            (that.getModel("dashboardData") as JSONModel).setData(oStats);
+        }).catch((oError: Error) => {
+            oView!.setBusy(false);
+            MessageBox.error("Failed to load and aggregate dashboard data: " + oError.message);
         });
     }
 
-    public onNotificationPress(oEvent: Event): void {
-        const oView = this.getView();
-        const oButton = (oEvent as any).getParameter("button");
-
-        if (!this._pNotificationPopover) {
-            this._pNotificationPopover = Fragment.load({
-                id: oView?.getId(),
-                name: "sap.defectmgmt.view.fragment.NotificationPopover",
-                controller: this
-            }).then((oPopover) => {
-                oView?.addDependent(oPopover as Popover);
-                return oPopover as Popover;
-            });
-        }
-
-        this._pNotificationPopover.then((oPopover) => {
-            oPopover.openBy(oButton);
-        });
+    /**
+     * Navigate back to Issue List.
+     */
+    public onNavBack(): void {
+        this.getRouter().navTo("IssueList", {}, true);
     }
 
-    public onSortPress(oEvent: Event): void {
-        const oButton = oEvent.getSource() as Button;
-        
-        if (!this._oSortActionSheet) {
-            this._oSortActionSheet = new ActionSheet({
-                title: "Sort By",
-                buttons: [
-                    new Button({ text: "ID (Newest First)", press: () => this._applySort("ISSUE_ID", true) }),
-                    new Button({ text: "ID (Oldest First)", press: () => this._applySort("ISSUE_ID", false) }),
-                    new Button({ text: "Status (A-Z)", press: () => this._applySort("STATUS", false) })
-                ]
-            });
-            this.getView()?.addDependent(this._oSortActionSheet);
-        }
-        
-        this._oSortActionSheet.openBy(oButton);
+    /**
+     * Navigate to issue list filtered by a specific status.
+     */
+    public onFilterListByStatus(): void {
+        this.getRouter().navTo("IssueList");
     }
 
-    private _applySort(sProperty: string, bDescending: boolean): void {
-        const oTable = this.byId("defectTable") as Table;
-        const oBinding = oTable.getBinding("items") as ListBinding;
-        oBinding.sort(new Sorter(sProperty, bDescending));
-        MessageToast.show("List sorted by " + sProperty);
+    /**
+     * Navigate to issue list filtered by overdue.
+     */
+    public onFilterListByOverdue(): void {
+        this.getRouter().navTo("IssueList");
     }
 }

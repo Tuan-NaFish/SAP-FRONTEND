@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls node_modules/@openui5)",
+      "Bash(ls node_modules/@sapui5)",
+      "Bash(ls node_modules/@sapui5/ts-types-esm)",
+      "Bash(npm install *)",
+      "Bash(npx tsc *)"
+    ]
+  }
+}

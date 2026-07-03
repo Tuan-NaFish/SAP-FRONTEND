@@ -1,121 +1,163 @@
 {
   "_version": "1.49.0",
+
   "sap.app": {
-      "id": "sap.defectmgmt",
-      "type": "application",
-      "i18n": "i18n/i18n.properties",
-      "applicationVersion": {
-        "version": "1.0.0"
-      },
-      "dataSources": {
-        "issueService": {
-          "uri": "/sap/opu/odata4/sap/zui_issue_srvbind/srvd/sap/zui_issue_srvdef/0001/",
-          "type": "OData",
-          "settings": {
-            "odataVersion": "4.0"
-          }
+    "id": "sap.defectmgmt",
+    "type": "application",
+    "i18n": "i18n/i18n.properties",
+    "applicationVersion": {
+      "version": "1.0.0"
+    },
+    "title": "{{appTitle}}",
+    "description": "{{appDescription}}",
+
+    "dataSources": {
+      "mainService": {
+        "uri": "/sap/opu/odata4/sap/zui_issue_srvbind/srvd/sap/zui_issue_srvdef/0001/",
+        "type": "OData",
+        "settings": {
+          "odataVersion": "4.0",
+          "localUri": "localService/metadata.xml"
         }
       }
-    },
+    }
+  },
+
   "sap.ui": {
     "technology": "UI5",
+    "icons": {
+      "icon": "sap-icon://quality-issue"
+    },
     "deviceTypes": {
       "desktop": true,
       "tablet": true,
       "phone": true
     }
   },
+
   "sap.ui5": {
     "flexEnabled": false,
+
+    "rootView": {
+      "viewName": "sap.defectmgmt.view.App",
+      "type": "XML",
+      "async": true,
+      "id": "app"
+    },
+
     "dependencies": {
       "minUI5Version": "1.120.0",
       "libs": {
-        "sap.ui.core": {},
         "sap.m": {},
-        "sap.f": {},
+        "sap.ui.core": {},
         "sap.ui.layout": {},
+        "sap.uxap": {},
+        "sap.f": {},
         "sap.ui.unified": {},
         "sap.suite.ui.microchart": {}
       }
     },
+
     "contentDensities": {
       "compact": true,
       "cozy": true
     },
+
     "models": {
+      "i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "settings": {
+          "bundleName": "sap.defectmgmt.i18n.i18n"
+        }
+      },
       "": {
-        "type": "sap.ui.model.json.JSONModel"
+        "dataSource": "mainService",
+        "preload": true,
+        "settings": {
+          "autoExpandSelect": true,
+          "operationMode": "Server",
+          "synchronizationMode": "None"
+        }
       },
       "userModel": {
         "type": "sap.ui.model.json.JSONModel"
       },
-      "defectModel": {
-        "dataSource": "issueService",
-        "type": "sap.ui.model.odata.v2.ODataModel",
-        "settings": {
-          "defaultBindingMode": "TwoWay",
-          "useBatch": false
-        }
-      },
-      "kpiModel": {
-        "type": "sap.ui.model.json.JSONModel",
-        "uri": "localService/mockdata/dashboard.json"
+      "userRole": {
+        "type": "sap.ui.model.json.JSONModel"
       }
-    
     },
+
+    "resources": {
+      "css": [
+        {
+          "uri": "css/style.css"
+        }
+      ]
+    },
+
     "routing": {
       "config": {
         "routerClass": "sap.m.routing.Router",
         "viewType": "XML",
-        "async": true,
         "viewPath": "sap.defectmgmt.view",
         "controlAggregation": "pages",
         "controlId": "app",
-        "clearControlAggregation": false
+        "async": true
       },
       "routes": [
         {
           "name": "Login",
           "pattern": "",
-          "target": ["TargetLogin"]
+          "target": ["Login"]
+        },
+        {
+          "name": "IssueList",
+          "pattern": "issues",
+          "target": ["IssueList"]
+        },
+        {
+          "name": "IssueDetail",
+          "pattern": "issue/{issueId}",
+          "target": ["IssueDetail"]
+        },
+        {
+          "name": "CreateIssue",
+          "pattern": "create",
+          "target": ["CreateIssue"]
         },
         {
           "name": "Dashboard",
           "pattern": "dashboard",
-          "target": ["TargetDashboard"]
-        },
-        {
-          "name": "IssueDetail",
-          "pattern": "issue/{issuePath}",
-          "target": ["TargetIssueDetail"]
+          "target": ["Dashboard"]
         }
       ],
       "targets": {
-        "TargetLogin": {
+        "Login": {
           "viewType": "XML",
-          "transition": "fade",
-          "viewId": "Login",
-          "viewName": "Login"
+          "viewName": "Login",
+          "viewLevel": 0
         },
-        "TargetDashboard": {
+        "IssueList": {
           "viewType": "XML",
-          "transition": "slide",
-          "viewId": "Dashboard",
-          "viewName": "Dashboard"
+          "viewName": "IssueList",
+          "viewLevel": 1
         },
-        "TargetIssueDetail": {
+        "IssueDetail": {
           "viewType": "XML",
-          "transition": "slide",
-          "viewId": "IssueDetail",
-          "viewName": "IssueDetail"
+          "viewName": "IssueDetail",
+          "viewLevel": 2
+        },
+        "CreateIssue": {
+          "viewType": "XML",
+          "viewName": "CreateIssue",
+          "viewLevel": 2
+        },
+        "Dashboard": {
+          "viewType": "XML",
+          "viewName": "Dashboard",
+          "viewLevel": 2
         }
       }
-    },
-    "rootView": {
-      "viewName": "sap.defectmgmt.view.App",
-      "type": "XML",
-      "async": true,
-      "id": "App"
     }
   }
 }

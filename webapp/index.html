@@ -1,30 +1,41 @@
 <!DOCTYPE html>
-<html style="height: 100%;">
+<html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>SAP Defect Management</title>
-    <script id="sap-ui-bootstrap"
-        src="https://ui5.sap.com/resources/sap-ui-core.js"
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAP Fiori — Defect Management System</title>
+
+    <!--
+        SAPUI5 Bootstrap
+        - Loads SAPUI5 1.120 from the SAP CDN
+        - Uses sap_horizon theme (latest SAP Fiori visual design)
+        - Sets resource roots so SAPUI5 can find our app modules
+        - ComponentSupport enables declarative component loading in HTML
+    -->
+    <script
+        id="sap-ui-bootstrap"
+        src="https://sapui5.hana.ondemand.com/1.120.0/resources/sap-ui-core.js"
         data-sap-ui-theme="sap_horizon"
         data-sap-ui-resourceroots='{"sap.defectmgmt": "./"}'
         data-sap-ui-compatVersion="edge"
         data-sap-ui-async="true"
         data-sap-ui-frameOptions="trusted"
-        data-sap-ui-libs="sap.m, sap.ui.core, sap.f, sap.suite.ui.microchart"> </script>
-    <script>
-        sap.ui.getCore().attachInit(function() {
-            sap.ui.require(["sap/ui/core/ComponentContainer"], function(ComponentContainer) {
-                new ComponentContainer({
-                    name: "sap.defectmgmt",
-                    settings : {
-                        id : "defectmgmt"
-                    },
-                    async: true
-                }).placeAt("content");
-            });
-        });
+        data-sap-ui-oninit="module:sap/ui/core/ComponentSupport">
     </script>
 </head>
-<body class="sapUiBody" id="content" style="height: 100%; margin: 0;">
+
+<body class="sapUiBody sapUiSizeCompact" id="content">
+    <!--
+        Declarative ComponentContainer
+        - Loads the Component defined in manifest.json
+        - The "data-name" must match the Component namespace
+        - Height 100% ensures the app fills the viewport
+    -->
+    <div data-sap-ui-component
+         data-name="sap.defectmgmt"
+         data-id="container"
+         data-settings='{"id" : "defectmgmt"}'
+         style="height: 100%">
+    </div>
 </body>
 </html>

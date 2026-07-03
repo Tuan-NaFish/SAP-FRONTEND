@@ -1,0 +1,56 @@
+[
+  {
+    "file_id": "att-001-001",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440001",
+    "file_name": "MIRO_dump_screenshot.png",
+    "mime_type": "image/png",
+    "file_size": 245760,
+    "uploaded_by": "TESTER01",
+    "uploaded_at": "2026-06-12T08:05:00"
+  },
+  {
+    "file_id": "att-001-002",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440001",
+    "file_name": "ST22_short_dump_log.txt",
+    "mime_type": "text/plain",
+    "file_size": 15360,
+    "uploaded_by": "TESTER01",
+    "uploaded_at": "2026-06-12T08:06:00"
+  },
+  {
+    "file_id": "att-002-001",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440002",
+    "file_name": "VA01_pricing_conditions_tab.png",
+    "mime_type": "image/png",
+    "file_size": 189440,
+    "uploaded_by": "TESTER02",
+    "uploaded_at": "2026-06-11T10:35:00"
+  },
+  {
+    "file_id": "att-002-002",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440002",
+    "file_name": "V_T685A_condition_table_export.xlsx",
+    "mime_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "file_size": 34816,
+    "uploaded_by": "DEV_SD_01",
+    "uploaded_at": "2026-06-12T09:15:00"
+  },
+  {
+    "file_id": "att-003-001",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440003",
+    "file_name": "FB50_blocked_costcenter_posting_proof.pdf",
+    "mime_type": "application/pdf",
+    "file_size": 524288,
+    "uploaded_by": "TESTER01",
+    "uploaded_at": "2026-06-10T08:10:00"
+  },
+  {
+    "file_id": "att-004-001",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440004",
+    "file_name": "QE01_error_inspection_plan.png",
+    "mime_type": "image/png",
+    "file_size": 102400,
+    "uploaded_by": "TESTER02",
+    "uploaded_at": "2026-06-11T10:40:00"
+  }
+]

@@ -1,2 +1,7 @@
+# Node modules and build files
 node_modules/
 dist/
+
+# System files
+.DS_Store
+Thumbs.db

@@ -47,12 +47,20 @@ export default class Login extends Controller {
                 fullName: sFullName,
                 role: sRole
             });
-            
+
+            // 2. Also set the "userRole" model for Phase 2 view compatibility
+            const oUserRoleModel = (this.getOwnerComponent() as any).getModel("userRole") as JSONModel;
+            if (oUserRoleModel) {
+                oUserRoleModel.setData({
+                    role: sRole.toUpperCase()
+                });
+            }
+
             MessageToast.show(`Welcome back, ${sFullName} (${sRole})!`);
-            
-            // 2. Chuyển hướng vào màn hình Dashboard
+
+            // 3. Chuyển hướng vào màn hình IssueList
             const oRouter = (this.getOwnerComponent() as any).getRouter();
-            oRouter.navTo("Dashboard");
+            oRouter.navTo("IssueList");
         } else {
             // Nhập sai tài khoản
             oUserInput.setValueState("Error");

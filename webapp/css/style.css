@@ -1,0 +1,88 @@
+/* ================================================== */
+/* SAP Fiori Defect Management — Custom Styles         */
+/* Supplements the sap_horizon theme                   */
+/* ================================================== */
+
+/* ---- Global: Ensure full viewport height ---- */
+html, body, #content {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+/* ---- Status badges: rounded pill style ---- */
+.sapMObjStatusInverted .sapMObjStatusText {
+    border-radius: 0.25rem;
+    padding: 0.125rem 0.5rem;
+}
+
+/* ---- Bold text utility class ---- */
+.sapMTextBold,
+.sapMTextBold .sapMText {
+    font-weight: 600 !important;
+}
+
+/* ---- SLA Progress Bar section ---- */
+/* Override progress bar height for better visibility */
+#slaContainer .sapMPI {
+    height: 1.5rem;
+}
+
+#slaContainer .sapMPIBar {
+    border-radius: 0.25rem;
+}
+
+/* ---- Audit History Timeline styling ---- */
+/* Vertical connector line between timeline items */
+#historyList .sapMLIBContent > .sapUiHBox {
+    border-left: 2px solid #d9d9d9;
+    padding-left: 1rem;
+    margin-left: 0.625rem;
+}
+
+/* Remove border for the last timeline item */
+#historyList .sapMListItems > .sapMLIB:last-child .sapMLIBContent > .sapUiHBox {
+    border-left-color: transparent;
+}
+
+/* ---- Comment feed styling ---- */
+/* Subtle background for comment type badge */
+.sapMFeedListItemInfoText {
+    background-color: #e8f0fe;
+    border-radius: 0.25rem;
+    padding: 0.0625rem 0.375rem;
+    font-size: 0.75rem;
+}
+
+/* ---- ObjectPage header: proper wrapping ---- */
+.sapUxAPObjectPageHeaderContent .sapUiHBox {
+    gap: 0.5rem;
+}
+
+/* ---- Attachment list item icons ---- */
+#attachmentList .sapMLIBContent .sapUiIcon {
+    font-size: 1.25rem;
+}
+
+/* ---- Responsive adjustments for narrow screens ---- */
+@media (max-width: 600px) {
+    /* Stack header content vertically on mobile */
+    .sapUxAPObjectPageHeaderContent .sapUiHBox {
+        flex-direction: column;
+    }
+
+    /* Reduce padding on mobile */
+    .sapUiSmallMargin {
+        margin: 0.5rem !important;
+    }
+}
+
+/* ---- Issue List: alternating row background ---- */
+#issueTable .sapMListItems > .sapMLIB:nth-child(even) {
+    background-color: #fafafa;
+}
+
+/* ---- Issue number column: monospace for alignment ---- */
+.sapMObjIdTitle {
+    font-family: "72Mono", "SFMono-Regular", "Consolas", monospace;
+}
