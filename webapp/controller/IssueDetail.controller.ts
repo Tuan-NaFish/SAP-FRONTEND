@@ -646,7 +646,7 @@ export default class IssueDetail extends BaseController {
 
         oNewContext.created().then(() => {
             that.getView()!.setBusy(false);
-            MessageToast.show("Comment added successfully");
+            MessageToast.show(that.getResourceBundle().getText("createCommentSuccess"));
             // Reload comments
             that._loadComments(sIssueId);
         }, (oError: Error) => {
@@ -700,7 +700,7 @@ export default class IssueDetail extends BaseController {
 
         oNewContext.created().then(() => {
             that.getView()!.setBusy(false);
-            MessageToast.show("File uploaded successfully");
+            MessageToast.show(that.getResourceBundle().getText("createAttachmentSuccess"));
             // Reload attachments
             that._loadAttachments(sIssueId);
         }, (oError: Error) => {

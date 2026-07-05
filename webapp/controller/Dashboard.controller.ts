@@ -202,7 +202,9 @@ export default class Dashboard extends BaseController {
             (that.getModel("dashboardData") as JSONModel).setData(oStats);
         }).catch((oError: Error) => {
             oView!.setBusy(false);
-            MessageBox.error("Failed to load and aggregate dashboard data: " + oError.message);
+            MessageBox.error(
+                this.getResourceBundle().getText("errorLoadingIssue") + " " + oError.message
+            );
         });
     }
 

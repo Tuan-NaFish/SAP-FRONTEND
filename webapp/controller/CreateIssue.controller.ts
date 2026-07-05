@@ -150,25 +150,26 @@ export default class CreateIssue extends BaseController {
      */
     private _validateForm(): boolean {
         let bValid = true;
+        const oBundle = this.getResourceBundle();
 
         const oInpTitle = this.byId("inpTitle") as Input;
         if (!oInpTitle.getValue().trim()) {
             oInpTitle.setValueState("Error");
-            oInpTitle.setValueStateText("Title is required");
+            oInpTitle.setValueStateText(oBundle.getText("createIssueValidationTitle"));
             bValid = false;
         }
 
         const oTxtDescription = this.byId("txtDescription") as TextArea;
         if (!oTxtDescription.getValue().trim()) {
             oTxtDescription.setValueState("Error");
-            oTxtDescription.setValueStateText("Description is required");
+            oTxtDescription.setValueStateText(oBundle.getText("createIssueValidationDesc"));
             bValid = false;
         }
 
         const oSelModule = this.byId("selModule") as Select;
         if (!oSelModule.getSelectedKey()) {
             oSelModule.setValueState("Error");
-            oSelModule.setValueStateText("Module is required");
+            oSelModule.setValueStateText(oBundle.getText("createIssueValidationModule"));
             bValid = false;
         }
 
@@ -176,7 +177,7 @@ export default class CreateIssue extends BaseController {
         const sDateVal = oDpDueDate.getValue();
         if (!sDateVal) {
             oDpDueDate.setValueState("Error");
-            oDpDueDate.setValueStateText("Due date is required");
+            oDpDueDate.setValueStateText(oBundle.getText("createIssueValidationDueDate"));
             bValid = false;
         } else {
             const oSelectedDate = new Date(sDateVal);
@@ -184,7 +185,7 @@ export default class CreateIssue extends BaseController {
             oToday.setHours(0, 0, 0, 0);
             if (oSelectedDate < oToday) {
                 oDpDueDate.setValueState("Error");
-                oDpDueDate.setValueStateText("Due date cannot be in the past");
+                oDpDueDate.setValueStateText(oBundle.getText("createIssueValidationPastDate"));
                 bValid = false;
             }
         }
@@ -196,8 +197,10 @@ export default class CreateIssue extends BaseController {
      * Submits the ticket form. Creates OData V4 record.
      */
     public onSubmit(): void {
+        const oBundle = this.getResourceBundle();
+
         if (!this._validateForm()) {
-            MessageBox.error("Please fill in all required fields and correct validation errors.");
+            MessageBox.error(oBundle.getText("createIssueValidationGeneral"));
             return;
         }
 
@@ -243,7 +246,7 @@ export default class CreateIssue extends BaseController {
         oContext.created().then(() => {
             oView.setBusy(false);
             const sNewIssueId = oContext.getProperty("issue_id") as string;
-            MessageToast.show("Ticket created and assigned successfully.");
+            MessageToast.show(oBundle.getText("createIssueSuccess"));
 
             // Navigate to details page
             that.getRouter().navTo("IssueDetail", {

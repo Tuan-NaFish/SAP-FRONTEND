@@ -11,10 +11,10 @@
 | **Tên ứng dụng** | SAP Fiori Defect Management System |
 | **App ID** | `com.sap490.defectmgmt` |
 | **Công nghệ** | SAPUI5 1.120 (sap_horizon theme) |
-| **OData Version** | OData V4 |
+| **OData Version** | OData V4 (theo manifest `odataVersion: "4.0"`) — **metadata.xml dùng `m:DataServiceVersion="2.0"` (SAP metadata schema v2, không liên quan OData protocol version)** |
 | **Data Source** | `/sap/opu/odata4/sap/zui_issue_srvbind/srvd/sap/zui_issue_srvdef/0001/` |
-| **Mock Server** | Có (`localService/mockserver.js`) — hiện đang tắt trong Component.js |
-| **i18n** | 1 file: `i18n/i18n.properties` (English) |
+| **Mock Server** | Có (`localService/mockserver.js`) — **hiện đang BẬT trong Component.ts** (sau khi merge, đã uncomment `mockserver.init()`) |
+| **i18n** | 1 file: `i18n/i18n.properties` (167 dòng, English) |
 | **Debug Mode** | `sap-ui-debug-mode=false` trong index.html |
 
 ---
@@ -143,7 +143,13 @@ webapp/
 | `changed_at` | Edm.DateTime | Thời gian thay đổi |
 | `notes` | Edm.String (1000) | Ghi chú thay đổi |
 
-### 4.5 Developer (6 properties, composite key)
+### 4.5 Navigation Fallback Logic
+- **Implement trong:** `BaseController.ts` → `onNavBack()`
+- **Logic:** `History.getInstance().getPreviousHash()` — nếu có previous hash → `window.history.go(-1)`, nếu không (direct URL, refresh) → `this.getRouter().navTo("IssueList", {}, true)`
+- **Áp dụng cho:** IssueDetail (back to list), CreateIssue (cancel), Dashboard (back to list)
+- **Edge case:** User mở trực tiếp `/issue/{id}` không có history → fallback về IssueList thay vì lỗi blank page
+
+### 4.6 Developer (6 properties, composite key)
 
 | Field | Type | Mô tả |
 |-------|------|-------|
@@ -280,7 +286,7 @@ webapp/
 
 ### 5.4 Dashboard.view.xml — Trang Manager KPI Dashboard
 - **Route:** `dashboard`
-- **Controller:** `Dashboard.controller.js`
+- **Controller:** `Dashboard.controller.ts` (229 dòng)
 - **UI Components:**
 
 #### KPI Tiles (5 tiles dạng GenericTile):
@@ -309,9 +315,21 @@ webapp/
 - Sorted by workload_score descending
 - 4 columns: Developer ID, Module Area, Status (Active/Inactive), Workload Level (0-10 ProgressIndicator)
 
+#### Dashboard Calculation Logic (từ code thực tế):
+- **Data Source:** `oModel.bindList("/Issue")` → `requestContexts(0, 1000)` — lấy tất cả issue từ OData để aggregate
+- **KPI Rules (lặp qua từng issue):**
+  - **totalOpen:** `sStatus !== "CLOSED"` → tăng biến đếm
+  - **totalClosed:** `sStatus === "CLOSED"` → tăng biến đếm
+  - **totalTesting:** `sStatus === "TESTING"` → tăng biến đếm
+  - **totalCritical:** `sSeverity === "CRITICAL" && sStatus !== "CLOSED"` → tăng biến đếm
+  - **totalOverdue:** `sStatus !== "CLOSED" && oDueDate < oToday` → tăng biến đếm
+- **Percentage calculation:** `Math.round((count / totalTickets) * 100)` cho từng status/severity/module
+- **Model:** Kết quả set vào `dashboardData` JSONModel → binding với UI
+- **Guard:** `totalTickets || 1` để tránh division by zero
+
 ### 5.5 CreateIssue.view.xml — Trang Tạo Issue Mới
 - **Route:** `create`
-- **Controller:** `CreateIssue.controller.js`
+- **Controller:** `CreateIssue.controller.ts` (296 dòng)
 - **UI Components:**
   - `Page` with nav back
   - `SimpleForm` (ResponsiveGridLayout, editable):
@@ -323,6 +341,17 @@ webapp/
     6. **Due Date** (DatePicker, format yyyy-MM-dd, display DD.MM.YYYY, required, no past date)
     7. **Assign Developer** (Select, disabled ban đầu, enable khi chọn module, auto-select developer workload thấp nhất, hiển thị workload score)
   - **Footer:** Create Ticket button (Emphasized) + Cancel button
+
+**Validation Logic (chi tiết từ code):**
+- **Title:** `oInpTitle.getValue().trim()` — nếu rỗng → `setValueState("Error")` + text "Title is required"
+- **Description:** `oTxtDescription.getValue().trim()` — nếu rỗng → `setValueState("Error")` + text "Description is required"
+- **Module:** `oSelModule.getSelectedKey()` — nếu không có key → `setValueState("Error")` + text "Module is required"
+- **Due Date:** 
+  - Nếu rỗng → `setValueState("Error")` + text "Due date is required"
+  - Nếu selected date < today (so sánh `oSelectedDate < oToday` với `oToday.setHours(0,0,0,0)`) → `setValueState("Error")` + text "Due date cannot be in the past"
+- **Flow khi fail:** `MessageBox.error("Please fill in all required fields and correct validation errors.")` → `return` (stop, không gọi API)
+- **Flow khi pass:** `oView.setBusy(true)` → tạo payload → `oListBinding.create(oPayload)` → `oContext.created().then(...)` → navigate IssueDetail hoặc báo lỗi
+- **Field change:** `onFieldChange` reset value state khi user sửa field bị lỗi → `setValueState("None")`
 
 ---
 
@@ -405,7 +434,9 @@ ASSIGNED → [Start Progress] → IN_PROGRESS → [Resolve] → RESOLVED
                                                      [Reopen] → REOPEN
 ```
 
-### 9.2 SLA Rules
+### 9.2 SLA Rules & Calculation
+
+**SLA Configuration (`SLA_HOURS` constant):**
 | Severity | SLA Window |
 |----------|------------|
 | CRITICAL | 2 hours |
@@ -413,15 +444,40 @@ ASSIGNED → [Start Progress] → IN_PROGRESS → [Resolve] → RESOLVED
 | MEDIUM | 24 hours |
 | LOW | 72 hours |
 
-- SLA tính từ `created_at` đến `due_date`
-- Color code: Green (<75%), Yellow (75-99%), Red (≥100% = overdue)
-- Special case: CLOSED ticket → 100%, Success, "Ticket Closed — SLA Complete"
+**Calculation Formula (từ `_calculateSLA` trong `IssueDetail.controller.ts`):**
+1. **Get SLA window:** `iSlaHours = SLA_HOURS[severity] || 72` — lookup từ constant, fallback 72h
+2. **Convert to ms:** `iSlaTotalMs = iSlaHours * 3600000`
+3. **Remaining time:** `iRemainingMs = oDue.getTime() - oNow.getTime()`
+4. **Elapsed time:** `iElapsedMs = iSlaTotalMs - iRemainingMs`
+5. **Percentage consumed:** `iPercent = Math.min(100, Math.max(0, Math.round((iElapsedMs / iSlaTotalMs) * 100)))`
+
+**Color code:**
+- Green (`Success`): `< 75%` consumed, icon color `#107e3e`
+- Yellow (`Warning`): `75% - 99%` consumed, icon color `#e78c07`
+- Red (`Error`): `≥ 100%` = overdue (iRemainingMs <= 0), icon color `#bb0000`, percent clamped to 100
+
+**Remaining time display:**
+- Overdue: `"OVERDUE by Xh Ym"` (absolute value of negative remaining)
+- ≥ 24h: `"Xd Xh Xm remaining"` (show days + hours)
+- < 24h: `"Xh Xm remaining"` (show hours + minutes)
+
+**Special case: CLOSED ticket**
+- slaPercent = 100, slaState = "Success"
+- slaRemainingText = "Ticket Closed — SLA Complete"
+- slaOverdueText = "No", slaIconColor = "#107e3e"
 
 ### 9.3 Auto-Assign Developer Logic
 - Khi tạo issue, chọn Module → query `/Developer` filter `modulename + is_active='X'`
 - Sort `workload_score` ascending
 - Auto-select developer có workload thấp nhất
 - Hiển thị workload info trong form
+
+**Implementation details:**
+- **Filter chain:** `new Filter("modulename", FilterOperator.EQ, sModule)` + `new Filter("is_active", FilterOperator.EQ, "X")` — chỉ lấy developer thuộc module đã chọn và đang active
+- **Sort:** `new Sorter("workload_score", false)` — ascending, developer có workload thấp nhất lên đầu
+- **Auto-select:** Sau khi `bindItems` + `dataReceived`, tự động `oDeveloperSelect.setSelectedItem(aItems[0])` — luôn chọn developer đầu tiên (workload thấp nhất)
+- **Binding:** Dùng OData V4 `bindItems()` với `path: "/Developer"`, filters và sorter động — binding runtime theo module được chọn
+- **Event:** `dataReceived` callback xử lý auto-select + hiển thị text "Lowest workload developer was pre-selected automatically."
 
 ### 9.4 Fix Version Auto-Increment
 - Khi resolve: parse `affected_version`, increment last segment
@@ -432,15 +488,59 @@ ASSIGNED → [Start Progress] → IN_PROGRESS → [Resolve] → RESOLVED
 - Nếu có `fix_version`, copy sang `affected_version`
 - Color: 0=green, 1-2=warning, 3+=error
 
-### 9.6 Role-based Visibility
-- **Role Selector** trên IssueList: TESTER / DEVELOPER / MANAGER
-- Các nút workflow trên IssueDetail chỉ hiển thị theo role + trạng thái:
+### 9.6 OData V4 Create Pattern (Batch Handling)
+- **Phương thức:** Dùng `oModel.bindList("/Issue", null, null, null, { $$updateGroupId: "createGroup" })` để tạo list binding với deferred update group
+- **Create entity:** `oListBinding.create(oPayload)` → `oContext.created().then(...)` để chờ OData V4 hoàn tất
+- **Submit batch:** `(oModel as any).submitBatch("createGroup")` — explicit submit DeferredGroup
+- **Reset pending:** Nếu `hasPendingChanges("createGroup")` → `resetChanges("createGroup")` để dọn dẹp
+- **Lý do:** OData V4 yêu cầu `$$updateGroupId` để quản lý batch request; không dùng `oModel.create()` trực tiếp như OData V2
+
+### 9.7 Backend Limitation Handling (SADL Write Constraint)
+- **Context:** Backend SAP SADL behavior definition có thể disable CREATE operations
+- **Detection:** Kiểm tra error message có chứa:
+  - `"Creating operations are disabled"`
+  - `"SADL_ENTITY_RUNTIME/011"`
+  - `"canceled"` / `"reset"`
+- **Fallback UI:** `MessageBox.warning()` với title "SAP Backend Write Constraint", hiển thị toàn bộ payload đã chuẩn bị
+- **Áp dụng cho:** Create Issue (`CreateIssue.controller.ts`), Post Comment (`IssueDetail.controller.ts`), Upload Attachment (`IssueDetail.controller.ts`)
+- **Ý nghĩa:** Frontend vẫn hoạt động đúng → chỉ là backend SADL không cho write, payload vẫn được validate và format chuẩn
+
+### 9.8 Status Transition Side Effects (chi tiết)
+Khi chuyển trạng thái, ngoài `status` còn update các field liên quan:
+
+| Transition | Status mới | Fields Update |
+|-----------|------------|---------------|
+| **Start Progress** | `IN_PROGRESS` | Không có field phụ |
+| **Resolve** | `RESOLVED` | `root_cause`, `fix_description`, `resolution_note`, `fixed_by` (= current assigned_to), `fixed_at` (= now), `fix_version` (auto-increment từ affected_version) |
+| **Start Testing** | `TESTING` | Không có field phụ |
+| **Close** | `CLOSED` | `closed_by` (= "DEVELOPER"), `closed_at` (= now) |
+| **Reopen** | `REOPEN` | `reopen_count` = current + 1, nếu có `fix_version` thì copy sang `affected_version` |
+| **Reassign** | `ASSIGNED` | `assigned_to` (= developer mới chọn), `assigned_at` (= now) |
+
+**Implementation:** Dùng `(oContext as any).setProperty(key, value)` từng field + `submitBatch("$auto")`
+
+### 9.9 Fix Version Auto-Increment
+- **Hàm:** `_calculateNextVersion(sVersion)` trong `IssueDetail.controller.ts`
+- **Logic:** Parse version string split by `.`, increment last segment
+- VD: "1.0" → "1.1", "1.2.3" → "1.2.4"
+- Nếu last segment không phải number → append ".1"
+- Nếu version rỗng/null → return "1.0"
+
+### 9.10 Role-based Visibility
+- **Nguồn role:** Login page (`Login.controller.ts`) set `userModel` (username, fullName, role) + `userRole` (role uppercase). App.controller.ts tạo `userRole` JSONModel global ban đầu rỗng.
+- **Mechanism:** Expression binding `{= ${userModel>/role} === 'Tester' || ${userModel>/role} === 'Manager' }` trên thuộc tính `visible`
+- **Đây là UI restriction, không phải backend security** — role được lưu trong client-side JSONModel, không có server-side authorization
+- **Các nút workflow trên IssueDetail chỉ hiển thị theo role + trạng thái:**
   - Start Progress: role DEVELOPER/MANAGER, status ASSIGNED
   - Resolve: role DEVELOPER/MANAGER, status IN_PROGRESS
   - Start Testing: role TESTER/MANAGER, status RESOLVED
   - Close: role TESTER/MANAGER, status TESTING
   - Reopen: role TESTER/MANAGER, status TESTING/CLOSED
   - Reassign: role TESTER/MANAGER, status REOPEN
+- **IssueList visibility:**
+  - Create Ticket button: `userModel>/role === 'Tester' || 'Manager'`
+  - KPI Dashboard button: `userModel>/role === 'Manager'`
+  - User display name: `userModel>/fullName`
 
 ---
 
@@ -580,15 +680,33 @@ Xem file [i18n.properties](webapp/i18n/i18n.properties) để có danh sách đ�
 12. Responsive trên mobile/tablet
 
 ### 15.3 Tech debt / Known limitations:
-- MockServer hiện đang **tắt** trong Component.js (dòng `mockserver.init()` bị comment)
-- Backend OData V4 có thể không hỗ trợ CREATE cho Comments, Attachments (có fallback MessageBox warning)
+- MockServer hiện đang **bật** trong Component.ts (đã uncomment `mockserver.init()`). **Khi deploy lên backend thật, phải comment/remove dòng này.**
+- MockServer `rootUri` phải khớp với OData service URI trong manifest.json — nếu không, mock data sẽ không load
+- Backend OData V4 SADL limitation: CREATE operations có thể bị disable bởi behavior definition → frontend có fallback `MessageBox.warning()` hiển thị payload (cho Issue, Comment, Attachment)
 - `action_type` và `notes` trong History entity được ghi chú là missing từ CDS view hiện tại (cần backend update)
-- `userRole` là simulated model (chưa có auth thực)
-- OData V4 sử dụng `bindList` + `requestContexts` thay vì `.read()` (deprecated)
+- `userRole` và `userModel` là simulated client-side models (chưa có auth thực từ backend)
+- OData V4 sử dụng `bindList` + `requestContexts` thay vì `.read()` (deprecated trong OData V4)
+- metadata.xml dùng namespace `m:DataServiceVersion="2.0"` (SAP metadata schema) — đây không phải OData protocol version, OData protocol vẫn là V4
+- `.gitignore` chỉ ignore `node_modules/` và `dist/` — không có rule bảo vệ file nhạy cảm hoặc backup files
 
 ---
 
-## 16. DANH SÁCH FILES THEO THỨ TỰ ƯU TIÊN KIỂM TRA
+## 16. CẤU HÌNH REPOSITORY
+
+### 16.1 .gitignore
+```
+node_modules/
+dist/
+.DS_Store
+Thumbs.db
+```
+- **Chỉ ignore:** node_modules, dist, system files
+- **Không ignore:** `webapp/` folder, config files, mock data → tất cả source code được track
+- **Cảnh báo merge:** File này tối giản, không có rule bảo vệ backup files (`*.bak`, `*.orig`), env files (`.env`), hay IDE files (`.vscode/`, `.idea/`)
+
+---
+
+## 17. DANH SÁCH FILES THEO THỨ TỰ ƯU TIÊN KIỂM TRA
 
 | Priority | File | Lý do |
 |----------|------|-------|

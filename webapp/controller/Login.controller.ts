@@ -1,15 +1,21 @@
 import Controller from "sap/ui/core/mvc/Controller";
 import MessageToast from "sap/m/MessageToast";
-import UIComponent from "sap/ui/core/UIComponent";
 import Input from "sap/m/Input";
-import JSONModel from "sap/ui/model/json/JSONModel"; // <--- Thêm dòng này
+import JSONModel from "sap/ui/model/json/JSONModel";
+import ResourceModel from "sap/ui/model/resource/ResourceModel";
 
 /**
  * @namespace sap.defectmgmt.controller
  */
 export default class Login extends Controller {
 
+    private getResourceBundle(): any {
+        const oModel = this.getOwnerComponent()?.getModel("i18n") as any as ResourceModel;
+        return oModel.getResourceBundle();
+    }
+
     public onLogin(): void {
+        const oBundle = this.getResourceBundle();
         const oUserInput = this.byId("usernameInput") as Input;
         const oPassInput = this.byId("passwordInput") as Input;
 
@@ -17,7 +23,7 @@ export default class Login extends Controller {
         const sPass = oPassInput.getValue();
 
         if (!sUser || !sPass) {
-            MessageToast.show("Please enter both username and password.");
+            MessageToast.show(oBundle.getText("loginEmpty"));
             return;
         }
 
@@ -39,7 +45,7 @@ export default class Login extends Controller {
         if (sRole !== "") {
             oUserInput.setValueState("None");
             oPassInput.setValueState("None");
-            
+
             // 1. Lưu Role vào biến toàn cục "userModel" để Fiori tự động ẩn/hiện UI
             const oUserModel = (this.getOwnerComponent() as any).getModel("userModel") as JSONModel;
             oUserModel.setData({
@@ -56,7 +62,7 @@ export default class Login extends Controller {
                 });
             }
 
-            MessageToast.show(`Welcome back, ${sFullName} (${sRole})!`);
+            MessageToast.show(oBundle.getText("loginWelcome") + ", " + sFullName + " (" + sRole + ")!");
 
             // 3. Chuyển hướng vào màn hình IssueList
             const oRouter = (this.getOwnerComponent() as any).getRouter();
@@ -65,7 +71,7 @@ export default class Login extends Controller {
             // Nhập sai tài khoản
             oUserInput.setValueState("Error");
             oPassInput.setValueState("Error");
-            MessageToast.show("Invalid credentials. Please try again.");
+            MessageToast.show(oBundle.getText("loginError"));
         }
     }
 }

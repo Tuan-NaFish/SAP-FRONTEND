@@ -13,15 +13,15 @@
                     <Image src="https://ui5.sap.com/resources/sap/ui/documentation/sdk/images/logo_sap.png" height="3.5rem" />
                 </FlexBox>
 
-                <Title text="SAP Defect Management" level="H2" class="sapUiMediumMarginBottom" textAlign="Center" width="100%"/>
-                
-                <Label text="Username" required="true"/>
-                <Input id="usernameInput" placeholder="Enter your username" class="sapUiSmallMarginBottom" />
-                
-                <Label text="Password" required="true"/>
-                <Input id="passwordInput" type="Password" placeholder="Enter your password" class="sapUiMediumMarginBottom" />
-                
-                <Button text="Log In" type="Emphasized" press=".onLogin" width="100%" />
+                <Title text="{i18n>loginTitle}" level="H2" class="sapUiMediumMarginBottom" textAlign="Center" width="100%"/>
+
+                <Label text="{i18n>loginUsername}" required="true"/>
+                <Input id="usernameInput" placeholder="{i18n>loginUsername}" class="sapUiSmallMarginBottom" />
+
+                <Label text="{i18n>loginPassword}" required="true"/>
+                <Input id="passwordInput" type="Password" placeholder="{i18n>loginPassword}" class="sapUiMediumMarginBottom" />
+
+                <Button text="{i18n>loginButton}" type="Emphasized" press=".onLogin" width="100%" />
                 
             </Panel>
 

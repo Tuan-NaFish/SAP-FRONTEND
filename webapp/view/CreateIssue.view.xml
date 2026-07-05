@@ -8,7 +8,7 @@
 
     <Page
         id="createIssuePage"
-        title="Create Defect Ticket"
+        title="{i18n>createIssueTitle}"
         showNavButton="true"
         navButtonPress=".onNavBack">
 
@@ -18,7 +18,7 @@
                     id="createIssueForm"
                     editable="true"
                     layout="ResponsiveGridLayout"
-                    title="Defect Details"
+                    title="{i18n>createIssueDetails}"
                     labelSpanXL="3"
                     labelSpanL="3"
                     labelSpanM="4"
@@ -35,28 +35,28 @@
 
                     <form:content>
                         <!-- Title Field -->
-                        <Label text="Title" required="true"/>
+                        <Label text="{i18n>createIssueLabelTitle}" required="true"/>
                         <Input
                             id="inpTitle"
-                            placeholder="Enter a brief, descriptive title"
+                            placeholder="{i18n>createIssueTitlePlaceholder}"
                             maxLength="100"
                             liveChange=".onFieldChange"/>
 
                         <!-- Description Field -->
-                        <Label text="Description / Steps to Reproduce" required="true"/>
+                        <Label text="{i18n>createIssueLabelDescription}" required="true"/>
                         <TextArea
                             id="txtDescription"
-                            placeholder="Describe the defect, steps to reproduce, and expected vs actual behavior"
+                            placeholder="{i18n>createIssueDescPlaceholder}"
                             rows="8"
                             maxLength="1000"
                             liveChange=".onFieldChange"/>
 
                         <!-- Module Selection -->
-                        <Label text="Module" required="true"/>
+                        <Label text="{i18n>createIssueLabelModule}" required="true"/>
                         <Select
                             id="selModule"
                             change=".onModuleChange">
-                            <core:Item key="" text="-- Select Module --"/>
+                            <core:Item key="" text="{i18n>createIssueSelectModule}"/>
                             <core:Item key="FI" text="FI - Financial Accounting"/>
                             <core:Item key="MM" text="MM - Material Management"/>
                             <core:Item key="SD" text="SD - Sales &amp; Distribution"/>
@@ -66,24 +66,24 @@
                         </Select>
 
                         <!-- Severity Selection -->
-                        <Label text="Severity" required="true"/>
+                        <Label text="{i18n>createIssueLabelSeverity}" required="true"/>
                         <Select
                             id="selSeverity">
-                            <core:Item key="LOW" text="Low"/>
-                            <core:Item key="MEDIUM" text="Medium"/>
-                            <core:Item key="HIGH" text="High"/>
-                            <core:Item key="CRITICAL" text="Critical"/>
+                            <core:Item key="LOW" text="{i18n>severityLow}"/>
+                            <core:Item key="MEDIUM" text="{i18n>severityMedium}"/>
+                            <core:Item key="HIGH" text="{i18n>severityHigh}"/>
+                            <core:Item key="CRITICAL" text="{i18n>severityCritical}"/>
                         </Select>
 
                         <!-- Affected Version -->
-                        <Label text="Affected Version"/>
+                        <Label text="{i18n>createIssueLabelAffectedVersion}"/>
                         <Input
                             id="inpAffectedVersion"
                             value="1.0"
-                            placeholder="e.g. 1.0"/>
+                            placeholder="{i18n>createIssueAffectedVersionPlaceholder}"/>
 
                         <!-- Due Date -->
-                        <Label text="Due Date" required="true"/>
+                        <Label text="{i18n>createIssueLabelDueDate}" required="true"/>
                         <DatePicker
                             id="dpDueDate"
                             valueFormat="yyyy-MM-dd"
@@ -91,7 +91,7 @@
                             change=".onFieldChange"/>
 
                         <!-- Developer Assignment -->
-                        <Label text="Assign Developer" required="false"/>
+                        <Label text="{i18n>createIssueLabelAssignDeveloper}" required="false"/>
                         <Select
                             id="selDeveloper"
                             enabled="false"
@@ -100,7 +100,7 @@
                                 sorters: [{path: 'workload_score', descending: false}]
                             }">
                             <!-- Placeholder item to display if empty -->
-                            <core:Item key="" text="Select Module First / Auto-Assign"/>
+                            <core:Item key="" text="{i18n>createIssueSelectDevFirst}"/>
                         </Select>
                         <Text id="txtDeveloperWorkloadInfo" text="" class="sapUiTinyMarginTop sapUiSubTemplates"/>
                     </form:content>
@@ -114,12 +114,12 @@
                 <ToolbarSpacer/>
                 <Button
                     id="btnSubmit"
-                    text="Create Ticket"
+                    text="{i18n>createIssueSubmit}"
                     type="Emphasized"
                     press=".onSubmit"/>
                 <Button
                     id="btnCancel"
-                    text="Cancel"
+                    text="{i18n>createIssueCancel}"
                     press=".onCancel"/>
             </OverflowToolbar>
         </footer>

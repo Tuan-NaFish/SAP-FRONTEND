@@ -9,10 +9,11 @@
 
 ## 1. CẤU TRÚC DỰ ÁN (Tổng quan thư mục)
 
+### PRE-MERGE (feature/phase1-ui-beta-code)
 ```
 SAP-FRONTEND/
 ├── .gitignore                          # Bỏ qua node_modules/ và dist/
-├── README.md                           # Readme hài hước của team
+├── README.md                           # Readme của team
 ├── package.json                        # Scripts: start, build, ts-check
 ├── tsconfig.json                       # TypeScript config (ES2020, strict: false)
 ├── ui5.yaml                            # Cấu hình SAPUI5 framework + proxy backend
@@ -23,30 +24,39 @@ SAP-FRONTEND/
     ├── Component.ts                    # Component gốc, khởi tạo Router
     │
     ├── i18n/
-    │   └── i18n.properties             # Chuỗi đa ngôn ngữ (hiện chỉ có appTitle)
+    │   └── i18n.properties             # Chuỗi đa ngôn ngữ
     │
     ├── localService/
     │   └── mockdata/
-    │       ├── dashboard.json          # Dữ liệu KPI mock (4 chỉ số)
-    │       └── issues.json             # 5 issues mẫu (DEF-1001 → DEF-1005)
+    │       ├── dashboard.json          # Dữ liệu KPI mock (4 chỉ số) 🔴 ĐÃ XÓA
+    │       └── issues.json             # 5 issues mẫu 🔴 ĐÃ XÓA
     │
     ├── controller/
-    │   ├── App.controller.ts           # Controller gốc: xử lý nhấn vào issue row
+    │   ├── App.controller.ts           # Controller gốc
     │   ├── Login.controller.ts         # Login + authentication + phân quyền
-    │   ├── Dashboard.controller.ts     # Bảng điều khiển: filter, sort, tạo issue, notification
-    │   └── IssueDetail.controller.ts   # Chi tiết issue: bind dữ liệu, navigation
+    │   ├── Dashboard.controller.ts     # Filter, sort, tạo issue, notification
+    │   └── IssueDetail.controller.ts   # Chi tiết issue (placeholder)
     │
     └── view/
         ├── App.view.xml                # View gốc: Shell + App container
         ├── Login.view.xml              # Giao diện đăng nhập
         ├── Dashboard.view.xml          # Giao diện Dashboard
-        ├── IssueDetail.view.xml        # Giao diện chi tiết issue
+        ├── IssueDetail.view.xml        # Giao diện chi tiết issue (placeholder)
         └── fragment/
-            ├── CreateIssueDialog.fragment.xml    # Dialog tạo issue mới
-            └── NotificationPopover.fragment.xml  # Popover thông báo
+            ├── CreateIssueDialog.fragment.xml    # Dialog tạo issue 🔴 ĐÃ XÓA
+            └── NotificationPopover.fragment.xml  # Popover thông báo 🔴 ĐÃ XÓA
 ```
 
-> **Số lượng file:** 20 files (không tính node_modules, dist, .git)
+### POST-MERGE (hiện tại — 28 source files)
+Xem MIGRATION_LOG.md section 5.1 để có inventory đầy đủ. Các thay đổi chính:
+- ➕ 8 controllers (thêm BaseController, IssueList, CreateIssue)
+- ➕ 6 views (thêm IssueList, CreateIssue)
+- ➕ 2 fragments mới (ResolveDialog, ReassignDialog)
+- ➕ 2 models (formatter.ts, models.ts)
+- ➕ 5 mock data files (Issue, Attachment, Comment, Developer, History)
+- 🔴 Xóa fragments cũ (CreateIssueDialog, NotificationPopover)
+- 🔴 Xóa mock data cũ (dashboard.json, issues.json)
+- 🔴 Xóa tất cả file `.js` (đã convert sang `.ts`)
 
 ---
 
@@ -66,26 +76,43 @@ SAP-FRONTEND/
 
 ### 2.2 [manifest.json](webapp/manifest.json) — Application Descriptor
 
-#### Data Models (4 models)
+#### Data Models (6 models post-merge)
 | Model | Type | Source |
 |-------|------|--------|
-| `""` (default) | JSONModel | (in-memory) |
-| `userModel` | JSONModel | (runtime — lưu thông tin user đăng nhập) |
-| `defectModel` | ODataModel v2 | `/sap/opu/odata4/sap/zui_issue_srvbind/srvd/sap/zui_issue_srvdef/0001/` |
-| `kpiModel` | JSONModel | `localService/mockdata/dashboard.json` |
+| `""` (default) | OData V4 | `mainService` dataSource — `/sap/opu/odata4/sap/zui_issue_srvbind/srvd/sap/zui_issue_srvdef/0001/` |
+| `i18n` | ResourceModel | `i18n/i18n.properties` |
+| `userModel` | JSONModel | (runtime — Login controller set: username, fullName, role) |
+| `userRole` | JSONModel | (runtime — App.controller init rỗng, Login set role uppercase) |
+| `device` | JSONModel | (Component.ts — `createDeviceModel()`) |
 
-#### Routing (3 routes)
-| Route | Pattern | Target | Transition |
-|-------|---------|--------|------------|
-| `Login` | `""` (mặc định) | `TargetLogin` | `fade` |
-| `Dashboard` | `dashboard` | `TargetDashboard` | `slide` |
-| `IssueDetail` | `issue/{issuePath}` | `TargetIssueDetail` | `slide` |
+> 🔴 **Đã xóa:** `kpiModel` (dashboard.json) — Dashboard giờ aggregate live từ OData
+
+**Client-side JSON Models (per-view):**
+| Model | View | Purpose |
+|-------|------|---------|
+| `attachments` | IssueDetail | `[]` — Attachment list |
+| `comments` | IssueDetail | `[]` — Comment list |
+| `history` | IssueDetail | `[]` — History list |
+| `slaModel` | IssueDetail | SLA calculation results |
+| `dashboardData` | Dashboard | Aggregated KPI statistics |
+
+#### Routing (5 routes post-merge)
+| Route | Pattern | Target | Level | Ghi chú |
+|-------|---------|--------|-------|--------|
+| `Login` | `""` (mặc định) | `Login` | 0 | Trang login đầu tiên |
+| `IssueList` | `issues` | `IssueList` | 1 | 🆕 Trang chính sau login |
+| `IssueDetail` | `issue/{issueId}` | `IssueDetail` | 2 | Bind theo GUID |
+| `CreateIssue` | `create` | `CreateIssue` | 2 | 🆕 Full page form |
+| `Dashboard` | `dashboard` | `Dashboard` | 2 | Manager KPI |
 
 #### OData Service
 - **URI:** `/sap/opu/odata4/sap/zui_issue_srvbind/srvd/sap/zui_issue_srvdef/0001/`
-- **Version:** OData V4
-- **Binding mode:** `TwoWay`
-- **Batch:** `false`
+- **Version:** OData V4 (theo manifest `odataVersion: "4.0"`)
+- **Binding mode:** `TwoWay` (mặc định của OData V4)
+- **Operation mode:** `Server` — mọi thay đổi cần explicit `submitBatch()`
+- **Synchronization mode:** `None` — không tự động sync
+- **Batch:** Từng controller tự quản lý batch group: `createGroup` (CreateIssue), `$auto` (IssueDetail workflow), hoặc `oListBinding.getUpdateGroupId()` (Comment, Attachment)
+- **Metadata.xml note:** `m:DataServiceVersion="2.0"` là SAP metadata schema version — **không liên quan** OData protocol version
 
 ### 2.3 [package.json](package.json)
 
@@ -193,10 +220,32 @@ SAP-FRONTEND/
 | Title | — | "Open Defects" |
 | Sort Button | — | Icon `sap-icon://sort`, mở ActionSheet |
 | Module Filter | `filterModule` | Select: All/FI/MM/SD |
-| Search Field | — | Live search theo title |
-| **Create Issue Button** | — | Icon `sap-icon://add`, type Emphasized |
+| Search Field | `searchField` | Live search theo title |
 
-> ⚠️ **Create Issue Button** chỉ hiện khi `userModel>/role === 'Tester'`
+> ⚠️ **Create Issue Button** chỉ hiện khi `userModel>/role === 'Tester' || 'Manager'`
+
+##### Filter Logic Chi Tiết (từ `_applyTableFilters` trong `IssueList.controller.ts`)
+- **Search + Filter combine:** AND logic — search filter (title/modulename OR) AND module filter
+- **Search pattern (`onSearch`):** Gọi `_applyTableFilters(sQuery)` với `sQuery` từ SearchField `liveChange` parameter
+- **Search filter:** `new Filter({ filters: [Filter("title", Contains, sQuery), Filter("modulename", Contains, sQuery)], and: false })` — OR giữa title và modulename
+- **Module filter:** `new Filter("modulename", FilterOperator.EQ, sModule)` — exact match
+- **Kết hợp:** Nếu có cả search + module → `aFilters = [searchFilter, moduleFilter]` → AND
+- **Case sensitivity:** `FilterOperator.Contains` trong SAPUI5 là **case-sensitive** — phụ thuộc backend
+- **Debounce:** **Không có debounce** — `onSearch` được trigger mỗi lần SearchField thay đổi (event `search`), không dùng `liveChange`
+- **No filter state:** Khi search rỗng + module "All" → `oBinding.filter([])` → clear all filters
+- **Apply filter:** Trực tiếp `oBinding.filter(aFilters)` trên table items binding (OData V4 list binding)
+
+##### Sort Logic Chi Tiết (từ `IssueList.controller.ts`)
+| Sort Option | Property | Direction | ActionSheet Label |
+|-------------|----------|-----------|-------------------|
+| ID Newest First | `issue_num` | Descending (`true`) | "ID (Newest First)" |
+| ID Oldest First | `issue_num` | Ascending (`false`) | "ID (Oldest First)" |
+| Status A-Z | `status` | Ascending (`false`) | "Status (A-Z)" |
+
+- **Default sort:** Không có default — table hiển thị theo thứ tự OData service trả về
+- **Sort field mapping:** `issue_num` là Edm.Int32 (numeric), `status` là Edm.String (alphabetical)
+- **Apply:** `(oBinding as any).sort(new Sorter(sProperty, bDescending))` + `MessageToast.show(...)`
+- **UI:** ActionSheet mở từ button, lazy tạo một lần, cache trong `_oSortActionSheet`
 
 ##### 9 Cột
 | # | Cột | Binding | Ghi chú |
@@ -259,9 +308,17 @@ SAP-FRONTEND/
 
 **Section 3: History** — Placeholder: "(Member 2 will put Timeline control here)"
 
-#### Navigation
-- `onNavBack()`: Quay lại trang trước (dùng History), fallback về Dashboard
-- `_onObjectMatched()`: Bind element từ `defectModel` theo path (dùng `bindElement`)
+#### Navigation & Error Handling
+- `onNavBack()`: Quay lại trang trước (dùng History), fallback về IssueList
+  - **Implementation (BaseController.ts):** `History.getInstance().getPreviousHash()` — kiểm tra có hash trước đó không
+  - Nếu có → `window.history.go(-1)` (quay về trang trước)
+  - Nếu không (direct URL, refresh, bookmark) → `this.getRouter().navTo("IssueList", {}, true)` — `true` = replaceHistory (không tạo thêm history entry)
+- `_onObjectMatched(oEvent)`: Bind element từ OData model theo issueId từ URL
+  - **Path format:** `"/Issue(" + sIssueId + ")"` — OData V4 key format với GUID
+  - **decodeURIComponent:** issueId được decode từ URL parameter trước khi bind
+  - **Event:** `dataReceived` và `change` được attach để trigger SLA recalculation
+- **Edge case: Invalid issuePath** — Nếu bindElement thất bại (issue không tồn tại), OData model sẽ báo lỗi qua `change` event hoặc hiển thị empty view. Hiện không có error UI cụ thể cho case này.
+- **Edge case: Refresh ở /issue/{id}** — `_onObjectMatched` sẽ chạy lại, bind lại dữ liệu từ OData. History bị reset → `onNavBack()` sẽ fallback về IssueList (đúng behavior).
 
 ---
 
@@ -269,35 +326,72 @@ SAP-FRONTEND/
 
 **File:** [CreateIssueDialog.fragment.xml](webapp/view/fragment/CreateIssueDialog.fragment.xml)
 
+> **⚠️ NOTE post-merge:** Fragment này đã bị xóa trong quá trình merge (xem MIGRATION_LOG.md section 4.2). Chức năng create issue hiện được implement bởi `CreateIssue.view.xml` + `CreateIssue.controller.ts` (full page, không phải dialog). Các field mapping và validation logic bên dưới mô tả code hiện tại trong `CreateIssue.controller.ts`.
+
 #### Form Fields (7 fields)
 | # | Field | ID | Control | Required | Ghi chú |
 |---|-------|-----|---------|----------|---------|
-| 1 | Title | `inputTitle` | Input | ✅ | placeholder: "Enter brief issue title..." |
-| 2 | Module | `selectModule` | Select | ✅ | FI / MM / SD |
-| 3 | Assign Developer | `selectDeveloper` | Select | ❌ | Lấy từ OData `defectModel>/Developer`, hiển thị: `developer_id - Workload: workload_score` |
-| 4 | Severity | `selectSeverity` | Select | ✅ | Low / Medium / High / Critical |
-| 5 | Due Date | `inputDueDate` | DatePicker | ✅ | Format: `yyyy-MM-dd` |
-| 6 | Affected Version | `inputVersion` | Input | ❌ | Mặc định: "1.0", **editable=false** |
-| 7 | Description | `inputDesc` | TextArea | ✅ | rows=4, hướng dẫn placeholder về T-Code |
+| 1 | Title | `inpTitle` | Input | ✅ | maxLength=100, placeholder từ i18n |
+| 2 | Module | `selModule` | Select | ✅ | FI / MM / SD / HCM / PP / QM |
+| 3 | Assign Developer | `selDeveloper` | Select | ❌ | Bị disable ban đầu. Khi chọn module → bindItems động `/Developer` filter `modulename` + `is_active='X'`, sort `workload_score` ASC, auto-select developer đầu tiên (workload thấp nhất) trong `dataReceived` event |
+| 4 | Severity | `selSeverity` | Select | ✅ | Low / Medium / High / Critical. Default: LOW |
+| 5 | Due Date | `dpDueDate` | DatePicker | ✅ | Format: `yyyy-MM-dd` |
+| 6 | Affected Version | `inpAffectedVersion` | Input | ❌ | editable=true, default: "1.0" |
+| 7 | Description | `txtDescription` | TextArea | ✅ | rows=8, maxLength=1000 |
 
-#### Attachment Upload
-| Control | ID | Cấu hình |
-|---------|-----|----------|
-| UploadSet | `uploadSet` | instantUpload=false, multiple=true, maxFileSize=5MB |
-| File types | — | jpg, png, pdf, docx |
-| Error handlers | `.onTypeMissmatch` | Toast: "File type '*...' is not supported..." |
-| Error handlers | `.onFileSizeExceed` | Toast: "The file is too big. Maximum allowed size is 5 MB." |
-| No data text | — | "Kéo & Thả tập tin đính kèm vào đây" |
+#### Validation Behavior (chi tiết từ code)
+| Field | Rule | Fail Action |
+|-------|------|-------------|
+| Title | `.getValue().trim()` rỗng | `setValueState("Error")` + `setValueStateText("Title is required")` |
+| Description | `.getValue().trim()` rỗng | `setValueState("Error")` + `setValueStateText("Description is required")` |
+| Module | `.getSelectedKey()` falsy | `setValueState("Error")` + `setValueStateText("Module is required")` |
+| Severity | (không validate — luôn có default "LOW") | — |
+| Due Date | `.getValue()` rỗng | `setValueState("Error")` + `setValueStateText("Due date is required")` |
+| Due Date | `new Date(sDateVal) < oToday` (today = `setHours(0,0,0,0)`) | `setValueState("Error")` + `setValueStateText("Due date cannot be in the past")` |
 
-#### Buttons
-| Button | Press handler |
-|--------|---------------|
-| Save (Emphasized) | `.onSaveIssue` |
-| Cancel | `.onCancelIssue` |
+- **Flow validation fail:** `_validateForm()` returns `false` → hiển thị `MessageBox.error("Please fill in all required fields...")` → `return` (STOP, không gọi API)
+- **Flow validation pass:** `_validateForm()` returns `true` → `oView.setBusy(true)` → tạo payload → `bindList("/Issue", ...)` → `oListBinding.create(payload)` → `oContext.created().then(...)`
+- **Field self-healing:** `onFieldChange()` — khi user sửa field bị lỗi → tự động `setValueState("None")`
+- **Description:** Không có min length — chỉ check rỗng
+
+#### Error Handling khi gọi OData Create
+| Scenario | Behavior |
+|----------|----------|
+| **API success** | `oContext.created().then(() => ...)` → `MessageToast.show("Ticket created and assigned successfully.")` → `navTo("IssueDetail", { issueId })` |
+| **API fail — SADL constraint** | Kiểm tra error message chứa `"Creating operations are disabled"` / `"SADL_ENTITY_RUNTIME/011"` / `"canceled"` / `"reset"` → `MessageBox.warning()` hiển thị "Backend Limitation" + JSON payload đã chuẩn bị |
+| **API fail — other** | `MessageBox.error("Failed to create ticket: " + sMessage)` |
+| **BusyDialog** | `oView.setBusy(true)` trước khi gọi create, `setBusy(false)` trong cả `.then()` và error callback |
+| **Rollback** | Không rollback form — form vẫn giữ nguyên giá trị user đã nhập |
+| **Retry** | Không có retry logic — user phải nhấn Submit lại thủ công |
+
+#### OData V4 Batch Pattern
+- Dùng `bindList("/Issue", null, null, null, { $$updateGroupId: "createGroup" })` để tạo deferred group
+- `oListBinding.create(oPayload)` → trả về `oContext`
+- Explicit `submitBatch("createGroup")` + check `hasPendingChanges("createGroup")` → `resetChanges("createGroup")`
+- **Không dùng** `oModel.create()` trực tiếp như OData V2
+
+#### Payload Mapping (chi tiết transform)
+```typescript
+{
+    title: sTitle,                    // Input, .trim()
+    description: sDescription,        // TextArea, .trim()
+    modulename: sModule,             // Select selectedKey (FI/MM/SD/HCM/PP/QM)
+    severity: sSeverity,             // Select selectedKey (LOW/MEDIUM/HIGH/CRITICAL)
+    status: "ASSIGNED",              // HARDCODED — luôn là ASSIGNED khi tạo mới
+    assigned_to: sDeveloper || null, // Select, null nếu không chọn
+    due_date: sFormattedDueDate,     // Date → "YYYY-MM-DDT00:00:00Z" (ISO string split + concat)
+    affected_version: sAffectedVersion // Input, default "1.0"
+}
+```
+- **Severity:** Giữ nguyên case từ Select (LOW/MEDIUM/HIGH/CRITICAL) — **không gọi `.toUpperCase()`** như code cũ của MERGE branch
+- **Date format gửi backend:** `oDueDate.toISOString().split("T")[0] + "T00:00:00Z"` → ISO 8601 midnight UTC
+- **status = "ASSIGNED":** Hardcoded, không thể chọn status khác khi create
 
 ---
 
 ### 3.5 🔔 Notification Popover (Fragment)
+
+> **⚠️ NOTE post-merge:** Fragment này đã bị xóa trong quá trình merge (xem MIGRATION_LOG.md section 4.2) — không còn code reference sau khi ShellBar bị remove. Phần này mô tả trạng thái TRƯỚC merge để reference.
 
 **File:** [NotificationPopover.fragment.xml](webapp/view/fragment/NotificationPopover.fragment.xml)
 
@@ -310,6 +404,12 @@ SAP-FRONTEND/
 
 > ⚠️ Dữ liệu hiện là **hardcoded tĩnh**, chưa có handler cho đóng/đánh dấu đã đọc.
 
+**UX Behavior (trước khi xóa):**
+- **Click vào notification:** Không có navigation handler → click không làm gì
+- **Close button:** Không có handler remove item
+- **"Mark all as read":** Button tồn tại nhưng không có press handler → không clear notification count
+- **State hiện tại sau merge:** Popover bị xóa, notification icon trên ShellBar không còn → không có notification system nào hoạt động
+
 ---
 
 ## 4. XỬ LÝ LOGIC TRONG CONTROLLERS
@@ -320,12 +420,21 @@ SAP-FRONTEND/
 | `onInit()` | Rỗng (placeholder) |
 | `onIssuePress(oEvent)` | Lấy context từ `defectModel` → lấy path → `navTo("IssueDetail", { issuePath })` |
 
+> **⚠️ POST-MERGE CHANGE:** Sau merge, App.controller.ts được thay thế bởi phiên bản từ PROJECT_CHECKLIST branch:
+> - `onInit()`: Không còn rỗng — thêm `Device.support.touch` check để set `sapUiSizeCozy`/`sapUiSizeCompact`, khởi tạo `userRole` JSONModel
+> - **KHÔNG có** `onIssuePress` — method này đã chuyển vào `IssueList.controller.ts`
+> - **Lifecycle:** `init` → load manifest → `Component.init()` → `mockserver.init()` → `super.init()` (tạo OData model) → `createDeviceModel()` → `this.getRouter().initialize()` → view init
+
 ### 4.2 [Login.controller.ts](webapp/controller/Login.controller.ts)
 | Method | Logic |
 |--------|-------|
 | `onLogin()` | Validate input → kiểm tra credentials (3 tài khoản cứng) → set `userModel` data → `navTo("Dashboard")` |
 
 ### 4.3 [Dashboard.controller.ts](webapp/controller/Dashboard.controller.ts)
+
+> **⚠️ POST-MERGE CHANGE:** Sau merge, controller này được thay thế hoàn toàn bởi phiên bản từ PROJECT_CHECKLIST branch. Version cũ (mô tả bên dưới) đã bị xóa. Controller mới tập trung vào KPI aggregation, không chứa logic Create Issue hay Notification nữa.
+
+**Dashboard.controller.ts (PRE-MERGE — ĐÃ BỊ THAY THẾ):**
 | Method | Logic |
 |--------|-------|
 | `onInit()` | Rỗng |
@@ -340,7 +449,33 @@ SAP-FRONTEND/
 | `onSortPress(oEvent)` | Mở ActionSheet với 3 lựa chọn sort |
 | `_applySort(sProperty, bDescending)` | Tạo Sorter → apply vào table binding |
 
-**Payload OData Create Issue:**
+**Dashboard.controller.ts (POST-MERGE — HIỆN TẠI):**
+| Method | Logic |
+|--------|-------|
+| `onInit()` | Setup `dashboardData` JSONModel, attach route "Dashboard" → `_onRouteMatched` |
+| `_onRouteMatched()` | Gọi `_loadDashboardData()` + `_refreshDeveloperWorkload()` |
+| `onRefreshData()` | Manual refresh: gọi lại cả 2 hàm trên |
+| `_loadDashboardData()` | `bindList("/Issue")` → `requestContexts(0, 1000)` → aggregate tất cả issue vào `dashboardData` model |
+| `_refreshDeveloperWorkload()` | Refresh binding của `developerWorkloadTable` |
+| `onNavBack()` | `navTo("IssueList")` |
+
+**UploadSet Behavior (PRE-MERGE, CreateIssueDialog):**
+- **instantUpload=false** — file không upload ngay khi chọn, đợi đến khi Save Issue
+- **multiple=true** — cho phép chọn nhiều file
+- **maxFileSize=5MB** — giới hạn dung lượng
+- **File types:** jpg, png, pdf, docx
+- **Upload flow:** Không rõ upload trước hay sau create issue (code comment: "Member 2 sẽ làm")
+- **Không có:** Gắn file với issue ID sau khi create
+- **User cancel:** File list bị clear theo dialog lifecycle
+
+**UploadSet Behavior (POST-MERGE, IssueDetail):**
+- **Implement trong:** `IssueDetail.controller.ts` → `onUploadFile()`
+- **Flow:** `oListBinding.create({issue_id, file_name, mime_type, file_size, uploaded_by, uploaded_at})` → `oNewContext.created().then(...)` → reload attachments
+- **File được lưu ở đâu:** OData entity `/Attachment` trên backend (metadata: `file_id`, `issue_id`, `file_name`, `mime_type`, `file_size`, `uploaded_by`, `uploaded_at`) — **file content không được gửi, chỉ metadata**
+- **Không có upload trước/sau logic:** Chỉ gửi metadata, không có binary upload
+- **Backend limitation:** Có fallback MessageBox warning giống Create Issue
+
+**Payload OData Create Issue (PRE-MERGE):**
 ```typescript
 {
     title: string,          // Từ inputTitle
@@ -354,25 +489,63 @@ SAP-FRONTEND/
 }
 ```
 
-> ⚠️ **Lưu ý:** `oModel.create` dùng đường dẫn `"/Issue"` — đây là entity set name trên SAP backend.
+> ⚠️ **Khác biệt PRE vs POST merge:**
+> - PRE: severity dùng `.toUpperCase()`, POST: giữ nguyên case từ Select
+> - PRE: dùng `oModel.create("/Issue", payload)` (OData V2 pattern), POST: dùng `bindList` + `oListBinding.create()` (OData V4 pattern)
+> - PRE: form trong dialog, POST: form trong full page
 
 ### 4.4 [IssueDetail.controller.ts](webapp/controller/IssueDetail.controller.ts)
+
+> **⚠️ POST-MERGE CHANGE:** Sau merge, controller được thay thế bởi version đầy đủ 735 dòng từ PROJECT_CHECKLIST branch (thay vì version placeholder trước merge).
+
+**IssueDetail.controller.ts (PRE-MERGE — ĐÃ BỊ THAY THẾ):**
 | Method | Logic |
 |--------|-------|
 | `onInit()` | Đăng ký listener cho route "IssueDetail" → `_onObjectMatched` |
 | `_onObjectMatched(oEvent)` | Lấy `issuePath` từ arguments → `bindElement({ path: "/" + issuePath, model: "defectModel" })` |
 | `onNavBack()` | Lấy previous hash từ History → `window.history.go(-1)`, fallback `navTo("Dashboard")` |
 
+**IssueDetail.controller.ts (POST-MERGE — HIỆN TẠI, 735 dòng):**
+| Method | Logic |
+|--------|-------|
+| `onInit()` | Init 4 JSON models (attachments, comments, history, slaModel) + route listener |
+| `_onObjectMatched(oEvent)` | Lấy issueId từ URL → `bindElement("/Issue(id)")` → load attachments, comments, history |
+| `_onBindingChange()` | SLA recalculation khi bound data thay đổi |
+| `_onDataReceived()` | SLA recalculation khi OData data về |
+| `_calculateSLA()` | Tính SLA % dựa trên severity + due_date |
+| `_updateIssueStatus()` | Generic status update helper: setProperty + submitBatch |
+| `onStartProgress()` | ASSIGNED → IN_PROGRESS |
+| `onStartTesting()` | RESOLVED → TESTING |
+| `onClose()` | TESTING → CLOSED (có confirm dialog) |
+| `onReopen()` | TESTING/CLOSED → REOPEN (tăng reopen_count, copy fix_version → affected_version) |
+| `onResolve()` | Mở ResolveDialog fragment |
+| `onResolveSubmit()` | Validate root_cause + fix_description → RESOLVED + auto-increment fix_version |
+| `onReassign()` | Mở ReassignDialog, filter developer theo module |
+| `onReassignSubmit()` | Validate selected developer → ASSIGNED + assigned_to, assigned_at |
+| `onPostComment()` | OData V4 create Comment entity |
+| `onUploadFile()` | OData V4 create Attachment entity |
+| `onNavBack()` | `window.history.go(-1)`, fallback `navTo("IssueList")` |
+
 ---
 
 ## 5. UI STATES & VISIBILITY LOGIC (Role-based)
 
+### 5.1 Role Visibility Rules
+
 | UI Element | Điều kiện hiển thị | Role được thấy |
 |------------|---------------------|----------------|
 | **Manager Dashboard** (KPI + Charts + Workload Table) | `userModel>/role === 'Manager'` | Manager only |
-| **Create Issue Button** | `userModel>/role === 'Tester'` | Tester only |
+| **Create Issue Button** | `userModel>/role === 'Tester' || 'Manager'` | Tester + Manager |
 | **Defect Table** | Luôn hiển thị | Tất cả roles |
 | **Login Page** | Route mặc định `""` | Tất cả (chưa auth) |
+
+### 5.2 Role Security — Important Caveat (⚠️)
+
+- **Đây là UI restriction, không phải security thật.** Role được lưu trong client-side `JSONModel` (`userModel` và `userRole`), không có server-side authorization check.
+- **Không có:** Backend validation của role khi create/edit/resolve issue
+- **Không có:** Token-based authentication hay session management
+- **Mock auth:** 3 tài khoản hardcoded (`tester/123`, `dev/123`, `manager/123`) — không tích hợp SAP IAS/XSUAA
+- **Implication:** Bất kỳ ai cũng có thể bypass role bằng cách chỉnh sửa giá trị `userModel` trong browser console
 
 ---
 
@@ -401,14 +574,16 @@ SAP-FRONTEND/
 
 ### 7.1 Các lỗi/thiếu sót đã biết (⚠️ TODO)
 
-| # | Vấn đề | Vị trí | Mức độ |
-|---|--------|--------|--------|
-| 1 | Chart event handlers `onChartSelect`, `onModuleChartSelect` **chưa được implement** trong controller | Dashboard.view.xml:47,63 | Trung bình |
-| 2 | 3 nút action trong IssueDetail (Start Progress, Resolve, Edit) **chưa có handler** | IssueDetail.view.xml:32-34 | Trung bình |
-| 3 | Upload attachment chưa được xử lý sau khi tạo issue (code comment: "Member 2 sẽ làm") | Dashboard.controller.ts:192 | Thấp |
-| 4 | Notification popover data **tĩnh, hardcoded**, chưa có handler đóng/đánh dấu đã đọc | NotificationPopover.fragment.xml | Thấp |
-| 5 | Attachments & History sections trong IssueDetail là **placeholder** | IssueDetail.view.xml:82,92 | Thấp |
-| 6 | `issues.json` mock data tồn tại nhưng **không được dùng** | localService/mockdata/ | Thấp |
+> **STATUS cập nhật post-merge (2026-07-04):** Nhiều item đã được fix sau merge. Xem MIGRATION_LOG.md để biết chi tiết.
+
+| # | Vấn đề | Vị trí | Mức độ | Status Post-Merge |
+|---|--------|--------|--------|-------------------|
+| 1 | Chart event handlers `onChartSelect`, `onModuleChartSelect` **chưa được implement** trong controller | Dashboard.view.xml | Trung bình | ⚠️ **Vẫn chưa implement** |
+| 2 | 3 nút action trong IssueDetail (Start Progress, Resolve, Edit) **chưa có handler** | IssueDetail.view.xml | Trung bình | ✅ **Đã fix** — 6 workflow buttons với đầy đủ handler trong IssueDetail.controller.ts |
+| 3 | Upload attachment chưa được xử lý sau khi tạo issue | Dashboard.controller.ts | Thấp | ✅ **Đã fix** — `onUploadFile()` trong IssueDetail.controller.ts |
+| 4 | Notification popover data **tĩnh, hardcoded** | NotificationPopover.fragment.xml | Thấp | 🔴 **Đã xóa fragment** — không còn notification system |
+| 5 | Attachments & History sections trong IssueDetail là **placeholder** | IssueDetail.view.xml | Thấp | ✅ **Đã fix** — sections hoàn chỉnh với data binding |
+| 6 | `issues.json` mock data tồn tại nhưng **không được dùng** | localService/mockdata/ | Thấp | 🔴 **Đã xóa file** — dùng Issue.json thay thế |
 
 ### 7.2 Các điểm integration quan trọng
 
@@ -420,7 +595,41 @@ SAP-FRONTEND/
 | 4 | **Proxy backend** | `https://s40lp1.ucc.cit.tum.de` client `324` — phải accessible |
 | 5 | **SAPUI5 CDN** | `https://ui5.sap.com/resources/sap-ui-core.js` — phải load được |
 
-### 7.3 Các field mapping OData
+### 7.3 Data Binding Mode & Model Types
+
+| Model | Type | Binding Mode | Behavior |
+|-------|------|-------------|----------|
+| `""` (default) | OData V4 | Server (operationMode) | Data từ backend, không tự động TwoWay sync |
+| `userModel` | JSONModel | — | Client-side, set thủ công sau Login |
+| `userRole` | JSONModel | — | Client-side, set thủ công sau Login |
+| `i18n` | ResourceModel | — | Load từ i18n.properties |
+| `device` | JSONModel | — | Device info (touch/desktop) |
+
+> ⚠️ **Manifest `odataVersion: "4.0"` nhưng metadata.xml dùng `m:DataServiceVersion="2.0"`** — đây là SAP metadata schema version, không phải OData protocol version. OData protocol vẫn là V4.
+
+- **TwoWay vs Server:** Trong OData V4, binding mode là `TwoWay` mặc định nhưng operationMode `Server` nghĩa là mọi thay đổi cần explicit `submitBatch()`
+- **JSONModel vs ODataModel:** JSONModel là in-memory (attachments, comments, history, slaModel, dashboardData), ODataModel là server-side (Issue, Developer, Comment, Attachment, History entities)
+
+### 7.4 i18n Strategy
+- **File:** `i18n/i18n.properties` — 167 dòng (sau merge)
+- **Language:** English only — **không có multi-language support**
+- **Binding:** `{i18n>keyName}` trong XML views
+- **Controller access:** `this.getResourceBundle().getText("keyName")` (via BaseController)
+- **Coverage:** Tất cả UI text, labels, error messages, button texts đều qua i18n — không có hardcoded string trong views (trừ một số `MessageBox` text trong controllers)
+
+### 7.5 Chart Event Handlers (Dashboard)
+- **`onChartSelect`** (Severity DonutChart): Khai báo trong XML `selectionChange=".onChartSelect"` — **chưa implement trong controller**
+- **`onModuleChartSelect`** (Module BarChart): Khai báo trong XML `selectionChange=".onModuleChartSelect"` — **chưa implement trong controller**
+- **Expected behavior (chưa code):** Click chart segment → filter bảng bên dưới theo severity/module tương ứng
+- **Severity:** Medium — chart vẫn hiển thị đúng dữ liệu, chỉ thiếu interaction
+
+### 7.6 State Management — Sau Create Issue
+- **Table refresh:** **Không tự động** — sau khi create issue thành công → `navTo("IssueDetail", {issueId})` (đi thẳng vào detail issue mới)
+- **Khi back về IssueList:** Table sẽ tự refresh do `bindElement` pattern của OData V4 — nhưng không có explicit `refresh()` call
+- **Không có:** Event bus, pub/sub, hay global state để notify các view khác về thay đổi
+- **Không có:** Optimistic UI update — table không thêm row mới trước khi API response
+
+### 7.7 Các field mapping OData
 
 | Field trong code (payload) | Field hiển thị UI | Backend entity field |
 |---------------------------|-------------------|---------------------|
@@ -450,33 +659,52 @@ SAP-FRONTEND/
 ### Component (1 file)
 - [ ] [webapp/Component.ts](webapp/Component.ts) — khởi tạo router
 
-### Controllers (4 files)
+### Controllers (8 files post-merge)
 - [ ] [webapp/controller/App.controller.ts](webapp/controller/App.controller.ts)
+- [ ] [webapp/controller/BaseController.ts](webapp/controller/BaseController.ts) 🆕
 - [ ] [webapp/controller/Login.controller.ts](webapp/controller/Login.controller.ts)
+- [ ] [webapp/controller/IssueList.controller.ts](webapp/controller/IssueList.controller.ts) 🆕
 - [ ] [webapp/controller/Dashboard.controller.ts](webapp/controller/Dashboard.controller.ts)
 - [ ] [webapp/controller/IssueDetail.controller.ts](webapp/controller/IssueDetail.controller.ts)
+- [ ] [webapp/controller/CreateIssue.controller.ts](webapp/controller/CreateIssue.controller.ts) 🆕
 
-### Views (4 files)
+### Views (6 files post-merge)
 - [ ] [webapp/view/App.view.xml](webapp/view/App.view.xml)
 - [ ] [webapp/view/Login.view.xml](webapp/view/Login.view.xml)
+- [ ] [webapp/view/IssueList.view.xml](webapp/view/IssueList.view.xml) 🆕
 - [ ] [webapp/view/Dashboard.view.xml](webapp/view/Dashboard.view.xml)
 - [ ] [webapp/view/IssueDetail.view.xml](webapp/view/IssueDetail.view.xml)
+- [ ] [webapp/view/CreateIssue.view.xml](webapp/view/CreateIssue.view.xml) 🆕
 
-### Fragments (2 files)
-- [ ] [webapp/view/fragment/CreateIssueDialog.fragment.xml](webapp/view/fragment/CreateIssueDialog.fragment.xml)
-- [ ] [webapp/view/fragment/NotificationPopover.fragment.xml](webapp/view/fragment/NotificationPopover.fragment.xml)
+### Fragments (2 files post-merge)
+- [ ] [webapp/view/fragment/ResolveDialog.fragment.xml](webapp/view/fragment/ResolveDialog.fragment.xml) 🆕
+- [ ] [webapp/view/fragment/ReassignDialog.fragment.xml](webapp/view/fragment/ReassignDialog.fragment.xml) 🆕
 
-### Mock data (2 files)
-- [ ] [webapp/localService/mockdata/dashboard.json](webapp/localService/mockdata/dashboard.json)
-- [ ] [webapp/localService/mockdata/issues.json](webapp/localService/mockdata/issues.json)
+> 🔴 **Đã xóa:** CreateIssueDialog.fragment.xml, NotificationPopover.fragment.xml
 
-### i18n (1 file)
+### Model (2 files post-merge)
+- [ ] [webapp/model/formatter.ts](webapp/model/formatter.ts) 🆕
+- [ ] [webapp/model/models.ts](webapp/model/models.ts) 🆕
+
+### Mock data (5 files post-merge)
+- [ ] [webapp/localService/metadata.xml](webapp/localService/metadata.xml)
+- [ ] [webapp/localService/mockserver.js](webapp/localService/mockserver.js)
+- [ ] [webapp/localService/mockdata/Issue.json](webapp/localService/mockdata/Issue.json)
+- [ ] [webapp/localService/mockdata/Attachment.json](webapp/localService/mockdata/Attachment.json) 🆕
+- [ ] [webapp/localService/mockdata/Comment.json](webapp/localService/mockdata/Comment.json) 🆕
+- [ ] [webapp/localService/mockdata/Developer.json](webapp/localService/mockdata/Developer.json) 🆕
+- [ ] [webapp/localService/mockdata/History.json](webapp/localService/mockdata/History.json) 🆕
+
+> 🔴 **Đã xóa:** dashboard.json, issues.json
+
+### i18n & Style (2 files)
 - [ ] [webapp/i18n/i18n.properties](webapp/i18n/i18n.properties)
+- [ ] [webapp/css/style.css](webapp/css/style.css) 🆕
 
 ### Documentation (1 file)
 - [ ] [README.md](README.md)
 
-**Tổng cộng: 20 files**
+**Tổng cộng: 28 source files (post-merge)**
 
 ---
 
@@ -488,28 +716,53 @@ SAP-FRONTEND/
 - [ ] `npm start` chạy được app
 - [ ] `npm run build` build thành công
 
+### Authentication & Routes (5 routes)
+- [ ] `""` → Login page
+- [ ] Login với `tester/123` → vào IssueList, thấy nút Create Issue
+- [ ] Login với `manager/123` → vào IssueList, thấy nút KPI Dashboard + Create Issue
+- [ ] Login với `dev/123` → vào IssueList, không thấy nút KPI Dashboard, không thấy Create Issue
+- [ ] `#/issues` → IssueList (trang chính sau login)
+- [ ] `#/create` → Create Issue page (full page, không phải dialog)
+- [ ] `#/issue/{id}` → IssueDetail với 7 sections
+- [ ] `#/dashboard` → Manager Dashboard với KPI tiles + distribution panels
+
 ### Functional Checks
-- [ ] Login với `tester/123` → vào Dashboard, thấy nút Create Issue
-- [ ] Login với `manager/123` → thấy KPI cards + Charts + Workload table
-- [ ] Login với `dev/123` → thấy danh sách defects, không thấy Create Issue
-- [ ] Filter module (FI/MM/SD) hoạt động
-- [ ] Search theo title hoạt động
-- [ ] Sort (ID newest/oldest, Status A-Z) hoạt động
-- [ ] Tạo issue mới → điền form → Save thành công
-- [ ] Nhấn vào một issue row → chuyển đến IssueDetail
-- [ ] IssueDetail hiển thị đúng dữ liệu
-- [ ] Nút Back từ IssueDetail hoạt động
-- [ ] Notification popover mở được
-- [ ] Upload file: sai định dạng → báo lỗi, file > 5MB → báo lỗi
+- [ ] **IssueList:** Search theo title/module hoạt động (OR logic)
+- [ ] **IssueList:** Filter module (FI/MM/SD) hoạt động, kết hợp AND với search
+- [ ] **IssueList:** Sort (ID newest/oldest, Status A-Z) hoạt động
+- [ ] **CreateIssue:** Chọn module → auto-load developer active, sort workload ASC
+- [ ] **CreateIssue:** Developer tự động chọn developer đầu tiên (thấp nhất workload)
+- [ ] **CreateIssue:** Validation — title/desc/module/due date rỗng → ValueState Error
+- [ ] **CreateIssue:** Validation — due date < today → ValueState Error
+- [ ] **CreateIssue:** Submit → busy indicator → success toast → navigate IssueDetail
+- [ ] **CreateIssue:** Submit fail (SADL constraint) → MessageBox warning + payload
+- [ ] **IssueDetail:** Hiển thị đúng dữ liệu issue (bindElement)
+- [ ] **IssueDetail:** SLA progress bar hiển thị đúng màu (green/yellow/red)
+- [ ] **IssueDetail:** Workflow buttons hiển thị đúng role + status
+- [ ] **IssueDetail:** Start Progress (ASSIGNED → IN_PROGRESS)
+- [ ] **IssueDetail:** Resolve dialog (validate root cause + fix desc → RESOLVED + auto-increment fix_version)
+- [ ] **IssueDetail:** Start Testing (RESOLVED → TESTING)
+- [ ] **IssueDetail:** Close (TESTING → CLOSED, có confirm)
+- [ ] **IssueDetail:** Reopen (TESTING/CLOSED → REOPEN, tăng reopen_count)
+- [ ] **IssueDetail:** Reassign dialog (filter dev theo module → ASSIGNED)
+- [ ] **IssueDetail:** Post comment (FeedInput) → OData create
+- [ ] **IssueDetail:** Upload file → OData create Attachment
+- [ ] **Dashboard:** KPI tiles aggregate đúng từ OData /Issue
+- [ ] **Dashboard:** Status/Severity/Module distribution hiển thị %
+- [ ] **Dashboard:** Developer workload table refresh
+- [ ] **Navigation:** Back button từ IssueDetail, CreateIssue, Dashboard → fallback IssueList
+- [ ] **Navigation:** Direct URL `/issue/{id}` → back → IssueList (không có history)
 
 ### UI Checks
 - [ ] Theme `sap_horizon` hiển thị đúng
-- [ ] Manager KPI cards responsive (CSS Grid)
-- [ ] Charts hiển thị (DonutChart + BarChart)
+- [ ] Content density: Compact (desktop) / Cozy (touch)
+- [ ] Manager KPI cards + 3 distribution panels
+- [ ] Charts hiển thị (DonutChart + BarChart) — **click không có handler**
 - [ ] ObjectStatus màu sắc đúng theo severity/status
-- [ ] No data state hiển thị khi filter/search không có kết quả
-- [ ] BusyDialog hiển thị khi đang save issue
-- [ ] MessageToast hiển thị sau các thao tác
+- [ ] No data state hiển thị khi filter/search không có kết quả trên IssueList
+- [ ] BusyIndicator hiển thị khi loading (create issue, dashboard aggregation)
+- [ ] MessageToast hiển thị sau các thao tác thành công
+- [ ] i18n text hiển thị đúng (167 keys, không thiếu)
 
 ---
 

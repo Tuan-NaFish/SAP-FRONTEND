@@ -146,7 +146,8 @@ export default class IssueList extends BaseController {
         const oTable = this.byId("issueTable") as Table;
         const oBinding = oTable.getBinding("items") as ListBinding;
         (oBinding as any).sort(new Sorter(sProperty, bDescending));
-        MessageToast.show("List sorted by " + (sProperty === "issue_num" ? "ID" : "Status"));
+        const sSortLabel = sProperty === "issue_num" ? "ID" : "Status";
+        MessageToast.show("List sorted by " + sSortLabel);
     }
 
     /**
