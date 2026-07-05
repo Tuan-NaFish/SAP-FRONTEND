@@ -8,8 +8,8 @@
     "applicationVersion": {
       "version": "1.0.0"
     },
-    "title": "{{appTitle}}",
-    "description": "{{appDescription}}",
+    "title": "SAP Defect Management System",
+    "description": "Defect tracking and lifecycle management for SAP ERP modules",
 
     "dataSources": {
       "mainService": {
@@ -67,7 +67,9 @@
       "i18n": {
         "type": "sap.ui.model.resource.ResourceModel",
         "settings": {
-          "bundleName": "sap.defectmgmt.i18n.i18n"
+          "bundleUrl": "i18n/i18n.properties",
+          "supportedLocales": [""],
+          "fallbackLocale": ""
         }
       },
       "": {
