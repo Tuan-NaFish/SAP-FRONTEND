@@ -208,6 +208,73 @@ function formatHistoryIconColor(sActionType: string | null | undefined): string 
 }
 
 // ================================================
+// WORKFLOW BUTTON VISIBILITY FORMATTERS
+// Each function returns true/false based on issue
+// status and user role. Used by ObjectPageHeaderActionButton
+// visible properties via path binding.
+// ================================================
+
+/**
+ * "Start Progress" — visible when ASSIGNED and user is DEVELOPER or MANAGER
+ */
+function isStartProgressVisible(
+    sStatus: string | null | undefined,
+    sRole: string | null | undefined
+): boolean {
+    return sStatus === "ASSIGNED" && (sRole === "DEVELOPER" || sRole === "MANAGER");
+}
+
+/**
+ * "Resolve" — visible when IN_PROGRESS and user is DEVELOPER or MANAGER
+ */
+function isResolveVisible(
+    sStatus: string | null | undefined,
+    sRole: string | null | undefined
+): boolean {
+    return sStatus === "IN_PROGRESS" && (sRole === "DEVELOPER" || sRole === "MANAGER");
+}
+
+/**
+ * "Start Testing" — visible when RESOLVED and user is TESTER or MANAGER
+ */
+function isStartTestingVisible(
+    sStatus: string | null | undefined,
+    sRole: string | null | undefined
+): boolean {
+    return sStatus === "RESOLVED" && (sRole === "TESTER" || sRole === "MANAGER");
+}
+
+/**
+ * "Close" — visible when TESTING and user is TESTER or MANAGER
+ */
+function isCloseVisible(
+    sStatus: string | null | undefined,
+    sRole: string | null | undefined
+): boolean {
+    return sStatus === "TESTING" && (sRole === "TESTER" || sRole === "MANAGER");
+}
+
+/**
+ * "Reopen" — visible when TESTING or CLOSED and user is TESTER or MANAGER
+ */
+function isReopenVisible(
+    sStatus: string | null | undefined,
+    sRole: string | null | undefined
+): boolean {
+    return (sStatus === "TESTING" || sStatus === "CLOSED") && (sRole === "TESTER" || sRole === "MANAGER");
+}
+
+/**
+ * "Reassign" — visible when REOPEN and user is TESTER or MANAGER
+ */
+function isReassignVisible(
+    sStatus: string | null | undefined,
+    sRole: string | null | undefined
+): boolean {
+    return sStatus === "REOPEN" && (sRole === "TESTER" || sRole === "MANAGER");
+}
+
+// ================================================
 // RESOLUTION SECTION VISIBILITY
 // ================================================
 
@@ -260,6 +327,12 @@ const formatter = {
     formatCommentType,
     formatHistoryIcon,
     formatHistoryIconColor,
+    isStartProgressVisible,
+    isResolveVisible,
+    isStartTestingVisible,
+    isCloseVisible,
+    isReopenVisible,
+    isReassignVisible,
     isResolutionVisible,
     formatOptionalField,
     formatReopenState

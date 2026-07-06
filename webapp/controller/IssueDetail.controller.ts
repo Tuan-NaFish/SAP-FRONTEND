@@ -88,6 +88,10 @@ export default class IssueDetail extends BaseController {
             slaIconColor:     "#666666"
         }), "slaModel");
 
+        // Ensure action buttons and resolution section start hidden.
+        // Visibility will be updated when data arrives.
+        this._updateVisibility();
+
         // Register the route pattern matched handler.
         // When the URL matches "issue/{issueId}", this fires.
         this.getRouter()
@@ -129,12 +133,13 @@ export default class IssueDetail extends BaseController {
 
     /**
      * Called when the element binding data changes.
-     * Recalculates SLA whenever the bound data is available.
+     * Recalculates SLA and updates control visibility.
      */
     private _onBindingChange(): void {
         const oContext = this.getView()!.getBindingContext();
         if (oContext) {
             this._calculateSLA(oContext);
+            this._updateVisibility();
         }
     }
 
@@ -146,6 +151,49 @@ export default class IssueDetail extends BaseController {
         const oContext = this.getView()!.getBindingContext();
         if (oContext) {
             this._calculateSLA(oContext);
+            this._updateVisibility();
+        }
+    }
+
+    /**
+     * Programmatically set the visible property on action buttons
+     * and resolution section based on current issue status and user role.
+     *
+     * SAPUI5 1.120 has a known limitation where binding expressions
+     * and composite bindings on the visible property of
+     * ObjectPageHeaderActionButton fail with FormatException.
+     * The workaround is to set visibility imperatively.
+     */
+    private _updateVisibility(): void {
+        const oContext = this.getView()!.getBindingContext();
+        if (!oContext) { return; }
+
+        const sStatus = oContext.getProperty("status") as string;
+        const oUserRoleModel = this.getOwnerComponent()!.getModel("userRole") as JSONModel;
+        const sRole = oUserRoleModel ? oUserRoleModel.getProperty("/role") as string : "";
+
+        // Button visibility rules (status + role)
+        const mVisibility: Record<string, boolean> = {
+            btnStartProgress: sStatus === "ASSIGNED" && (sRole === "DEVELOPER" || sRole === "MANAGER"),
+            btnResolve:       sStatus === "IN_PROGRESS" && (sRole === "DEVELOPER" || sRole === "MANAGER"),
+            btnStartTesting:  sStatus === "RESOLVED" && (sRole === "TESTER" || sRole === "MANAGER"),
+            btnClose:         sStatus === "TESTING" && (sRole === "TESTER" || sRole === "MANAGER"),
+            btnReopen:        (sStatus === "TESTING" || sStatus === "CLOSED") && (sRole === "TESTER" || sRole === "MANAGER"),
+            btnReassign:      sStatus === "REOPEN" && (sRole === "TESTER" || sRole === "MANAGER")
+        };
+
+        for (const sId of Object.keys(mVisibility)) {
+            const oControl = this.byId(sId);
+            if (oControl) {
+                oControl.setVisible(mVisibility[sId]);
+            }
+        }
+
+        // Resolution section visibility
+        const bResolved = sStatus === "RESOLVED" || sStatus === "TESTING" || sStatus === "CLOSED";
+        const oSection = this.byId("resolutionSection");
+        if (oSection) {
+            oSection.setVisible(bResolved);
         }
     }
 

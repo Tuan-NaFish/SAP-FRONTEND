@@ -55,10 +55,10 @@
                         wrapping="true"/>
                 </uxap:heading>
 
-                <!-- Subheading: Module name -->
-                <uxap:subheading>
+                <!-- Subtitle: Module name (shown below heading when header is expanded) -->
+                <uxap:expandedHeading>
                     <Text text="{i18n>moduleLabel}: {modulename}"/>
-                </uxap:subheading>
+                </uxap:expandedHeading>
 
                 <!-- Snapped content (visible when header is collapsed) -->
                 <uxap:snappedContent>
@@ -98,40 +98,46 @@
                 <!-- ================================================ -->
                 <uxap:actions>
                     <uxap:ObjectPageHeaderActionButton
+                        id="btnStartProgress"
                         text="{i18n>btnStartProgress}"
                         type="Emphasized"
                         press=".onStartProgress"
-                        visible="{= ${status} === 'ASSIGNED' &amp;&amp; (${userRole>/role} === 'DEVELOPER' || ${userRole>/role} === 'MANAGER') }"
+                        visible="false"
                         importance="High"/>
                     <uxap:ObjectPageHeaderActionButton
+                        id="btnResolve"
                         text="{i18n>btnResolve}"
                         type="Emphasized"
                         press=".onResolve"
-                        visible="{= ${status} === 'IN_PROGRESS' &amp;&amp; (${userRole>/role} === 'DEVELOPER' || ${userRole>/role} === 'MANAGER') }"
+                        visible="false"
                         importance="High"/>
                     <uxap:ObjectPageHeaderActionButton
+                        id="btnStartTesting"
                         text="{i18n>btnStartTesting}"
                         type="Emphasized"
                         press=".onStartTesting"
-                        visible="{= ${status} === 'RESOLVED' &amp;&amp; (${userRole>/role} === 'TESTER' || ${userRole>/role} === 'MANAGER') }"
+                        visible="false"
                         importance="High"/>
                     <uxap:ObjectPageHeaderActionButton
+                        id="btnClose"
                         text="{i18n>btnClose}"
                         type="Accept"
                         press=".onClose"
-                        visible="{= ${status} === 'TESTING' &amp;&amp; (${userRole>/role} === 'TESTER' || ${userRole>/role} === 'MANAGER') }"
+                        visible="false"
                         importance="High"/>
                     <uxap:ObjectPageHeaderActionButton
+                        id="btnReopen"
                         text="{i18n>btnReopen}"
                         type="Reject"
                         press=".onReopen"
-                        visible="{= (${status} === 'TESTING' || ${status} === 'CLOSED') &amp;&amp; (${userRole>/role} === 'TESTER' || ${userRole>/role} === 'MANAGER') }"
+                        visible="false"
                         importance="Medium"/>
                     <uxap:ObjectPageHeaderActionButton
+                        id="btnReassign"
                         text="{i18n>btnReassign}"
                         type="Emphasized"
                         press=".onReassign"
-                        visible="{= ${status} === 'REOPEN' &amp;&amp; (${userRole>/role} === 'TESTER' || ${userRole>/role} === 'MANAGER') }"
+                        visible="false"
                         importance="High"/>
                 </uxap:actions>
 
@@ -223,35 +229,33 @@
             <uxap:ObjectPageSection
                 id="generalInfoSection"
                 title="{i18n>sectionGeneralInfo}">
-                <uxap:subSections>
-                    <uxap:ObjectPageSubSection title="{i18n>sectionDescription}">
-                        <uxap:blocks>
-                            <form:SimpleForm
-                                editable="false"
-                                layout="ResponsiveGridLayout"
-                                labelSpanXL="3" labelSpanL="3" labelSpanM="3" labelSpanS="12"
-                                emptySpanXL="4" emptySpanL="4" emptySpanM="4" emptySpanS="0"
-                                columnsXL="1" columnsL="1" columnsM="1">
+                <uxap:ObjectPageSubSection title="{i18n>sectionDescription}">
+                    <uxap:blocks>
+                        <form:SimpleForm
+                            editable="false"
+                            layout="ResponsiveGridLayout"
+                            labelSpanXL="3" labelSpanL="3" labelSpanM="3" labelSpanS="12"
+                            emptySpanXL="4" emptySpanL="4" emptySpanM="4" emptySpanS="0"
+                            columnsXL="1" columnsL="1" columnsM="1">
 
-                                <form:toolbar>
-                                    <Toolbar>
-                                        <Title text="{i18n>descriptionDetails}" level="H4"/>
-                                    </Toolbar>
-                                </form:toolbar>
+                            <form:toolbar>
+                                <Toolbar>
+                                    <Title text="{i18n>descriptionDetails}" level="H4"/>
+                                </Toolbar>
+                            </form:toolbar>
 
-                                <!-- Issue ID (GUID) — useful for backend reference -->
-                                <Label text="{i18n>issueIdLabel}"/>
-                                <Text text="{issue_id}"/>
+                            <!-- Issue ID (GUID) — useful for backend reference -->
+                            <Label text="{i18n>issueIdLabel}"/>
+                            <Text text="{issue_id}"/>
 
-                                <!-- Description / Steps to Reproduce -->
-                                <!-- renderWhitespace preserves line breaks from the tester -->
-                                <Label text="{i18n>descriptionLabel}"/>
-                                <Text text="{description}" renderWhitespace="true"/>
+                            <!-- Description / Steps to Reproduce -->
+                            <!-- renderWhitespace preserves line breaks from the tester -->
+                            <Label text="{i18n>descriptionLabel}"/>
+                            <Text text="{description}" renderWhitespace="true"/>
 
-                            </form:SimpleForm>
-                        </uxap:blocks>
-                    </uxap:ObjectPageSubSection>
-                </uxap:subSections>
+                        </form:SimpleForm>
+                    </uxap:blocks>
+                </uxap:ObjectPageSubSection>
             </uxap:ObjectPageSection>
 
             <!-- ==================================================== -->
@@ -261,47 +265,45 @@
             <uxap:ObjectPageSection
                 id="assignmentSection"
                 title="{i18n>sectionAssignment}">
-                <uxap:subSections>
-                    <uxap:ObjectPageSubSection title="{i18n>sectionAssignment}">
-                        <uxap:blocks>
-                            <form:SimpleForm
-                                editable="false"
-                                layout="ResponsiveGridLayout"
-                                labelSpanXL="3" labelSpanL="3" labelSpanM="4" labelSpanS="12"
-                                emptySpanXL="1" emptySpanL="1" emptySpanM="0" emptySpanS="0"
-                                columnsXL="2" columnsL="2" columnsM="1">
+                <uxap:ObjectPageSubSection title="{i18n>sectionAssignment}">
+                    <uxap:blocks>
+                        <form:SimpleForm
+                            editable="false"
+                            layout="ResponsiveGridLayout"
+                            labelSpanXL="3" labelSpanL="3" labelSpanM="4" labelSpanS="12"
+                            emptySpanXL="1" emptySpanL="1" emptySpanM="0" emptySpanS="0"
+                            columnsXL="2" columnsL="2" columnsM="1">
 
-                                <!-- Assigned Developer -->
-                                <Label text="{i18n>assignedToLabel}"/>
-                                <HBox alignItems="Center">
-                                    <core:Icon src="sap-icon://employee" class="sapUiTinyMarginEnd"/>
-                                    <Text text="{assigned_to}"/>
-                                </HBox>
+                            <!-- Assigned Developer -->
+                            <Label text="{i18n>assignedToLabel}"/>
+                            <HBox alignItems="Center">
+                                <core:Icon src="sap-icon://employee" class="sapUiTinyMarginEnd"/>
+                                <Text text="{assigned_to}"/>
+                            </HBox>
 
-                                <!-- Assignment Timestamp -->
-                                <Label text="{i18n>assignedAtLabel}"/>
-                                <Text text="{path: 'assigned_at', formatter: '.formatter.formatDateTime'}"/>
+                            <!-- Assignment Timestamp -->
+                            <Label text="{i18n>assignedAtLabel}"/>
+                            <Text text="{path: 'assigned_at', formatter: '.formatter.formatDateTime'}"/>
 
-                                <!-- Created By (tester who reported) -->
-                                <Label text="{i18n>createdByLabel}"/>
-                                <Text text="{created_by}"/>
+                            <!-- Created By (tester who reported) -->
+                            <Label text="{i18n>createdByLabel}"/>
+                            <Text text="{created_by}"/>
 
-                                <!-- Creation Timestamp -->
-                                <Label text="{i18n>createdAtLabel}"/>
-                                <Text text="{path: 'created_at', formatter: '.formatter.formatDateTime'}"/>
+                            <!-- Creation Timestamp -->
+                            <Label text="{i18n>createdAtLabel}"/>
+                            <Text text="{path: 'created_at', formatter: '.formatter.formatDateTime'}"/>
 
-                                <!-- Last Updated By -->
-                                <Label text="{i18n>lastUpdatedByLabel}"/>
-                                <Text text="{last_updated_by}"/>
+                            <!-- Last Updated By -->
+                            <Label text="{i18n>lastUpdatedByLabel}"/>
+                            <Text text="{last_updated_by}"/>
 
-                                <!-- Last Updated Timestamp -->
-                                <Label text="{i18n>lastUpdatedAtLabel}"/>
-                                <Text text="{path: 'last_updated_at', formatter: '.formatter.formatDateTime'}"/>
+                            <!-- Last Updated Timestamp -->
+                            <Label text="{i18n>lastUpdatedAtLabel}"/>
+                            <Text text="{path: 'last_updated_at', formatter: '.formatter.formatDateTime'}"/>
 
-                            </form:SimpleForm>
-                        </uxap:blocks>
-                    </uxap:ObjectPageSubSection>
-                </uxap:subSections>
+                        </form:SimpleForm>
+                    </uxap:blocks>
+                </uxap:ObjectPageSubSection>
             </uxap:ObjectPageSection>
 
             <!-- ==================================================== -->
@@ -311,90 +313,85 @@
             <uxap:ObjectPageSection
                 id="versionSlaSection"
                 title="{i18n>sectionVersionSla}">
-                <uxap:subSections>
+                <uxap:ObjectPageSubSection title="{i18n>sectionVersionInfo}">
+                    <uxap:blocks>
+                        <form:SimpleForm
+                            editable="false"
+                            layout="ResponsiveGridLayout"
+                            labelSpanXL="3" labelSpanL="3" labelSpanM="4" labelSpanS="12"
+                            emptySpanXL="1" emptySpanL="1" emptySpanM="0" emptySpanS="0"
+                            columnsXL="2" columnsL="2" columnsM="1">
 
-                    <!-- Sub-Section: Version Information -->
-                    <uxap:ObjectPageSubSection title="{i18n>sectionVersionInfo}">
-                        <uxap:blocks>
-                            <form:SimpleForm
-                                editable="false"
-                                layout="ResponsiveGridLayout"
-                                labelSpanXL="3" labelSpanL="3" labelSpanM="4" labelSpanS="12"
-                                emptySpanXL="1" emptySpanL="1" emptySpanM="0" emptySpanS="0"
-                                columnsXL="2" columnsL="2" columnsM="1">
+                            <!-- Affected Version (set at creation, e.g., "1.0") -->
+                            <Label text="{i18n>affectedVersionLabel}"/>
+                            <Text text="{affected_version}"/>
 
-                                <!-- Affected Version (set at creation, e.g., "1.0") -->
-                                <Label text="{i18n>affectedVersionLabel}"/>
-                                <Text text="{affected_version}"/>
+                            <!-- Fix Version (auto-set when resolved, e.g., "1.1") -->
+                            <Label text="{i18n>fixVersionLabel}"/>
+                            <Text text="{path: 'fix_version', formatter: '.formatter.formatOptionalField'}"/>
 
-                                <!-- Fix Version (auto-set when resolved, e.g., "1.1") -->
-                                <Label text="{i18n>fixVersionLabel}"/>
-                                <Text text="{path: 'fix_version', formatter: '.formatter.formatOptionalField'}"/>
+                            <!-- Reopen Count (highlighted if > 0) -->
+                            <Label text="{i18n>reopenCountLabel}"/>
+                            <ObjectNumber
+                                number="{reopen_count}"
+                                state="{path: 'reopen_count', formatter: '.formatter.formatReopenState'}"/>
 
-                                <!-- Reopen Count (highlighted if > 0) -->
-                                <Label text="{i18n>reopenCountLabel}"/>
-                                <ObjectNumber
-                                    number="{reopen_count}"
-                                    state="{path: 'reopen_count', formatter: '.formatter.formatReopenState'}"/>
+                            <!-- Due Date -->
+                            <Label text="{i18n>dueDateLabel}"/>
+                            <Text text="{path: 'due_date', formatter: '.formatter.formatDateTime'}"/>
 
-                                <!-- Due Date -->
-                                <Label text="{i18n>dueDateLabel}"/>
-                                <Text text="{path: 'due_date', formatter: '.formatter.formatDateTime'}"/>
+                        </form:SimpleForm>
+                    </uxap:blocks>
+                </uxap:ObjectPageSubSection>
 
-                            </form:SimpleForm>
-                        </uxap:blocks>
-                    </uxap:ObjectPageSubSection>
+                <!-- Sub-Section: SLA Progress Display -->
+                <uxap:ObjectPageSubSection title="{i18n>sectionSlaProgress}">
+                    <uxap:blocks>
+                        <VBox class="sapUiSmallMargin" id="slaContainer">
 
-                    <!-- Sub-Section: SLA Progress Display -->
-                    <uxap:ObjectPageSubSection title="{i18n>sectionSlaProgress}">
-                        <uxap:blocks>
-                            <VBox class="sapUiSmallMargin" id="slaContainer">
+                            <!-- SLA Remaining Time Header -->
+                            <HBox alignItems="Center" class="sapUiSmallMarginBottom">
+                                <core:Icon
+                                    src="sap-icon://time-overtime"
+                                    color="{slaModel>/slaIconColor}"
+                                    class="sapUiSmallMarginEnd"
+                                    size="1.5rem"/>
+                                <Title
+                                    text="{slaModel>/slaRemainingText}"
+                                    titleStyle="H4"/>
+                            </HBox>
 
-                                <!-- SLA Remaining Time Header -->
-                                <HBox alignItems="Center" class="sapUiSmallMarginBottom">
-                                    <core:Icon
-                                        src="sap-icon://time-overtime"
-                                        color="{slaModel>/slaIconColor}"
-                                        class="sapUiSmallMarginEnd"
-                                        size="1.5rem"/>
-                                    <Title
-                                        text="{slaModel>/slaRemainingText}"
-                                        titleStyle="H4"/>
-                                </HBox>
+                            <!-- SLA Progress Bar -->
+                            <!-- Green = on track, Yellow = warning (>75%), Red = overdue -->
+                            <ProgressIndicator
+                                id="slaProgressBar"
+                                percentValue="{slaModel>/slaPercent}"
+                                displayValue="{slaModel>/slaDisplayValue}"
+                                state="{slaModel>/slaState}"
+                                showValue="true"
+                                class="sapUiMediumMarginBottom"/>
 
-                                <!-- SLA Progress Bar -->
-                                <!-- Green = on track, Yellow = warning (>75%), Red = overdue -->
-                                <ProgressIndicator
-                                    id="slaProgressBar"
-                                    percentValue="{slaModel>/slaPercent}"
-                                    displayValue="{slaModel>/slaDisplayValue}"
-                                    state="{slaModel>/slaState}"
-                                    showValue="true"
-                                    class="sapUiMediumMarginBottom"/>
+                            <!-- SLA Info Labels -->
+                            <HBox wrap="Wrap">
+                                <VBox class="sapUiMediumMarginEnd">
+                                    <Label text="{i18n>slaSeverityLabel}" design="Bold"/>
+                                    <Text text="{severity}"/>
+                                </VBox>
+                                <VBox class="sapUiMediumMarginEnd">
+                                    <Label text="{i18n>slaTotalTimeLabel}" design="Bold"/>
+                                    <Text text="{slaModel>/slaTotalTime}"/>
+                                </VBox>
+                                <VBox>
+                                    <Label text="{i18n>slaOverdueLabel}" design="Bold"/>
+                                    <ObjectStatus
+                                        text="{slaModel>/slaOverdueText}"
+                                        state="{slaModel>/slaOverdueState}"/>
+                                </VBox>
+                            </HBox>
 
-                                <!-- SLA Info Labels -->
-                                <HBox wrap="Wrap">
-                                    <VBox class="sapUiMediumMarginEnd">
-                                        <Label text="{i18n>slaSeverityLabel}" design="Bold"/>
-                                        <Text text="{severity}"/>
-                                    </VBox>
-                                    <VBox class="sapUiMediumMarginEnd">
-                                        <Label text="{i18n>slaTotalTimeLabel}" design="Bold"/>
-                                        <Text text="{slaModel>/slaTotalTime}"/>
-                                    </VBox>
-                                    <VBox>
-                                        <Label text="{i18n>slaOverdueLabel}" design="Bold"/>
-                                        <ObjectStatus
-                                            text="{slaModel>/slaOverdueText}"
-                                            state="{slaModel>/slaOverdueState}"/>
-                                    </VBox>
-                                </HBox>
-
-                            </VBox>
-                        </uxap:blocks>
-                    </uxap:ObjectPageSubSection>
-
-                </uxap:subSections>
+                        </VBox>
+                    </uxap:blocks>
+                </uxap:ObjectPageSubSection>
             </uxap:ObjectPageSection>
 
             <!-- ==================================================== -->
@@ -405,44 +402,42 @@
             <uxap:ObjectPageSection
                 id="resolutionSection"
                 title="{i18n>sectionResolution}"
-                visible="{path: 'status', formatter: '.formatter.isResolutionVisible'}">
-                <uxap:subSections>
-                    <uxap:ObjectPageSubSection title="{i18n>sectionResolution}">
-                        <uxap:blocks>
-                            <form:SimpleForm
-                                editable="false"
-                                layout="ResponsiveGridLayout"
-                                labelSpanXL="3" labelSpanL="3" labelSpanM="3" labelSpanS="12"
-                                emptySpanXL="4" emptySpanL="4" emptySpanM="4" emptySpanS="0"
-                                columnsXL="1" columnsL="1" columnsM="1">
+                visible="false">
+                <uxap:ObjectPageSubSection title="{i18n>sectionResolution}">
+                    <uxap:blocks>
+                        <form:SimpleForm
+                            editable="false"
+                            layout="ResponsiveGridLayout"
+                            labelSpanXL="3" labelSpanL="3" labelSpanM="3" labelSpanS="12"
+                            emptySpanXL="4" emptySpanL="4" emptySpanM="4" emptySpanS="0"
+                            columnsXL="1" columnsL="1" columnsM="1">
 
-                                <!-- Root Cause (mandatory for resolve) -->
-                                <Label text="{i18n>rootCauseLabel}" design="Bold"/>
-                                <Text text="{root_cause}" renderWhitespace="true"/>
+                            <!-- Root Cause (mandatory for resolve) -->
+                            <Label text="{i18n>rootCauseLabel}" design="Bold"/>
+                            <Text text="{root_cause}" renderWhitespace="true"/>
 
-                                <!-- Fix Description (mandatory for resolve) -->
-                                <Label text="{i18n>fixDescriptionLabel}" design="Bold"/>
-                                <Text text="{fix_description}" renderWhitespace="true"/>
+                            <!-- Fix Description (mandatory for resolve) -->
+                            <Label text="{i18n>fixDescriptionLabel}" design="Bold"/>
+                            <Text text="{fix_description}" renderWhitespace="true"/>
 
-                                <!-- Resolution Note (optional) -->
-                                <Label text="{i18n>resolutionNoteLabel}"/>
-                                <Text text="{path: 'resolution_note', formatter: '.formatter.formatOptionalField'}" renderWhitespace="true"/>
+                            <!-- Resolution Note (optional) -->
+                            <Label text="{i18n>resolutionNoteLabel}"/>
+                            <Text text="{path: 'resolution_note', formatter: '.formatter.formatOptionalField'}" renderWhitespace="true"/>
 
-                                <!-- Fixed By (developer who resolved) -->
-                                <Label text="{i18n>fixedByLabel}"/>
-                                <HBox alignItems="Center">
-                                    <core:Icon src="sap-icon://employee" class="sapUiTinyMarginEnd"/>
-                                    <Text text="{fixed_by}"/>
-                                </HBox>
+                            <!-- Fixed By (developer who resolved) -->
+                            <Label text="{i18n>fixedByLabel}"/>
+                            <HBox alignItems="Center">
+                                <core:Icon src="sap-icon://employee" class="sapUiTinyMarginEnd"/>
+                                <Text text="{fixed_by}"/>
+                            </HBox>
 
-                                <!-- Fixed At timestamp -->
-                                <Label text="{i18n>fixedAtLabel}"/>
-                                <Text text="{path: 'fixed_at', formatter: '.formatter.formatDateTime'}"/>
+                            <!-- Fixed At timestamp -->
+                            <Label text="{i18n>fixedAtLabel}"/>
+                            <Text text="{path: 'fixed_at', formatter: '.formatter.formatDateTime'}"/>
 
-                            </form:SimpleForm>
-                        </uxap:blocks>
-                    </uxap:ObjectPageSubSection>
-                </uxap:subSections>
+                        </form:SimpleForm>
+                    </uxap:blocks>
+                </uxap:ObjectPageSubSection>
             </uxap:ObjectPageSection>
 
             <!-- ==================================================== -->
@@ -453,7 +448,7 @@
             <uxap:ObjectPageSection
                 id="attachmentsSection"
                 title="{i18n>sectionAttachments}">
-                <uxap:subSections>
+
                     <uxap:ObjectPageSubSection title="{i18n>sectionAttachments}">
                         <uxap:blocks>
                             <List
@@ -504,7 +499,7 @@
                             </List>
                         </uxap:blocks>
                     </uxap:ObjectPageSubSection>
-                </uxap:subSections>
+
             </uxap:ObjectPageSection>
 
             <!-- ==================================================== -->
@@ -515,7 +510,7 @@
             <uxap:ObjectPageSection
                 id="commentsSection"
                 title="{i18n>sectionComments}">
-                <uxap:subSections>
+
                     <uxap:ObjectPageSubSection title="{i18n>sectionComments}">
                         <uxap:blocks>
                             <VBox class="sapUiSmallMargin">
@@ -538,7 +533,7 @@
                             </VBox>
                         </uxap:blocks>
                     </uxap:ObjectPageSubSection>
-                </uxap:subSections>
+
             </uxap:ObjectPageSection>
 
             <!-- ==================================================== -->
@@ -549,7 +544,7 @@
             <uxap:ObjectPageSection
                 id="historySection"
                 title="{i18n>sectionHistory}">
-                <uxap:subSections>
+
                     <uxap:ObjectPageSubSection title="{i18n>sectionAuditTrail}">
                         <uxap:blocks>
                             <List
@@ -616,7 +611,7 @@
                             </List>
                         </uxap:blocks>
                     </uxap:ObjectPageSubSection>
-                </uxap:subSections>
+
             </uxap:ObjectPageSection>
 
         </uxap:sections>
