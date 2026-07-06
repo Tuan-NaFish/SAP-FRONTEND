@@ -1,25 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    OData V2 EDMX Metadata
-    
+    OData V4 EDMX Metadata
+
     Describes the entity types and entity sets exposed by the
     ZUI_ISSUE_SRVDEF OData service. This file is consumed by
     the SAPUI5 MockServer to simulate the backend locally.
-    
+
     Entity Types:
       - Issue        : Main defect ticket record (from Z_I_ISSUE CDS view)
       - Attachment   : File attachments linked to issues (from Z_I_ATTACHMENT)
       - Comment      : Issue comments/notes (from Z_I_COMMENT)
       - History      : Audit trail / change log (from Z_I_ISSUE_HISTORY)
       - Developer    : Developer-module assignment with workload (from Z_I_DEVELOPER)
-    
+
     NOTE: action_type and notes fields are included in History even though
     the current CDS view Z_I_ISSUE_HISTORY does not expose them. The
     backend CDS view should be updated to include these fields.
+
+    Converted to OData V4 (http://docs.oasis-open.org/odata/ns/edmx)
+    from the previous OData V2 format to resolve MockServer parsing errors.
 -->
-<edmx:Edmx Version="1.0" xmlns:edmx="http://schemas.microsoft.com/ado/2007/06/edmx">
-  <edmx:DataServices m:DataServiceVersion="2.0" xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata">
-    <Schema Namespace="ZUI_ISSUE_SRVDEF" xmlns="http://schemas.microsoft.com/ado/2008/09/edm">
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+  <edmx:DataServices>
+    <Schema Namespace="ZUI_ISSUE_SRVDEF" xmlns="http://docs.oasis-open.org/odata/ns/edm">
 
       <!-- ================================================ -->
       <!-- ENTITY TYPE: Issue (Main Defect Ticket)           -->
@@ -37,22 +40,27 @@
         <Property Name="severity" Type="Edm.String" MaxLength="10"/>
         <Property Name="status" Type="Edm.String" MaxLength="15"/>
         <Property Name="created_by" Type="Edm.String" MaxLength="12"/>
-        <Property Name="created_at" Type="Edm.DateTime" Precision="7"/>
+        <Property Name="created_at" Type="Edm.DateTimeOffset"/>
         <Property Name="assigned_to" Type="Edm.String" MaxLength="12"/>
-        <Property Name="assigned_at" Type="Edm.DateTime" Precision="7"/>
-        <Property Name="due_date" Type="Edm.DateTime" Precision="7"/>
+        <Property Name="assigned_at" Type="Edm.DateTimeOffset"/>
+        <Property Name="due_date" Type="Edm.DateTimeOffset"/>
         <Property Name="affected_version" Type="Edm.String" MaxLength="20"/>
         <Property Name="fix_version" Type="Edm.String" MaxLength="20"/>
         <Property Name="root_cause" Type="Edm.String"/>
         <Property Name="fix_description" Type="Edm.String"/>
         <Property Name="resolution_note" Type="Edm.String"/>
         <Property Name="fixed_by" Type="Edm.String" MaxLength="12"/>
-        <Property Name="fixed_at" Type="Edm.DateTime" Precision="7"/>
+        <Property Name="fixed_at" Type="Edm.DateTimeOffset"/>
         <Property Name="closed_by" Type="Edm.String" MaxLength="12"/>
-        <Property Name="closed_at" Type="Edm.DateTime" Precision="7"/>
+        <Property Name="closed_at" Type="Edm.DateTimeOffset"/>
         <Property Name="last_updated_by" Type="Edm.String" MaxLength="12"/>
-        <Property Name="last_updated_at" Type="Edm.DateTime" Precision="7"/>
+        <Property Name="last_updated_at" Type="Edm.DateTimeOffset"/>
         <Property Name="reopen_count" Type="Edm.Int32"/>
+
+        <!-- Navigation Properties -->
+        <NavigationProperty Name="Attachments" Type="Collection(ZUI_ISSUE_SRVDEF.Attachment)" Partner="Issue"/>
+        <NavigationProperty Name="Comments" Type="Collection(ZUI_ISSUE_SRVDEF.Comment)" Partner="Issue"/>
+        <NavigationProperty Name="Histories" Type="Collection(ZUI_ISSUE_SRVDEF.History)" Partner="Issue"/>
       </EntityType>
 
       <!-- ================================================ -->
@@ -69,7 +77,12 @@
         <Property Name="mime_type" Type="Edm.String" MaxLength="50"/>
         <Property Name="file_size" Type="Edm.Int64"/>
         <Property Name="uploaded_by" Type="Edm.String" MaxLength="12"/>
-        <Property Name="uploaded_at" Type="Edm.DateTime" Precision="7"/>
+        <Property Name="uploaded_at" Type="Edm.DateTimeOffset"/>
+
+        <!-- Navigation Properties -->
+        <NavigationProperty Name="Issue" Type="ZUI_ISSUE_SRVDEF.Issue" Partner="Attachments">
+          <ReferentialConstraint Property="issue_id" ReferencedProperty="issue_id"/>
+        </NavigationProperty>
       </EntityType>
 
       <!-- ================================================ -->
@@ -85,9 +98,14 @@
         <Property Name="comment_type" Type="Edm.String" MaxLength="10"/>
         <Property Name="comment_text" Type="Edm.String"/>
         <Property Name="comment_by" Type="Edm.String" MaxLength="12"/>
-        <Property Name="comment_at" Type="Edm.DateTime" Precision="7"/>
+        <Property Name="comment_at" Type="Edm.DateTimeOffset"/>
         <Property Name="edited_by" Type="Edm.String" MaxLength="12"/>
-        <Property Name="edited_at" Type="Edm.DateTime" Precision="7"/>
+        <Property Name="edited_at" Type="Edm.DateTimeOffset"/>
+
+        <!-- Navigation Properties -->
+        <NavigationProperty Name="Issue" Type="ZUI_ISSUE_SRVDEF.Issue" Partner="Comments">
+          <ReferentialConstraint Property="issue_id" ReferencedProperty="issue_id"/>
+        </NavigationProperty>
       </EntityType>
 
       <!-- ================================================ -->
@@ -107,8 +125,13 @@
         <Property Name="old_value" Type="Edm.String" MaxLength="200"/>
         <Property Name="new_value" Type="Edm.String" MaxLength="200"/>
         <Property Name="changed_by" Type="Edm.String" MaxLength="12"/>
-        <Property Name="changed_at" Type="Edm.DateTime" Precision="7"/>
+        <Property Name="changed_at" Type="Edm.DateTimeOffset"/>
         <Property Name="notes" Type="Edm.String" MaxLength="1000"/>
+
+        <!-- Navigation Properties -->
+        <NavigationProperty Name="Issue" Type="ZUI_ISSUE_SRVDEF.Issue" Partner="Histories">
+          <ReferentialConstraint Property="issue_id" ReferencedProperty="issue_id"/>
+        </NavigationProperty>
       </EntityType>
 
       <!-- ================================================ -->
@@ -126,17 +149,27 @@
         <Property Name="is_active" Type="Edm.String" MaxLength="1"/>
         <Property Name="workload_score" Type="Edm.Int32"/>
         <Property Name="last_updated_by" Type="Edm.String" MaxLength="12"/>
-        <Property Name="last_updated_at" Type="Edm.DateTime" Precision="7"/>
+        <Property Name="last_updated_at" Type="Edm.DateTimeOffset"/>
       </EntityType>
 
       <!-- ================================================ -->
       <!-- ENTITY CONTAINER                                  -->
       <!-- ================================================ -->
-      <EntityContainer Name="ZUI_ISSUE_SRVDEF_Entities" m:IsDefaultEntityContainer="true">
-        <EntitySet Name="Issue" EntityType="ZUI_ISSUE_SRVDEF.Issue"/>
-        <EntitySet Name="Attachment" EntityType="ZUI_ISSUE_SRVDEF.Attachment"/>
-        <EntitySet Name="Comment" EntityType="ZUI_ISSUE_SRVDEF.Comment"/>
-        <EntitySet Name="History" EntityType="ZUI_ISSUE_SRVDEF.History"/>
+      <EntityContainer Name="ZUI_ISSUE_SRVDEF_Entities">
+        <EntitySet Name="Issue" EntityType="ZUI_ISSUE_SRVDEF.Issue">
+          <NavigationPropertyBinding Path="Attachments" Target="Attachment"/>
+          <NavigationPropertyBinding Path="Comments" Target="Comment"/>
+          <NavigationPropertyBinding Path="Histories" Target="History"/>
+        </EntitySet>
+        <EntitySet Name="Attachment" EntityType="ZUI_ISSUE_SRVDEF.Attachment">
+          <NavigationPropertyBinding Path="Issue" Target="Issue"/>
+        </EntitySet>
+        <EntitySet Name="Comment" EntityType="ZUI_ISSUE_SRVDEF.Comment">
+          <NavigationPropertyBinding Path="Issue" Target="Issue"/>
+        </EntitySet>
+        <EntitySet Name="History" EntityType="ZUI_ISSUE_SRVDEF.History">
+          <NavigationPropertyBinding Path="Issue" Target="Issue"/>
+        </EntitySet>
         <EntitySet Name="Developer" EntityType="ZUI_ISSUE_SRVDEF.Developer"/>
       </EntityContainer>
 
