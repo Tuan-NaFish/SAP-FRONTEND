@@ -233,12 +233,15 @@ export default class CreateIssue extends BaseController {
 
         const oModel = this.getModel()!;
 
-        // Create a list binding to /Issue with a dedicated deferred update group
+        // Create a list binding to /Issue with $direct update group.
+        // $direct bypasses $batch entirely — each request is sent as
+        // an individual HTTP call (no batching), which works with the
+        // mock server and SAP backends that don't support batch writes.
         const oListBinding = oModel.bindList("/Issue", undefined, undefined, undefined, {
-            $$updateGroupId: "createGroup"
+            $$updateGroupId: "$direct"
         }) as ODataListBinding;
 
-        // Create the entity
+        // Create the entity — sent immediately as a direct POST request
         const oContext = oListBinding.create(oPayload);
         const that = this;
 
@@ -272,13 +275,6 @@ export default class CreateIssue extends BaseController {
                 );
             } else {
                 MessageBox.error("Failed to create ticket: " + sMessage);
-            }
-        });
-
-        // Explicitly submit batch request using our dedicated deferred group
-        (oModel as any).submitBatch("createGroup").then(() => {
-            if ((oModel as any).hasPendingChanges("createGroup")) {
-                (oModel as any).resetChanges("createGroup");
             }
         });
     }

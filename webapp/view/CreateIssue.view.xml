@@ -30,8 +30,7 @@
                     emptySpanS="0"
                     columnsXL="1"
                     columnsL="1"
-                    columnsM="1"
-                    singleContainerFullWidth="false">
+                    columnsM="1">
 
                     <form:content>
                         <!-- Title Field -->

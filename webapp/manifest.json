@@ -79,7 +79,8 @@
           "autoExpandSelect": true,
           "operationMode": "Server",
           "synchronizationMode": "None",
-          "groupId": "$direct"
+          "groupId": "$direct",
+          "updateGroupId": "$direct"
         }
       },
       "userModel": {

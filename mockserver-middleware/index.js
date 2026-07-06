@@ -311,6 +311,91 @@ module.exports = async function ({ log, options, middlewareUtil }) {
       return;
     }
 
+// Default entity templates — used to fill in required fields
+// that aren't provided in a POST request body. Every field
+// declared in the metadata.xml MUST have a default value here.
+const DEFAULT_TEMPLATES = {
+  Issue: {
+    issue_num: null, title: null, description: null, modulename: null, severity: null,
+    status: "ASSIGNED", created_by: null, assigned_to: null, assigned_at: null, due_date: null,
+    affected_version: "1.0", fix_version: null, root_cause: null, fix_description: null,
+    resolution_note: null, fixed_by: null, fixed_at: null, closed_by: null, closed_at: null,
+    last_updated_by: null, reopen_count: 0,
+  },
+  Attachment: {
+    issue_id: null, file_name: null, mime_type: null, file_size: null, uploaded_by: null,
+  },
+  Comment: {
+    issue_id: null, comment_type: "GENERAL", comment_text: null, comment_by: null, edited_by: null, edited_at: null,
+  },
+  History: {
+    issue_id: null, action_type: null, field_name: null, old_value: null, new_value: null, changed_by: null, notes: null,
+  },
+  Developer: { is_active: "X", workload_score: 0, last_updated_by: null },
+};
+
+// Timestamp fields per entity set — these get fresh values on each create.
+const TIMESTAMP_FIELDS = {
+  Issue: ["created_at", "last_updated_at"],
+  Attachment: ["uploaded_at"],
+  Comment: ["comment_at"],
+  History: ["changed_at"],
+  Developer: ["last_updated_at"],
+};
+
+function applyTimestamps(entityName, item) {
+  const fields = TIMESTAMP_FIELDS[entityName];
+  if (!fields) return;
+  // Strip milliseconds to avoid FormatException from OData V4
+  // DateTimeOffset parser (expects YYYY-MM-DDTHH:mm:ssZ format)
+  const now = new Date().toISOString().split(".")[0] + "Z";
+  for (const f of fields) { item[f] = now; }
+}
+
+    // --- POST handler: Create entity ---
+    // POST /Issue  |  POST /Attachment  |  POST /Comment  |  etc.
+    if (req.method === "POST") {
+      if (Object.keys(keyValues).length > 0) {
+        // POST to a specific entity key is invalid
+        setODataHeaders(res);
+        res.status(405).json({ error: { code: "405", message: "POST on entity key not allowed" } });
+        return;
+      }
+
+      // Parse the request body and merge with a default template
+      // so that every metadata-defined field has a value. This prevents
+      // the OData V4 model from crashing when drilling into missing properties.
+      let body = "";
+      req.on("data", chunk => { body += chunk; });
+      req.on("end", () => {
+        const parsedBody = JSON.parse(body);
+
+        // Generate a unique primary key for this entity set
+        const keyProps = getKeys(entitySetName);
+        const pkField = keyProps[0]; // first key field is the PK (e.g. issue_id)
+        const newId = "mock-" + Date.now() + "-" + Math.random().toString(36).substring(2, 10);
+
+        // Merge: defaults ← parsedBody ← generated ID
+        // The template ensures every metadata field exists; the parsed body
+        // overrides with user-provided values; the ID wins last as the PK.
+        const template = DEFAULT_TEMPLATES[entitySetName] || {};
+        const newItem = { ...template, ...parsedBody, [pkField]: newId };
+
+        // Apply fresh timestamps to timestamp fields
+        applyTimestamps(entitySetName, newItem);
+
+        // Append to in-memory mock data so subsequent GETs include it
+        entityData.push(newItem);
+        log.info(`[mockserver] POST ${entitySetName} → created ${pkField}=${newId}`);
+
+        // Return 201 Created with the complete entity (all fields present)
+        res.status(201);
+        setODataHeaders(res);
+        res.json(newItem);
+      });
+      return;
+    }
+
     // --- Entity set request: /Issue?$filter=...&$orderby=...&$top=...&$skip=...&$count=true ---
     const params = {};
     if (qIdx >= 0) {
