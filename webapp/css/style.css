@@ -10,10 +10,33 @@ html, body, #content {
     padding: 0;
 }
 
-/* ---- Status badges: rounded pill style ---- */
-.sapMObjStatusInverted .sapMObjStatusText {
-    border-radius: 0.25rem;
-    padding: 0.125rem 0.5rem;
+/* ---- Uniform inverted-pill sizing for Module and Status columns ---- */
+/* Force pill to be a centered block element inside its table cell */
+.sapMObjStatus.uniformPill {
+    display: block !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding: 0 !important;
+}
+
+/* Center text inside the pill */
+.sapMObjStatus.uniformPill .sapMObjStatusText {
+    text-align: center !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+/* Kill the icon wrapper strictly */
+.sapMObjStatus.uniformPill .sapMObjStatusIcon,
+.sapMObjStatus.uniformPill .sapUiIcon {
+    display: none !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
 }
 
 /* ---- Bold text utility class ---- */

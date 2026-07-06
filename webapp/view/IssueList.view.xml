@@ -92,10 +92,10 @@
                     <Column width="5.5rem" hAlign="Center">
                         <Text text="{i18n>columnIssueNum}"/>
                     </Column>
-                    <Column>
+                    <Column hAlign="Left">
                         <Text text="{i18n>columnTitle}"/>
                     </Column>
-                    <Column width="5.5rem" hAlign="Center" demandPopin="true" minScreenWidth="Tablet">
+                    <Column width="8rem" hAlign="Center" demandPopin="true" minScreenWidth="Tablet">
                         <Text text="{i18n>columnModule}"/>
                     </Column>
                     <Column width="7rem" hAlign="Center" demandPopin="true" minScreenWidth="Tablet">
@@ -104,7 +104,7 @@
                     <Column width="8rem" hAlign="Center">
                         <Text text="{i18n>columnStatus}"/>
                     </Column>
-                    <Column width="8rem" demandPopin="true" minScreenWidth="Desktop">
+                    <Column width="8rem" hAlign="Center" demandPopin="true" minScreenWidth="Desktop">
                         <Text text="{i18n>columnAssignedTo}"/>
                     </Column>
                     <Column width="7rem" hAlign="Center" demandPopin="true" minScreenWidth="Desktop">
@@ -114,7 +114,7 @@
 
                 <!-- Row Template — each row navigates to detail on press -->
                 <items>
-                    <ColumnListItem type="Navigation" press=".onIssuePress">
+                    <ColumnListItem type="Navigation" vAlign="Middle" press=".onIssuePress">
                         <cells>
                             <!-- Issue Number (formatted as #1001) -->
                             <ObjectIdentifier title="#{issue_num}"/>
@@ -122,11 +122,13 @@
                             <!-- Title (truncated to 2 lines) -->
                             <Text text="{title}" maxLines="2"/>
 
-                            <!-- Module badge (inverted blue) -->
+                            <!-- Module badge — ObjectStatus with inverted styling matching Status column -->
                             <ObjectStatus
-                                text="{modulename}"
+                                class="uniformPill"
                                 inverted="true"
-                                state="Information"/>
+                                text="{modulename}"
+                                state="{= ${modulename} === 'FI' ? 'Indication01' : ${modulename} === 'MM' ? 'Indication02' : ${modulename} === 'SD' ? 'Indication03' : 'Indication04' }"
+                            />
 
                             <!-- Severity with icon and color -->
                             <ObjectStatus
@@ -140,8 +142,9 @@
                                     formatter: '.formatter.formatSeverityIcon'
                                 }"/>
 
-                            <!-- Status with color coding (inverted pill) -->
+                            <!-- Status — consistent ObjectStatus with inverted pill styling -->
                             <ObjectStatus
+                                class="uniformPill"
                                 text="{
                                     path: 'status',
                                     formatter: '.formatter.formatStatusText'

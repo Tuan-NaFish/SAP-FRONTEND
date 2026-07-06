@@ -29,7 +29,7 @@ function formatStatusState(sStatus: string): string {
         case "ASSIGNED":    return "Information"; // Blue
         case "IN_PROGRESS": return "Warning";     // Orange
         case "RESOLVED":    return "Success";     // Green
-        case "TESTING":     return "None";        // Neutral
+        case "TESTING":     return "Information";  // Blue
         case "CLOSED":      return "Success";     // Green
         case "REOPEN":      return "Error";       // Red
         default:            return "None";
