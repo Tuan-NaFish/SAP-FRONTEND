@@ -364,7 +364,13 @@ function applyTimestamps(entityName, item) {
       let body = "";
       req.on("data", chunk => { body += chunk; });
       req.on("end", () => {
-        const parsedBody = JSON.parse(body);
+        let parsedBody;
+        try {
+          parsedBody = JSON.parse(body || "{}");
+        } catch (e) {
+          res.status(400).json({ error: { code: "400", message: "Malformed JSON body: " + e.message } });
+          return;
+        }
 
         // Find the source entity
         let found = null;

@@ -119,6 +119,9 @@ export default class IssueDetail extends BaseController {
         const sPath = "/Issue(" + sIssueId + ")";
         this.getView()!.bindElement({
             path: sPath,
+            parameters: {
+                $$updateGroupId: "detailUpdateGroup"
+            },
             events: {
                 dataReceived: this._onDataReceived.bind(this),
                 change: this._onBindingChange.bind(this)
@@ -420,7 +423,7 @@ export default class IssueDetail extends BaseController {
         }
 
         // Submit OData V4 batch group
-        (oModel as any).submitBatch("$auto").then(() => {
+        (oModel as any).submitBatch("detailUpdateGroup").then(() => {
             oView.setBusy(false);
             if (sSuccessMsg) {
                 MessageToast.show(sSuccessMsg);
