@@ -34,10 +34,24 @@ export default class IssueList extends BaseController {
 
     /**
      * Lifecycle: called when the view is first loaded.
+     * Registers route match handler to refresh table on navigation.
      */
     public onInit(): void {
-        // No special initialization needed for the list page.
-        // The table auto-binds to /Issue from the OData model.
+        this.getRouter().getRoute("IssueList").attachPatternMatched(this._onRouteMatched, this);
+    }
+
+    /**
+     * Route match event handler. Refreshes the table binding so newly
+     * created issues appear after navigating back from CreateIssue.
+     */
+    private _onRouteMatched(): void {
+        const oTable = this.byId("issueTable") as Table;
+        if (oTable) {
+            const oBinding = oTable.getBinding("items") as ListBinding;
+            if (oBinding) {
+                oBinding.refresh();
+            }
+        }
     }
 
     /**

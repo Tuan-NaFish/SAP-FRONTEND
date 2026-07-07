@@ -251,10 +251,11 @@ export default class CreateIssue extends BaseController {
             const sNewIssueId = oContext.getProperty("issue_id") as string;
             MessageToast.show(oBundle.getText("createIssueSuccess"));
 
-            // Navigate to details page
+            // Navigate to details page, replacing the current history state
+            // so pressing "Back" returns to the issue list, not the create form
             that.getRouter().navTo("IssueDetail", {
                 issueId: encodeURIComponent(sNewIssueId)
-            });
+            }, true);
         }, (oError: Error) => {
             oView.setBusy(false);
 

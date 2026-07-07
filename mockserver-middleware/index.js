@@ -381,6 +381,12 @@ function applyTimestamps(entityName, item) {
         const template = DEFAULT_TEMPLATES[entitySetName] || {};
         const newItem = { ...template, ...parsedBody, [pkField]: newId };
 
+        // SNRO Simulation: auto-increment issue_num for Issue entity set
+        if (entitySetName === "Issue") {
+          const maxNum = entityData.reduce((max, item) => Math.max(max, item.issue_num || 1000), 1000);
+          newItem.issue_num = maxNum + 1;
+        }
+
         // Apply fresh timestamps to timestamp fields
         applyTimestamps(entitySetName, newItem);
 

@@ -361,6 +361,111 @@ With `$batch` re-enabled and live data:
 
 ---
 
-*Document generated: July 6, 2026*  
-*Session scope: Architectural migration, OData V4 fixes, RBAC verification, git cleanup, UI polish*  
-*Next milestone: Production backend integration*
+## 8. Issue Detail View — XML & Binding Bug Fixes
+
+### 8.1 Invalid `<uxap:subheading>` Aggregation
+
+**Problem:** `<uxap:subheading>` inside `<uxap:ObjectPageDynamicHeaderTitle>` caused `Cannot add direct child without default aggregation defined` error. The control has no default aggregation.
+
+**Fix:** Replaced with `<uxap:expandedHeading>` — the correct aggregation for subtitle text shown when the header is expanded.
+
+**File:** `webapp/view/IssueDetail.view.xml`
+
+### 8.2 `<uxap:subSections>` Parsed as Control Class
+
+**Problem:** `<uxap:subSections>` wrapper tags caused UI5 to load `sap/uxap/subSections.js` as a control class, resulting in `ModuleError: failed to load 'sap/uxap/subSections.js'` and broken routing.
+
+**Root Cause:** `subSections` is the **default aggregation** of `ObjectPageSection` — the wrapper tag is unnecessary. UI5's XML parser treats it as a control reference instead of an aggregation name.
+
+**Fix:** Removed all 14 `<uxap:subSections>` and `</uxap:subSections>` tags across all 7 sections. `ObjectPageSubSection` elements now sit directly inside `ObjectPageSection` as the default aggregation.
+
+**File:** `webapp/view/IssueDetail.view.xml`
+
+### 8.3 Self-Closing Tag on resolutionSection
+
+**Problem:** After an earlier edit, the `resolutionSection` tag accidentally closed with `/>` instead of `>`, but child elements still followed — breaking the entire section tree.
+
+**Fix:** Changed `/>` to `>` at line 408.
+
+**File:** `webapp/view/IssueDetail.view.xml`
+
+### 8.4 FormatException on `visible` Property — All Bindings
+
+**Problem:** All 6 action buttons and the resolution section threw `FormatException: ASSIGNED is not a valid boolean value` regardless of binding approach:
+- Expression bindings (`{= ... }`) failed
+- Composite bindings (`{parts: [...]}`) failed  
+- Simple path bindings with formatter (`{path: 'status', formatter: '...'}`) failed
+
+**Root Cause:** Both expression bindings and formatter-based composite bindings on the `visible` property failed in SAPUI5 1.120. The OData V4 model's binding context resolves each part individually before calling the formatter, causing `"ASSIGNED"` to be evaluated as a boolean.
+
+**Fix (XML):** Set all 6 `ObjectPageHeaderActionButton` controls and `resolutionSection` to `visible="false"` (hardcoded, no binding). Added unique `id` attributes to each button: `btnStartProgress`, `btnResolve`, `btnStartTesting`, `btnClose`, `btnReopen`, `btnReassign`.
+
+**Fix (Controller):** Added `_updateVisibility()` method in `IssueDetail.controller.ts` that:
+- Reads `status` from the element binding context
+- Reads `role` from the component-level `userRole` JSON model
+- Programmatically calls `setVisible(true|false)` on each button and the resolution section
+- Is called from `onInit()`, `_onBindingChange()`, and `_onDataReceived()`
+
+**Files:** `webapp/view/IssueDetail.view.xml`, `webapp/controller/IssueDetail.controller.ts`
+
+### 8.5 New Visibility Formatter Functions
+
+Added 6 new formatter functions for action button visibility logic (`isStartProgressVisible`, `isResolveVisible`, `isStartTestingVisible`, `isCloseVisible`, `isReopenVisible`, `isReassignVisible`). These exist as reusable logic but are invoked imperatively by the controller rather than via XML binding.
+
+**File:** `webapp/model/formatter.ts`
+
+---
+
+## 9. Create Issue — $batch Bypass & POST Handler
+
+### 9.1 `updateGroupId` Missing in Manifest
+
+**Problem:** POST to create an issue was being sent to `/$batch` (404), even though `groupId: "$direct"` was set.
+
+**Fix:** Added `"updateGroupId": "$direct"` alongside `"groupId": "$direct"` in the OData model settings. The `groupId` controls reads; `updateGroupId` controls writes. Both now use `$direct` to bypass batching entirely.
+
+**File:** `webapp/manifest.json`
+
+### 9.2 Controller Forced Batch Submission
+
+**Problem:** `CreateIssue.controller.ts` used `$$updateGroupId: "createGroup"` (a custom deferred group) on `bindList()` and explicitly called `submitBatch("createGroup")` after create — forcing batch submission.
+
+**Fix:** Changed `$$updateGroupId` to `"$direct"` and removed the `submitBatch()` call. With `$direct`, the POST is sent immediately as an individual HTTP request.
+
+**File:** `webapp/controller/CreateIssue.controller.ts`
+
+### 9.3 Invalid `singleContainerFullWidth` Property
+
+**Problem:** `CreateIssue.view.xml` had `singleContainerFullWidth="false"` on `SimpleForm`, which is not a valid property — causing a UI5 assertion warning.
+
+**Fix:** Removed the property entirely.
+
+**File:** `webapp/view/CreateIssue.view.xml`
+
+---
+
+## 10. Mock Server POST Handler
+
+### 10.1 No POST Handler (404 on Create)
+
+**Problem:** The mock middleware only handled GET requests. POST requests to `/Issue` returned 404.
+
+**Fix:** Added a POST handler that parses the request body, generates a mock primary key, appends the entity to in-memory mock data, and returns `201 Created`.
+
+**File:** `mockserver-middleware/index.js`
+
+### 10.2 Missing Entity Fields Caused V4 Cache Crash
+
+**Problem:** After creating an entity, the Detail view flooded the console with `Failed to drill-down into reopen_count, invalid segment: reopen_count` — UI5's OData V4 cache couldn't find properties that weren't included in the 201 response.
+
+**Root Cause:** The POST handler returned only the fields from the request body + generated ID. Missing fields (like `reopen_count`, `created_at`, `last_updated_at`, `assigned_to`, etc.) triggered infinite drill-down loops in the V4 model cache.
+
+**Fix:** Created `DEFAULT_TEMPLATES` — a module-level object with all metadata-defined fields for each entity set (`Issue`, `Attachment`, `Comment`, `History`, `Developer`). The POST handler now merges: `{ ...defaultTemplate, ...parsedBody, [pkField]: newId }` and applies fresh timestamps via `applyTimestamps()`.
+
+### 10.3 DateTimeOffset Millisecond Precision Error
+
+**Problem:** Timestamps generated with `new Date().toISOString()` produced strings like `2026-07-06T17:31:40.679Z`. The OData V4 `DateTimeOffset` parser threw `FormatException: Illegal sap.ui.model.odata.type.DateTimeOffset value` because the metadata doesn't expect millisecond precision.
+
+**Fix:** Created `applyTimestamps()` helper that strips milliseconds: `new Date().toISOString().split(".")[0] + "Z"` → `2026-07-06T17:31:40Z`. Applied in the POST handler after template merge.
+
+**File:** `mockserver-middleware/index.js`

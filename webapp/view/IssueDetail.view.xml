@@ -31,15 +31,16 @@
     xmlns:form="sap.ui.layout.form">
 
     <!-- ============================================================ -->
-    <!-- OBJECT PAGE LAYOUT                                            -->
+    <!-- OBJECT PAGE LAYOUT — wrapped in sap.m.Page for Fiori back button -->
     <!-- SAP Fiori standard for detail/object pages                    -->
     <!-- ============================================================ -->
-    <uxap:ObjectPageLayout
-        id="issueObjectPage"
-        upperCaseAnchorBar="false"
-        enableLazyLoading="true"
-        showHeaderContent="true"
-        headerContentPinnable="true">
+    <Page showHeader="true" showNavButton="true" navButtonPress=".onNavBack" title="Issue Details" enableScrolling="false" class="sapUiNoContentPadding">
+        <uxap:ObjectPageLayout
+            id="issueObjectPage"
+            upperCaseAnchorBar="false"
+            enableLazyLoading="true"
+            showHeaderContent="true"
+            headerContentPinnable="true">
 
         <!-- ======================================================== -->
         <!-- HEADER TITLE — Issue Identity (always visible)            -->
@@ -97,58 +98,44 @@
                 <!-- and current issue status combination               -->
                 <!-- ================================================ -->
                 <uxap:actions>
-                    <uxap:ObjectPageHeaderActionButton
+                    <Button
                         id="btnStartProgress"
                         text="{i18n>btnStartProgress}"
                         type="Emphasized"
                         press=".onStartProgress"
-                        visible="false"
-                        importance="High"/>
-                    <uxap:ObjectPageHeaderActionButton
+                        visible="false"/>
+                    <Button
                         id="btnResolve"
                         text="{i18n>btnResolve}"
                         type="Emphasized"
                         press=".onResolve"
-                        visible="false"
-                        importance="High"/>
-                    <uxap:ObjectPageHeaderActionButton
+                        visible="false"/>
+                    <Button
                         id="btnStartTesting"
                         text="{i18n>btnStartTesting}"
                         type="Emphasized"
                         press=".onStartTesting"
-                        visible="false"
-                        importance="High"/>
-                    <uxap:ObjectPageHeaderActionButton
+                        visible="false"/>
+                    <Button
                         id="btnClose"
                         text="{i18n>btnClose}"
                         type="Accept"
                         press=".onClose"
-                        visible="false"
-                        importance="High"/>
-                    <uxap:ObjectPageHeaderActionButton
+                        visible="false"/>
+                    <Button
                         id="btnReopen"
                         text="{i18n>btnReopen}"
                         type="Reject"
                         press=".onReopen"
-                        visible="false"
-                        importance="Medium"/>
-                    <uxap:ObjectPageHeaderActionButton
+                        visible="false"/>
+                    <Button
                         id="btnReassign"
                         text="{i18n>btnReassign}"
                         type="Emphasized"
                         press=".onReassign"
-                        visible="false"
-                        importance="High"/>
+                        visible="false"/>
                 </uxap:actions>
 
-                <!-- Back button in the header navigation area -->
-                <uxap:navigationActions>
-                    <uxap:ObjectPageHeaderActionButton
-                        icon="sap-icon://nav-back"
-                        text="{i18n>backButton}"
-                        press=".onNavBack"
-                        importance="High"/>
-                </uxap:navigationActions>
 
             </uxap:ObjectPageDynamicHeaderTitle>
         </uxap:headerTitle>
@@ -617,5 +604,6 @@
         </uxap:sections>
 
     </uxap:ObjectPageLayout>
+    </Page>
 
 </mvc:View>
