@@ -352,6 +352,53 @@ function applyTimestamps(entityName, item) {
   for (const f of fields) { item[f] = now; }
 }
 
+    // --- PATCH handler: Update entity ---
+    // PATCH /Issue('key')
+    if (req.method === "PATCH") {
+      if (Object.keys(keyValues).length === 0) {
+        setODataHeaders(res);
+        res.status(405).json({ error: { code: "405", message: "PATCH requires an entity key" } });
+        return;
+      }
+
+      let body = "";
+      req.on("data", chunk => { body += chunk; });
+      req.on("end", () => {
+        const parsedBody = JSON.parse(body);
+
+        // Find the source entity
+        let found = null;
+        for (const item of entityData) {
+          let match = true;
+          for (const [k, v] of Object.entries(keyValues)) {
+            if (String(item[k] || "") !== String(v)) { match = false; break; }
+          }
+          if (match) { found = item; break; }
+        }
+
+        if (!found) {
+          setODataHeaders(res);
+          res.status(404).json({ error: { code: "404", message: "Entity not found for update" } });
+          return;
+        }
+
+        // Update properties
+        Object.keys(parsedBody).forEach(key => {
+          found[key] = parsedBody[key];
+        });
+
+        // Also update timestamps
+        found["last_updated_at"] = new Date().toISOString().split(".")[0] + "Z";
+        found["last_updated_by"] = parsedBody["last_updated_by"] || found["assigned_to"] || "SYSTEM";
+
+        log.info(`[mockserver] PATCH ${entitySetName} → updated key=${JSON.stringify(keyValues)}`);
+
+        setODataHeaders(res);
+        res.status(200).json(found);
+      });
+      return;
+    }
+
     // --- POST handler: Create entity ---
     // POST /Issue  |  POST /Attachment  |  POST /Comment  |  etc.
     if (req.method === "POST") {
