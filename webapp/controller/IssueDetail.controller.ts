@@ -712,7 +712,7 @@ export default class IssueDetail extends BaseController {
 
         this._updateIssueStatus("ASSIGNED", {
             assigned_to: sDeveloperId,
-            assigned_at: new Date()
+            assigned_at: new Date().toISOString()
         }, "Issue reassigned to " + sDeveloperId);
     }
 
