@@ -469,3 +469,137 @@ Added 6 new formatter functions for action button visibility logic (`isStartProg
 **Fix:** Created `applyTimestamps()` helper that strips milliseconds: `new Date().toISOString().split(".")[0] + "Z"` → `2026-07-06T17:31:40Z`. Applied in the POST handler after template merge.
 
 **File:** `mockserver-middleware/index.js`
+
+---
+
+## 11. UI Polish & UX Fixes — July 7 Session
+
+### 11.1 Issue Detail — Blank Blue Squares on Action Buttons
+
+**Problem:** The 6 workflow action buttons (`btnStartProgress`, `btnResolve`, `btnStartTesting`, `btnClose`, `btnReopen`, `btnReassign`) inside `<uxap:actions>` rendered as blank blue squares without text labels — poor UX.
+
+**Root Cause:** `sap.uxap.ObjectPageHeaderActionButton` does not render its `text` property as a visible label in this SAPUI5 version; it only renders as a tooltip or icon placeholder.
+
+**Fix:** Replaced all 6 `<uxap:ObjectPageHeaderActionButton>` tags with standard `<Button>` tags (from `sap.m`). Retained all existing attributes (`id`, `text`, `type`, `press`, `visible`). Removed the `importance` attribute which is specific to the old control type.
+
+**File:** `webapp/view/IssueDetail.view.xml`
+
+### 11.2 Create Issue → Issue Detail Navigation History Leak
+
+**Problem:** Navigating from CreateIssue to IssueDetail pushed a new history entry. Pressing "Back" returned the user to an empty CreateIssue form instead of the issue list — bad UX.
+
+**Fix:** Added `true` as the third argument to `navTo()` in `CreateIssue.controller.ts`, replacing the current history state instead of pushing a new one:
+
+```typescript
+that.getRouter().navTo("IssueDetail", { issueId: encodeURIComponent(sNewIssueId) }, true);
+```
+
+**File:** `webapp/controller/CreateIssue.controller.ts`
+
+### 11.3 Back Button Placement — Top-Left via sap.m.Page Wrapper
+
+**Problem:** The back button was placed via `<uxap:navigationActions>` inside the ObjectPageDynamicHeaderTitle, rendering on the far right — violates Fiori design guidelines (should be top-left). Attempting `showNavButton` on `ObjectPageLayout` caused assertion errors.
+
+**Fix:** Wrapped the entire `<uxap:ObjectPageLayout>` in a `<Page>` tag with `showNavButton="true"` and `navButtonPress=".onNavBack"`. This renders a standard Fiori back button at the top-left. Removed the old `<uxap:navigationActions>` block entirely. Also added `class="sapUiNoContentPadding"` to avoid double padding.
+
+**File:** `webapp/view/IssueDetail.view.xml`
+
+### 11.4 Issue List Auto-Refresh After Ticket Creation
+
+**Problem:** Newly created issues did not appear in the IssueList table after navigating back from CreateIssue because the OData V4 table binding cached old data and didn't auto-refresh.
+
+**Fix:** Registered a route-pattern-matched handler in `IssueList.controller.ts` that calls `refresh()` on the table's items binding every time the IssueList route is matched:
+
+```typescript
+public onInit(): void {
+    this.getRouter().getRoute("IssueList").attachPatternMatched(this._onRouteMatched, this);
+}
+
+private _onRouteMatched(): void {
+    const oTable = this.byId("issueTable") as Table;
+    if (oTable) {
+        const oBinding = oTable.getBinding("items") as ListBinding;
+        if (oBinding) oBinding.refresh();
+    }
+}
+```
+
+No new imports were needed — `Table` and `ListBinding` were already imported.
+
+**Files:** `webapp/controller/IssueList.controller.ts`
+
+### 11.5 Mock Server SNRO Simulation (Auto-Increment issue_num)
+
+**Problem:** The mock server created new issues with `issue_num: null` because it lacked SAP Number Range (SNRO) simulation. The backend expects sequential issue numbers for display.
+
+**Fix:** Added auto-increment logic in the POST handler of the mock middleware. After merging the new item, it calculates the maximum existing `issue_num` (flooring at 1000) and assigns `maxNum + 1`:
+
+```javascript
+if (entitySetName === "Issue") {
+    const maxNum = entityData.reduce((max, item) => Math.max(max, item.issue_num || 1000), 1000);
+    newItem.issue_num = maxNum + 1;
+}
+```
+
+**File:** `mockserver-middleware/index.js`
+
+### 11.6 Dashboard HBox Justify Property Error
+
+**Problem:** Multiple assertion errors in Dashboard view because `<HBox justify="SpaceBetween">` used an invalid property name. The correct SAPUI5 property is `justifyContent`.
+
+**Fix:** Replaced all 19 instances of `justify="SpaceBetween"` with `justifyContent="SpaceBetween"`. Zero invalid occurrences remain.
+
+**File:** `webapp/view/Dashboard.view.xml`
+
+### 11.7 F5 Refresh State Loss — Login Persistence via sessionStorage
+
+**Problem:** Reloading the page (F5) wiped the client-side `userModel` and `userRole` JSON models from memory, causing role-based UI buttons (Create Ticket, KPI Dashboard) to disappear.
+
+**Fix (Login):** Added `sessionStorage.setItem(...)` calls for `username`, `userFullName`, and `userRole` immediately after setting models on login:
+
+```typescript
+sessionStorage.setItem("username", sUser);
+sessionStorage.setItem("userFullName", sFullName);
+sessionStorage.setItem("userRole", sRole);
+```
+
+**Fix (App):** Updated `App.onInit()` to read from `sessionStorage` on startup and recreate both `userRole` and `userModel` JSON models so role-based UI survives page refresh:
+
+```typescript
+const sStoredRole = sessionStorage.getItem("userRole") || "";
+const sStoredName = sessionStorage.getItem("userFullName") || "";
+const sStoredUser = sessionStorage.getItem("username") || "";
+// Recreate both models from stored values...
+```
+
+**Files:** `webapp/controller/Login.controller.ts`, `webapp/controller/App.controller.ts`
+
+### 11.8 SAP Logo Branding on Issue List Header
+
+**Problem:** The Issue List page had no SAP branding in the header area, making it unclear that it was an SAP system.
+
+**Initial Fix:** Added an `<Image>` tag with the SAP logo from the official UI5 CDN into `<headerContent>`. However, `<headerContent>` items rendered on the far right due to how `sap.m.Page` lays out header content items.
+
+**Final Fix:** Replaced `<headerContent>` with a `<customHeader>` containing a `<Bar>` that explicitly separates left and right content:
+
+- **contentLeft**: SAP logo + page title "Defect Management" (top-left)
+- **contentRight**: App title, user name, and action buttons (right side)
+
+Removed the default `title` attribute from `<Page>` since the title is now rendered inside the custom header bar.
+
+**File:** `webapp/view/IssueList.view.xml`
+
+---
+
+## Files Modified This Session (July 7)
+
+| File | Changes |
+|---|---|
+| `webapp/view/IssueDetail.view.xml` | Button replacement, Page wrapper, navigationActions removal |
+| `webapp/controller/CreateIssue.controller.ts` | navTo history state replacement |
+| `webapp/controller/IssueList.controller.ts` | Route match handler for table refresh |
+| `webapp/view/Dashboard.view.xml` | HBox justifyContent fix (19 occurrences) |
+| `webapp/controller/Login.controller.ts` | sessionStorage persistence on login |
+| `webapp/controller/App.controller.ts` | sessionStorage restoration on init |
+| `webapp/view/IssueList.view.xml` | Custom header with SAP logo branding |
+| `mockserver-middleware/index.js` | SNRO auto-increment simulation |

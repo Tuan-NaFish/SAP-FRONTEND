@@ -24,18 +24,24 @@
 
     <Page
         id="issueListPage"
-        title="{i18n>issueListTitle}"
+        title=""
         showNavButton="false">
 
-        <!-- Page Header: App title & Action buttons -->
-        <headerContent>
-            <Title text="{i18n>appTitle}" titleStyle="H4"/>
-            <Text text="{userModel>/fullName}" visible="{= !!${userModel>/fullName} }"/>
-            <Button icon="sap-icon://add" text="Create Ticket" press=".onGoToCreate" type="Emphasized"
-                visible="{= ${userModel>/role} === 'Tester' || ${userModel>/role} === 'Manager' }"/>
-            <Button icon="sap-icon://manager-insight" text="KPI Dashboard" press=".onGoToDashboard"
-                visible="{= ${userModel>/role} === 'Manager' }"/>
-        </headerContent>
+        <!-- Custom Header: SAP logo + title on left, actions on right -->
+        <customHeader>
+            <Bar>
+                <contentLeft>
+                    <Image src="https://ui5.sap.com/resources/sap/ui/documentation/sdk/images/logo_sap.png" height="1.5rem" class="sapUiSmallMarginBegin sapUiSmallMarginEnd" />
+                    <Title text="{i18n>issueListTitle}" level="H2"/>
+                </contentLeft>
+                <contentRight>
+                    <Title text="{i18n>appTitle}" titleStyle="H4" class="sapUiSmallMarginEnd"/>
+                    <Text text="{userModel>/fullName}" visible="{= !!${userModel>/fullName} }" class="sapUiSmallMarginEnd"/>
+                    <Button icon="sap-icon://add" text="Create Ticket" press=".onGoToCreate" type="Emphasized" visible="{= ${userModel>/role} === 'Tester' || ${userModel>/role} === 'Manager' }"/>
+                    <Button icon="sap-icon://manager-insight" text="KPI Dashboard" press=".onGoToDashboard" visible="{= ${userModel>/role} === 'Manager' }"/>
+                </contentRight>
+            </Bar>
+        </customHeader>
 
         <content>
             <!-- ================================================ -->
