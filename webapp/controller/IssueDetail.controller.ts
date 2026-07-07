@@ -466,7 +466,7 @@ export default class IssueDetail extends BaseController {
                 if (sAction === MessageBox.Action.OK) {
                     that._updateIssueStatus("CLOSED", {
                         closed_by: "DEVELOPER",
-                        closed_at: new Date()
+                        closed_at: new Date().toISOString()
                     }, "Issue closed successfully");
                 }
             }
@@ -578,7 +578,7 @@ export default class IssueDetail extends BaseController {
             fix_description: sFixDesc,
             resolution_note: sNote,
             fixed_by: sCurrentUser,
-            fixed_at: new Date(),
+            fixed_at: new Date().toISOString(),
             fix_version: sNextVersion
         }, "Issue resolved. Fix Version: " + sNextVersion);
     }
