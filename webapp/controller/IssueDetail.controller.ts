@@ -60,6 +60,7 @@ export default class IssueDetail extends BaseController {
 
     private _oResolveDialog: Dialog | null = null;
     private _oReassignDialog: Dialog | null = null;
+    private _oReopenDialog: Dialog | null = null;
 
     // ============================================================
     // LIFECYCLE
@@ -434,8 +435,9 @@ export default class IssueDetail extends BaseController {
             if (oContextUpdated) {
                 that._calculateSLA(oContextUpdated);
             }
-            // Reload history
+            // Reload history and comments
             that._loadHistory(sIssueId);
+            that._loadComments(sIssueId);
         }).catch((oError: Error) => {
             oView.setBusy(false);
             MessageBox.error("Failed to update status: " + oError.message);
@@ -475,27 +477,84 @@ export default class IssueDetail extends BaseController {
 
     /**
      * Reopen action (TESTING/CLOSED -> REOPEN)
+     * Opens the Reopen Dialog to capture the reopen reason.
      */
     public onReopen(): void {
+        const oView = this.getView()!;
         const that = this;
-        MessageBox.confirm(this.getResourceBundle().getText("dialogReopenConfirm"), {
-            onClose: function (sAction: string) {
-                if (sAction === MessageBox.Action.OK) {
-                    const oContext = that.getView()!.getBindingContext();
-                    const iCurrentReopenCount = (oContext!.getProperty("reopen_count") as number) || 0;
-                    const sFixVersion = oContext!.getProperty("fix_version") as string;
 
-                    const mProps: Record<string, any> = {
-                        reopen_count: iCurrentReopenCount + 1
-                    };
-                    if (sFixVersion) {
-                        mProps.affected_version = sFixVersion;
-                    }
+        if (!this._oReopenDialog) {
+            this.loadFragment({
+                name: "sap.defectmgmt.view.fragment.ReopenDialog"
+            }).then((oDialog: Dialog) => {
+                that._oReopenDialog = oDialog;
+                oView.addDependent(that._oReopenDialog);
+                that._oReopenDialog.open();
+            });
+        } else {
+            this._oReopenDialog.open();
+        }
+    }
 
-                    that._updateIssueStatus("REOPEN", mProps, "Issue reopened successfully");
-                }
-            }
+    /**
+     * Cancel Reopen dialog.
+     */
+    public onReopenCancel(): void {
+        if (this._oReopenDialog) {
+            this._oReopenDialog.close();
+        }
+    }
+
+    /**
+     * Submit Reopen dialog.
+     * Validates inputs, posts Reopen Reason as a Comment, and updates status to REOPEN.
+     */
+    public onReopenSubmit(): void {
+        const oReopenReasonInput = this.byId("txtReopenReason") as TextArea;
+        const sReason = oReopenReasonInput.getValue().trim();
+
+        if (!sReason) {
+            oReopenReasonInput.setValueState("Error");
+            oReopenReasonInput.setValueStateText(this.getResourceBundle().getText("dialogReopenReasonRequired"));
+            return;
+        }
+        oReopenReasonInput.setValueState("None");
+
+        this._oReopenDialog!.close();
+        oReopenReasonInput.setValue("");
+
+        const oView = this.getView()!;
+        const oContext = oView.getBindingContext();
+        if (!oContext) { return; }
+
+        const sIssueId = oContext.getProperty("issue_id") as string;
+        const iCurrentReopenCount = (oContext.getProperty("reopen_count") as number) || 0;
+        const sFixVersion = oContext.getProperty("fix_version") as string;
+
+        // Post reopen reason as a comment
+        const oModel = this.getModel()!;
+        const oListBinding = oModel.bindList("/Comment") as ODataListBinding;
+        const oUserRoleModel = this.getOwnerComponent()!.getModel("userRole") as JSONModel;
+        const sRole = oUserRoleModel.getProperty("/role") || "TESTER";
+
+        // Create comment
+        oListBinding.create({
+            issue_id: sIssueId,
+            comment_text: "Reopen Reason: " + sReason,
+            comment_type: "GENERAL",
+            comment_by: sRole
         });
+
+        const mProps: Record<string, any> = {
+            reopen_count: iCurrentReopenCount + 1
+        };
+        if (sFixVersion) {
+            mProps.affected_version = sFixVersion;
+            mProps.fix_version = ""; // Reset fix_version when reopened
+        }
+
+        // Send updates
+        this._updateIssueStatus("REOPEN", mProps, "Issue reopened successfully");
     }
 
     /**

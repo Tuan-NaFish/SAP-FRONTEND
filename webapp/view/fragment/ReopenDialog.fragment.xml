@@ -1,0 +1,36 @@
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:form="sap.ui.layout.form">
+    <Dialog
+        id="reopenDialog"
+        title="{i18n>dialogReopenTitle}">
+        <content>
+            <form:SimpleForm
+                editable="true"
+                layout="ResponsiveGridLayout"
+                labelSpanXL="4" labelSpanL="4" labelSpanM="4" labelSpanS="12">
+                <form:content>
+                    <!-- Reopen Reason (Mandatory) -->
+                    <Label text="{i18n>dialogReopenReason}" required="true"/>
+                    <TextArea
+                        id="txtReopenReason"
+                        rows="4"
+                        width="100%"
+                        placeholder="{i18n>dialogReopenReasonPlaceholder}"/>
+                </form:content>
+            </form:SimpleForm>
+        </content>
+        <beginButton>
+            <Button
+                text="{i18n>dialogSubmit}"
+                type="Emphasized"
+                press=".onReopenSubmit"/>
+        </beginButton>
+        <endButton>
+            <Button
+                text="{i18n>dialogCancel}"
+                press=".onReopenCancel"/>
+        </endButton>
+    </Dialog>
+</core:FragmentDefinition>
