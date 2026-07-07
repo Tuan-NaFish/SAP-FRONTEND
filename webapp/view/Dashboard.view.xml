@@ -16,6 +16,7 @@
         <headerContent>
             <!-- Refresh button -->
             <Button icon="sap-icon://refresh" tooltip="{i18n>dashboardRefreshTooltip}" press=".onRefreshData"/>
+            <Button icon="sap-icon://log" text="Logout" press=".onLogout" type="Transparent"/>
         </headerContent>
 
         <content>

@@ -73,4 +73,32 @@ export default class BaseController extends Controller {
             this.getRouter().navTo("IssueList", {}, true /* no history */);
         }
     }
+
+    /**
+     * Clear user details and navigate back to the Login view.
+     */
+    public onLogout(): void {
+        // 1. Clear session storage
+        sessionStorage.removeItem("username");
+        sessionStorage.removeItem("userFullName");
+        sessionStorage.removeItem("userRole");
+
+        // 2. Clear JSON models
+        const oComponent = this.getOwnerComponent();
+        if (oComponent) {
+            const oUserRoleModel = oComponent.getModel("userRole") as any;
+            if (oUserRoleModel) {
+                oUserRoleModel.setData({ role: "" });
+            }
+            const oUserModel = oComponent.getModel("userModel") as any;
+            if (oUserModel) {
+                oUserModel.setData({
+                    username: "",
+                    fullName: "",
+                    role: ""
+                });
+            }
+        }
+        this.getRouter().navTo("Login", {}, true);
+    }
 }

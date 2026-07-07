@@ -35,6 +35,9 @@
     <!-- SAP Fiori standard for detail/object pages                    -->
     <!-- ============================================================ -->
     <Page showHeader="true" showNavButton="true" navButtonPress=".onNavBack" title="Issue Details" enableScrolling="false" class="sapUiNoContentPadding">
+        <headerContent>
+            <Button icon="sap-icon://log" text="Logout" press=".onLogout" type="Transparent"/>
+        </headerContent>
         <uxap:ObjectPageLayout
             id="issueObjectPage"
             upperCaseAnchorBar="false"

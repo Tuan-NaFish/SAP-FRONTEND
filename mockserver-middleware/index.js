@@ -176,6 +176,140 @@ module.exports = async function ({ log, options, middlewareUtil }) {
       return;
     }
 
+    // Serve $batch
+    if (rawPath === "/$batch") {
+      let body = "";
+      req.on("data", chunk => { body += chunk; });
+      req.on("end", () => {
+        const ct = req.headers["content-type"] || "";
+        const m = ct.match(/boundary=([\w\-]+)/);
+        if (!m) { res.status(400).end("No boundary found in Content-Type"); return; }
+        const boundary = m[1];
+        
+        // Split body by boundary
+        const parts = body.split("--" + boundary);
+        const responses = [];
+        
+        for (const part of parts) {
+          if (part.includes("--") || !part.includes("HTTP/1.1")) continue;
+          
+          const lineMatch = part.match(/(GET|POST|PATCH|PUT|DELETE)\s+(\S+)\s+HTTP\/1.1/i);
+          if (!lineMatch) continue;
+          
+          const method = lineMatch[1].toUpperCase();
+          let urlPath = lineMatch[2];
+          if (urlPath.startsWith(servicePrefix)) {
+            urlPath = urlPath.slice(servicePrefix.length);
+          }
+          
+          // Remove query params
+          const qIdx = urlPath.indexOf("?");
+          const rawUrlPath = qIdx >= 0 ? urlPath.substring(0, qIdx) : urlPath;
+          const cleanUrlPath = rawUrlPath.startsWith("/") ? rawUrlPath.slice(1) : rawUrlPath;
+          
+          // Parse entitySetName and keyValues
+          const segments = cleanUrlPath.split("/").filter(Boolean);
+          if (segments.length === 0) continue;
+          
+          const seg0 = segments[0];
+          const parenIdx = seg0.indexOf("(");
+          let entitySetName = seg0, keyValues = {};
+          if (parenIdx >= 0) {
+            entitySetName = seg0.substring(0, parenIdx);
+            const closeIdx = seg0.lastIndexOf(")");
+            if (closeIdx >= 0) {
+              const keyPart = seg0.substring(parenIdx + 1, closeIdx);
+              const keyVals = parseKeyValues(keyPart);
+              const keyProps = getKeys(entitySetName);
+              for (let i = 0; i < keyVals.length; i++) {
+                keyValues[keyProps[i] || "id"] = keyVals[i];
+              }
+            }
+          }
+          
+          // Find entity data
+          let entityData = null;
+          for (const [es, data] of Object.entries(mockData)) {
+            if (es.toLowerCase() === entitySetName.toLowerCase()) {
+              entityData = data;
+              entitySetName = es;
+              break;
+            }
+          }
+          if (!entityData) continue;
+          
+          // Parse JSON body in part if present
+          let parsedBody = {};
+          const firstBrace = part.indexOf("{");
+          const lastBrace = part.lastIndexOf("}");
+          if (firstBrace >= 0 && lastBrace > firstBrace) {
+            try {
+              parsedBody = JSON.parse(part.substring(firstBrace, lastBrace + 1));
+            } catch (e) { /* ignore */ }
+          }
+          
+          // Execute method
+          if (method === "GET") {
+            if (Object.keys(keyValues).length > 0) {
+              // Single entity
+              let found = entityData.find(item => 
+                Object.entries(keyValues).every(([k, v]) => String(item[k] || "") === String(v))
+              );
+              responses.push({
+                status: found ? "200 OK" : "404 Not Found",
+                body: found || { error: { message: "Not found" } }
+              });
+            } else {
+              // Entity set
+              responses.push({ status: "200 OK", body: { value: entityData } });
+            }
+          } else if (method === "PATCH") {
+            let found = entityData.find(item => 
+              Object.entries(keyValues).every(([k, v]) => String(item[k] || "") === String(v))
+            );
+            if (found) {
+              Object.keys(parsedBody).forEach(key => { found[key] = parsedBody[key]; });
+              found["last_updated_at"] = new Date().toISOString().split(".")[0] + "Z";
+              found["last_updated_by"] = parsedBody["last_updated_by"] || found["assigned_to"] || "SYSTEM";
+              responses.push({ status: "200 OK", body: found });
+            } else {
+              responses.push({ status: "404 Not Found", body: { error: { message: "Not found" } } });
+            }
+          } else if (method === "POST") {
+            const keyProps = getKeys(entitySetName);
+            const pkField = keyProps[0];
+            const newId = "mock-" + Date.now() + "-" + Math.random().toString(36).substring(2, 10);
+            const template = DEFAULT_TEMPLATES[entitySetName] || {};
+            const newItem = { ...template, ...parsedBody, [pkField]: newId };
+            if (entitySetName === "Issue") {
+              const maxNum = entityData.reduce((max, item) => Math.max(max, item.issue_num || 1000), 1000);
+              newItem.issue_num = maxNum + 1;
+            }
+            applyTimestamps(entitySetName, newItem);
+            entityData.push(newItem);
+            responses.push({ status: "201 Created", body: newItem });
+          }
+        }
+        
+        // Build multipart response
+        let respBody = "";
+        responses.forEach(r => {
+          respBody += `--${boundary}\r\n`;
+          respBody += `Content-Type: application/http\r\n`;
+          respBody += `Content-Transfer-Encoding: binary\r\n\r\n`;
+          respBody += `HTTP/1.1 ${r.status}\r\n`;
+          respBody += `Content-Type: application/json;odata.metadata=minimal\r\n\r\n`;
+          respBody += JSON.stringify(r.body) + "\r\n";
+        });
+        respBody += `--${boundary}--\r\n`;
+        
+        res.set("OData-Version", "4.0");
+        res.set("Content-Type", `multipart/mixed; boundary=${boundary}`);
+        res.status(200).send(respBody);
+      });
+      return;
+    }
+
     // Remove leading slash if present
     const cleanPath = rawPath.startsWith("/") ? rawPath.slice(1) : rawPath;
     if (!cleanPath) {
@@ -292,7 +426,7 @@ module.exports = async function ({ log, options, middlewareUtil }) {
     }
 
     // --- Single entity request: /Issue('key') ---
-    if (Object.keys(keyValues).length > 0) {
+    if (Object.keys(keyValues).length > 0 && req.method === "GET") {
       let found = null;
       for (const item of entityData) {
         let match = true;
@@ -351,6 +485,59 @@ function applyTimestamps(entityName, item) {
   const now = new Date().toISOString().split(".")[0] + "Z";
   for (const f of fields) { item[f] = now; }
 }
+
+    // --- PATCH handler: Update entity ---
+    // PATCH /Issue('key')
+    if (req.method === "PATCH") {
+      if (Object.keys(keyValues).length === 0) {
+        setODataHeaders(res);
+        res.status(405).json({ error: { code: "405", message: "PATCH requires an entity key" } });
+        return;
+      }
+
+      let body = "";
+      req.on("data", chunk => { body += chunk; });
+      req.on("end", () => {
+        let parsedBody;
+        try {
+          parsedBody = JSON.parse(body || "{}");
+        } catch (e) {
+          res.status(400).json({ error: { code: "400", message: "Malformed JSON body: " + e.message } });
+          return;
+        }
+
+        // Find the source entity
+        let found = null;
+        for (const item of entityData) {
+          let match = true;
+          for (const [k, v] of Object.entries(keyValues)) {
+            if (String(item[k] || "") !== String(v)) { match = false; break; }
+          }
+          if (match) { found = item; break; }
+        }
+
+        if (!found) {
+          setODataHeaders(res);
+          res.status(404).json({ error: { code: "404", message: "Entity not found for update" } });
+          return;
+        }
+
+        // Update properties
+        Object.keys(parsedBody).forEach(key => {
+          found[key] = parsedBody[key];
+        });
+
+        // Also update timestamps
+        found["last_updated_at"] = new Date().toISOString().split(".")[0] + "Z";
+        found["last_updated_by"] = parsedBody["last_updated_by"] || found["assigned_to"] || "SYSTEM";
+
+        log.info(`[mockserver] PATCH ${entitySetName} → updated key=${JSON.stringify(keyValues)} body=${JSON.stringify(parsedBody)}`);
+
+        setODataHeaders(res);
+        res.status(200).json(found);
+      });
+      return;
+    }
 
     // --- POST handler: Create entity ---
     // POST /Issue  |  POST /Attachment  |  POST /Comment  |  etc.
