@@ -292,7 +292,7 @@ module.exports = async function ({ log, options, middlewareUtil }) {
     }
 
     // --- Single entity request: /Issue('key') ---
-    if (Object.keys(keyValues).length > 0) {
+    if (Object.keys(keyValues).length > 0 && req.method === "GET") {
       let found = null;
       for (const item of entityData) {
         let match = true;
