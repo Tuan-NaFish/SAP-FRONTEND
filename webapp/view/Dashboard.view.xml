@@ -69,12 +69,12 @@
                 <!-- ======================================================== -->
                 <Title text="{i18n>dashboardDistributionTitle}" level="H2" class="sapUiSmallMarginBottom"/>
 
-                <HBox wrap="Wrap" justify="SpaceBetween">
+                <HBox wrap="Wrap" justifyContent="SpaceBetween">
                     <!-- Status Distribution Panel -->
                     <Panel width="100%" class="sapUiResponsiveMargin sapUiNoContentPadding" headerText="{i18n>dashboardStatusDistribution}" expandable="true" expanded="true">
                         <layout:Grid defaultSpan="XL4 L4 M6 S12" class="sapUiSmallMargin">
                             <VBox class="sapUiSmallMarginBottom">
-                                <HBox justify="SpaceBetween">
+                                <HBox justifyContent="SpaceBetween">
                                     <Label text="{i18n>dashboardAssignedLabel}"/>
                                     <Text text="{dashboardData>/status/ASSIGNED} / {dashboardData>/totalTickets}"/>
                                 </HBox>
@@ -85,7 +85,7 @@
                             </VBox>
 
                             <VBox class="sapUiSmallMarginBottom">
-                                <HBox justify="SpaceBetween">
+                                <HBox justifyContent="SpaceBetween">
                                     <Label text="{i18n>dashboardInProgressLabel}"/>
                                     <Text text="{dashboardData>/status/IN_PROGRESS} / {dashboardData>/totalTickets}"/>
                                 </HBox>
@@ -96,7 +96,7 @@
                             </VBox>
 
                             <VBox class="sapUiSmallMarginBottom">
-                                <HBox justify="SpaceBetween">
+                                <HBox justifyContent="SpaceBetween">
                                     <Label text="{i18n>dashboardResolvedLabel}"/>
                                     <Text text="{dashboardData>/status/RESOLVED} / {dashboardData>/totalTickets}"/>
                                 </HBox>
@@ -107,7 +107,7 @@
                             </VBox>
 
                             <VBox class="sapUiSmallMarginBottom">
-                                <HBox justify="SpaceBetween">
+                                <HBox justifyContent="SpaceBetween">
                                     <Label text="{i18n>dashboardTestingLabel}"/>
                                     <Text text="{dashboardData>/status/TESTING} / {dashboardData>/totalTickets}"/>
                                 </HBox>
@@ -118,7 +118,7 @@
                             </VBox>
 
                             <VBox class="sapUiSmallMarginBottom">
-                                <HBox justify="SpaceBetween">
+                                <HBox justifyContent="SpaceBetween">
                                     <Label text="{i18n>dashboardReopenedLabel}"/>
                                     <Text text="{dashboardData>/status/REOPEN} / {dashboardData>/totalTickets}"/>
                                 </HBox>
@@ -129,7 +129,7 @@
                             </VBox>
 
                             <VBox class="sapUiSmallMarginBottom">
-                                <HBox justify="SpaceBetween">
+                                <HBox justifyContent="SpaceBetween">
                                     <Label text="{i18n>dashboardClosedLabel}"/>
                                     <Text text="{dashboardData>/status/CLOSED} / {dashboardData>/totalTickets}"/>
                                 </HBox>
@@ -142,12 +142,12 @@
                     </Panel>
                 </HBox>
 
-                <HBox wrap="Wrap" justify="SpaceBetween">
+                <HBox wrap="Wrap" justifyContent="SpaceBetween">
                     <!-- Severity Distribution Panel -->
                     <Panel width="100%" class="sapUiResponsiveMargin sapUiNoContentPadding" headerText="{i18n>dashboardSeverityDistribution}" expandable="true" expanded="true">
                         <layout:Grid defaultSpan="XL3 L3 M6 S12" class="sapUiSmallMargin">
                             <VBox class="sapUiSmallMarginBottom">
-                                <HBox justify="SpaceBetween">
+                                <HBox justifyContent="SpaceBetween">
                                     <Label text="{i18n>dashboardCriticalLabel}"/>
                                     <Text text="{dashboardData>/severity/CRITICAL} / {dashboardData>/totalTickets}"/>
                                 </HBox>
@@ -158,7 +158,7 @@
                             </VBox>
 
                             <VBox class="sapUiSmallMarginBottom">
-                                <HBox justify="SpaceBetween">
+                                <HBox justifyContent="SpaceBetween">
                                     <Label text="{i18n>dashboardHighLabel}"/>
                                     <Text text="{dashboardData>/severity/HIGH} / {dashboardData>/totalTickets}"/>
                                 </HBox>
@@ -169,7 +169,7 @@
                             </VBox>
 
                             <VBox class="sapUiSmallMarginBottom">
-                                <HBox justify="SpaceBetween">
+                                <HBox justifyContent="SpaceBetween">
                                     <Label text="{i18n>dashboardMediumLabel}"/>
                                     <Text text="{dashboardData>/severity/MEDIUM} / {dashboardData>/totalTickets}"/>
                                 </HBox>
@@ -180,7 +180,7 @@
                             </VBox>
 
                             <VBox class="sapUiSmallMarginBottom">
-                                <HBox justify="SpaceBetween">
+                                <HBox justifyContent="SpaceBetween">
                                     <Label text="{i18n>dashboardLowLabel}"/>
                                     <Text text="{dashboardData>/severity/LOW} / {dashboardData>/totalTickets}"/>
                                 </HBox>
@@ -193,47 +193,47 @@
                     </Panel>
                 </HBox>
 
-                <HBox wrap="Wrap" justify="SpaceBetween">
+                <HBox wrap="Wrap" justifyContent="SpaceBetween">
                     <!-- Module Distribution Panel -->
                     <Panel width="100%" class="sapUiResponsiveMargin sapUiNoContentPadding" headerText="{i18n>dashboardModuleDistribution}" expandable="true" expanded="true">
                         <layout:Grid defaultSpan="XL2 L2 M4 S12" class="sapUiSmallMargin">
                             <VBox class="sapUiSmallMarginBottom">
-                                <HBox justify="SpaceBetween">
+                                <HBox justifyContent="SpaceBetween">
                                     <Label text="FI"/>
                                     <Text text="{dashboardData>/module/FI}"/>
                                 </HBox>
                                 <ProgressIndicator percentValue="{dashboardData>/modulePercent/FI}" displayValue="{dashboardData>/modulePercent/FI}%" state="Information"/>
                             </VBox>
                             <VBox class="sapUiSmallMarginBottom">
-                                <HBox justify="SpaceBetween">
+                                <HBox justifyContent="SpaceBetween">
                                     <Label text="MM"/>
                                     <Text text="{dashboardData>/module/MM}"/>
                                 </HBox>
                                 <ProgressIndicator percentValue="{dashboardData>/modulePercent/MM}" displayValue="{dashboardData>/modulePercent/MM}%" state="Information"/>
                             </VBox>
                             <VBox class="sapUiSmallMarginBottom">
-                                <HBox justify="SpaceBetween">
+                                <HBox justifyContent="SpaceBetween">
                                     <Label text="SD"/>
                                     <Text text="{dashboardData>/module/SD}"/>
                                 </HBox>
                                 <ProgressIndicator percentValue="{dashboardData>/modulePercent/SD}" displayValue="{dashboardData>/modulePercent/SD}%" state="Information"/>
                             </VBox>
                             <VBox class="sapUiSmallMarginBottom">
-                                <HBox justify="SpaceBetween">
+                                <HBox justifyContent="SpaceBetween">
                                     <Label text="HCM"/>
                                     <Text text="{dashboardData>/module/HCM}"/>
                                 </HBox>
                                 <ProgressIndicator percentValue="{dashboardData>/modulePercent/HCM}" displayValue="{dashboardData>/modulePercent/HCM}%" state="Information"/>
                             </VBox>
                             <VBox class="sapUiSmallMarginBottom">
-                                <HBox justify="SpaceBetween">
+                                <HBox justifyContent="SpaceBetween">
                                     <Label text="PP"/>
                                     <Text text="{dashboardData>/module/PP}"/>
                                 </HBox>
                                 <ProgressIndicator percentValue="{dashboardData>/modulePercent/PP}" displayValue="{dashboardData>/modulePercent/PP}%" state="Information"/>
                             </VBox>
                             <VBox class="sapUiSmallMarginBottom">
-                                <HBox justify="SpaceBetween">
+                                <HBox justifyContent="SpaceBetween">
                                     <Label text="QM"/>
                                     <Text text="{dashboardData>/module/QM}"/>
                                 </HBox>

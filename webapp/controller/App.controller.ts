@@ -25,9 +25,21 @@ export default class App extends BaseController {
         // Instantiate simulated global user role model.
         // This model is set on the component so all views can access it.
         // The Login controller will overwrite the role when the user logs in.
+        // On F5 refresh, restore from sessionStorage to avoid state loss.
+        const sStoredRole = sessionStorage.getItem("userRole") || "";
+        const sStoredName = sessionStorage.getItem("userFullName") || "";
+        const sStoredUser = sessionStorage.getItem("username") || "";
+
         const oUserRoleModel = new JSONModel({
-            role: "" // Will be set by Login: TESTER, DEVELOPER, or MANAGER
+            role: sStoredRole.toUpperCase()
         });
         this.getOwnerComponent()?.setModel(oUserRoleModel, "userRole");
+
+        const oUserModel = new JSONModel({
+            username: sStoredUser,
+            fullName: sStoredName,
+            role: sStoredRole
+        });
+        this.getOwnerComponent()?.setModel(oUserModel, "userModel");
     }
 }

@@ -62,6 +62,11 @@ export default class Login extends Controller {
                 });
             }
 
+            // 3. Persist login state to sessionStorage so F5 refresh doesn't wipe it
+            sessionStorage.setItem("username", sUser);
+            sessionStorage.setItem("userFullName", sFullName);
+            sessionStorage.setItem("userRole", sRole);
+
             MessageToast.show(oBundle.getText("loginWelcome") + ", " + sFullName + " (" + sRole + ")!");
 
             // 3. Chuyển hướng vào màn hình IssueList
