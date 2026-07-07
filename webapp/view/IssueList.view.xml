@@ -39,6 +39,7 @@
                     <Text text="{userModel>/fullName}" visible="{= !!${userModel>/fullName} }" class="sapUiSmallMarginEnd"/>
                     <Button icon="sap-icon://add" text="Create Ticket" press=".onGoToCreate" type="Emphasized" visible="{= ${userModel>/role} === 'Tester' || ${userModel>/role} === 'Manager' }"/>
                     <Button icon="sap-icon://manager-insight" text="KPI Dashboard" press=".onGoToDashboard" visible="{= ${userModel>/role} === 'Manager' }"/>
+                    <Button icon="sap-icon://log" text="Logout" press=".onLogout" type="Transparent"/>
                 </contentRight>
             </Bar>
         </customHeader>

@@ -185,7 +185,7 @@ export default class IssueDetail extends BaseController {
         for (const sId of Object.keys(mVisibility)) {
             const oControl = this.byId(sId);
             if (oControl) {
-                oControl.setVisible(mVisibility[sId]);
+                (oControl as any).setVisible(mVisibility[sId]);
             }
         }
 
@@ -193,7 +193,7 @@ export default class IssueDetail extends BaseController {
         const bResolved = sStatus === "RESOLVED" || sStatus === "TESTING" || sStatus === "CLOSED";
         const oSection = this.byId("resolutionSection");
         if (oSection) {
-            oSection.setVisible(bResolved);
+            (oSection as any).setVisible(bResolved);
         }
     }
 
@@ -424,6 +424,12 @@ export default class IssueDetail extends BaseController {
             oView.setBusy(false);
             if (sSuccessMsg) {
                 MessageToast.show(sSuccessMsg);
+            }
+            // Trigger immediate UI visibility and SLA update
+            that._updateVisibility();
+            const oContextUpdated = oView.getBindingContext();
+            if (oContextUpdated) {
+                that._calculateSLA(oContextUpdated);
             }
             // Reload history
             that._loadHistory(sIssueId);
