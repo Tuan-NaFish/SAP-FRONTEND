@@ -1,0 +1,109 @@
+<mvc:View
+    controllerName="sap.defectmgmt.controller.TesterWorklist"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core">
+
+    <Page
+        id="testerWorklistPage"
+        title="{i18n>testerWorklistTitle}"
+        showNavButton="true"
+        navButtonPress=".onNavBack">
+
+        <headerContent>
+            <Button icon="sap-icon://refresh" tooltip="{i18n>dashboardRefreshTooltip}" press=".onRefresh"/>
+        </headerContent>
+
+        <content>
+            <IconTabBar id="testerTabBar" expanded="true" class="sapUiResponsiveContentPadding">
+                <items>
+                    <!-- TAB 1: My Tickets (created by tester) -->
+                    <IconTabFilter
+                        key="myTickets"
+                        icon="sap-icon://create"
+                        text="{i18n>testerWorklistTabMyTickets}">
+                        <Table
+                            id="testerMyTicketsTable"
+                            items="{/Issue}"
+                            growing="true"
+                            growingThreshold="20"
+                            sticky="ColumnHeaders">
+                            <noData>
+                                <VBox alignItems="Center" justifyContent="Center" class="sapUiLargeMargin">
+                                    <core:Icon src="sap-icon://create" size="4rem" color="#8a97a1" class="sapUiSmallMarginBottom"/>
+                                    <Title text="{i18n>testerWorklistMyNoData}" level="H4"/>
+                                </VBox>
+                            </noData>
+                            <columns>
+                                <Column width="5.5rem" hAlign="Center"><Text text="{i18n>columnIssueNum}"/></Column>
+                                <Column><Text text="{i18n>columnTitle}"/></Column>
+                                <Column width="8rem" hAlign="Center" demandPopin="true" minScreenWidth="Tablet"><Text text="{i18n>columnStatus}"/></Column>
+                                <Column width="7rem" hAlign="Center" demandPopin="true" minScreenWidth="Tablet"><Text text="{i18n>columnSeverity}"/></Column>
+                                <Column width="8rem" hAlign="Center" demandPopin="true" minScreenWidth="Desktop"><Text text="{i18n>columnAssignedTo}"/></Column>
+                                <Column width="7rem" hAlign="Center" demandPopin="true" minScreenWidth="Desktop"><Text text="{i18n>columnDueDate}"/></Column>
+                                <Column width="7rem" hAlign="Center"><Text text="{i18n>columnSla}"/></Column>
+                            </columns>
+                            <items>
+                                <ColumnListItem type="Navigation" vAlign="Middle" press=".onIssuePress">
+                                    <cells>
+                                        <ObjectIdentifier title="#{issue_num}"/>
+                                        <Text text="{title}" maxLines="2"/>
+                                        <ObjectStatus class="uniformPill" inverted="true" text="{ path: 'status', formatter: '.formatter.formatStatusText' }" state="{ path: 'status', formatter: '.formatter.formatStatusState' }"/>
+                                        <ObjectStatus text="{severity}" state="{ path: 'severity', formatter: '.formatter.formatSeverityState' }" icon="{ path: 'severity', formatter: '.formatter.formatSeverityIcon' }"/>
+                                        <Text text="{assigned_to}"/>
+                                        <Text text="{ path: 'due_date', formatter: '.formatter.formatDate' }"/>
+                                        <ObjectStatus text="{ parts: ['due_date', 'status'], formatter: '.formatter.formatOverdueText' }" state="{ parts: ['due_date', 'status'], formatter: '.formatter.formatOverdueState' }" icon="{ parts: ['due_date', 'status'], formatter: '.formatter.formatOverdueIcon' }"/>
+                                    </cells>
+                                </ColumnListItem>
+                            </items>
+                        </Table>
+                    </IconTabFilter>
+
+                    <!-- TAB 2: Needs Verification (RESOLVED / TESTING) -->
+                    <IconTabFilter
+                        key="verification"
+                        icon="sap-icon://inspection"
+                        iconColor="Critical"
+                        text="{i18n>testerWorklistTabVerification}">
+                        <Table
+                            id="testerVerificationTable"
+                            items="{/Issue}"
+                            growing="true"
+                            growingThreshold="20"
+                            sticky="ColumnHeaders">
+                            <noData>
+                                <VBox alignItems="Center" justifyContent="Center" class="sapUiLargeMargin">
+                                    <core:Icon src="sap-icon://inspection" size="4rem" color="#8a97a1" class="sapUiSmallMarginBottom"/>
+                                    <Title text="{i18n>testerWorklistVerifyNoData}" level="H4"/>
+                                </VBox>
+                            </noData>
+                            <columns>
+                                <Column width="5.5rem" hAlign="Center"><Text text="{i18n>columnIssueNum}"/></Column>
+                                <Column><Text text="{i18n>columnTitle}"/></Column>
+                                <Column width="8rem" hAlign="Center" demandPopin="true" minScreenWidth="Tablet"><Text text="{i18n>columnStatus}"/></Column>
+                                <Column width="7rem" hAlign="Center" demandPopin="true" minScreenWidth="Tablet"><Text text="{i18n>columnSeverity}"/></Column>
+                                <Column width="8rem" hAlign="Center" demandPopin="true" minScreenWidth="Desktop"><Text text="{i18n>columnAssignedTo}"/></Column>
+                                <Column width="7rem" hAlign="Center" demandPopin="true" minScreenWidth="Desktop"><Text text="{i18n>columnDueDate}"/></Column>
+                                <Column width="7rem" hAlign="Center"><Text text="{i18n>columnSla}"/></Column>
+                            </columns>
+                            <items>
+                                <ColumnListItem type="Navigation" vAlign="Middle" press=".onIssuePress">
+                                    <cells>
+                                        <ObjectIdentifier title="#{issue_num}"/>
+                                        <Text text="{title}" maxLines="2"/>
+                                        <ObjectStatus class="uniformPill" inverted="true" text="{ path: 'status', formatter: '.formatter.formatStatusText' }" state="{ path: 'status', formatter: '.formatter.formatStatusState' }"/>
+                                        <ObjectStatus text="{severity}" state="{ path: 'severity', formatter: '.formatter.formatSeverityState' }" icon="{ path: 'severity', formatter: '.formatter.formatSeverityIcon' }"/>
+                                        <Text text="{assigned_to}"/>
+                                        <Text text="{ path: 'due_date', formatter: '.formatter.formatDate' }"/>
+                                        <ObjectStatus text="{ parts: ['due_date', 'status'], formatter: '.formatter.formatOverdueText' }" state="{ parts: ['due_date', 'status'], formatter: '.formatter.formatOverdueState' }" icon="{ parts: ['due_date', 'status'], formatter: '.formatter.formatOverdueIcon' }"/>
+                                    </cells>
+                                </ColumnListItem>
+                            </items>
+                        </Table>
+                    </IconTabFilter>
+                </items>
+            </IconTabBar>
+        </content>
+    </Page>
+
+</mvc:View>

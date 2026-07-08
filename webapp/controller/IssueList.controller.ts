@@ -177,4 +177,18 @@ export default class IssueList extends BaseController {
     public onGoToDashboard(): void {
         this.getRouter().navTo("Dashboard");
     }
+
+    /**
+     * Event handler: navigate to Developer Worklist.
+     */
+    public onGoToDeveloperWorklist(): void {
+        this.getRouter().navTo("DeveloperWorklist");
+    }
+
+    /**
+     * Event handler: navigate to Tester Worklist.
+     */
+    public onGoToTesterWorklist(): void {
+        this.getRouter().navTo("TesterWorklist");
+    }
 }

@@ -163,5 +163,82 @@
     "changed_by": "TESTER02",
     "changed_at": "2026-06-16T09:30:00",
     "notes": "Sent for testing by: TESTER02"
+  },
+  {
+    "history_id": "hist-005-001",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440005",
+    "action_type": "CREATE",
+    "field_name": "STATUS",
+    "old_value": "",
+    "new_value": "ASSIGNED",
+    "changed_by": "TESTER01",
+    "changed_at": "2026-06-05T09:00:00",
+    "notes": "Ticket created and assigned to DEV_MM_01"
+  },
+  {
+    "history_id": "hist-005-002",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440005",
+    "action_type": "UPDATE",
+    "field_name": "STATUS",
+    "old_value": "ASSIGNED",
+    "new_value": "IN_PROGRESS",
+    "changed_by": "DEV_MM_01",
+    "changed_at": "2026-06-05T10:00:00",
+    "notes": "Developer started work: DEV_MM_01"
+  },
+  {
+    "history_id": "hist-005-003",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440005",
+    "action_type": "UPDATE",
+    "field_name": "STATUS",
+    "old_value": "IN_PROGRESS",
+    "new_value": "RESOLVED",
+    "changed_by": "DEV_MM_01",
+    "changed_at": "2026-06-08T15:30:00",
+    "notes": "Resolved before due date"
+  },
+  {
+    "history_id": "hist-005-004",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440005",
+    "action_type": "UPDATE",
+    "field_name": "STATUS",
+    "old_value": "RESOLVED",
+    "new_value": "CLOSED",
+    "changed_by": "TESTER01",
+    "changed_at": "2026-06-09T10:00:00",
+    "notes": "Closed after successful retest"
+  },
+  {
+    "history_id": "hist-006-001",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440006",
+    "action_type": "CREATE",
+    "field_name": "STATUS",
+    "old_value": "",
+    "new_value": "ASSIGNED",
+    "changed_by": "TESTER01",
+    "changed_at": "2026-06-06T09:00:00",
+    "notes": "Ticket created and assigned to DEV_MM_01"
+  },
+  {
+    "history_id": "hist-006-002",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440006",
+    "action_type": "UPDATE",
+    "field_name": "STATUS",
+    "old_value": "IN_PROGRESS",
+    "new_value": "RESOLVED",
+    "changed_by": "DEV_MM_01",
+    "changed_at": "2026-06-10T14:00:00",
+    "notes": "Initial fix delivered"
+  },
+  {
+    "history_id": "hist-006-003",
+    "issue_id": "550e8400-e29b-41d4-a716-446655440006",
+    "action_type": "UPDATE",
+    "field_name": "STATUS",
+    "old_value": "TESTING",
+    "new_value": "REOPEN",
+    "changed_by": "TESTER01",
+    "changed_at": "2026-06-18T09:00:00",
+    "notes": "Regression found in QA"
   }
 ]

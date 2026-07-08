@@ -24,6 +24,16 @@
             <!-- 1. KPI TILES CONTAINER                                   -->
             <!-- ======================================================== -->
             <layout:VerticalLayout width="100%" class="sapUiSmallMargin">
+
+                <!-- Critical Defect Red Alert (shown when open critical count >= threshold) -->
+                <!-- Critical Defect Red Alert (expression binding — no derivable state in model) -->
+                <MessageStrip
+                    text="{ parts: ['dashboardData>/totalCritical', 'dashboardData>/criticalThreshold'], formatter: '.formatCriticalAlertText' }"
+                    type="Error"
+                    showIcon="true"
+                    visible="{= ${dashboardData>/totalCritical} >= ${dashboardData>/criticalThreshold} }"
+                    class="sapUiSmallMarginBottom"/>
+
                 <Title text="{i18n>dashboardKpiTitle}" level="H2" class="sapUiSmallMarginBottom"/>
 
                 <HBox wrap="Wrap" class="sapUiTinyMarginBottom">
@@ -243,6 +253,47 @@
                         </layout:Grid>
                     </Panel>
                 </HBox>
+
+                <core:HTML content="&lt;hr style='border: none; border-top: 1px solid #e5e5e5; margin: 1.5rem 0;' /&gt;"/>
+
+                <!-- ======================================================== -->
+                <!-- 2b. QUALITY & SLA METRICS                                -->
+                <!-- ======================================================== -->
+                <Title text="{i18n>dashboardAdvancedKpiTitle}" level="H2" class="sapUiSmallMarginBottom"/>
+
+                <HBox wrap="Wrap" class="sapUiTinyMarginBottom">
+                    <!-- SLA Compliance % -->
+                    <GenericTile header="{i18n>kpiSlaCompliance}" frameType="OneByOne" class="sapUiTinyMarginEnd sapUiTinyMarginBottom">
+                        <TileContent unit="%">
+                            <NumericContent
+                                value="{dashboardData>/slaCompliance}"
+                                valueColor="{= ${dashboardData>/slaCompliance} >= 80 ? 'Good' : (${dashboardData>/slaCompliance} >= 50 ? 'Critical' : 'Error') }"
+                                icon="sap-icon://accept"/>
+                        </TileContent>
+                    </GenericTile>
+
+                    <!-- MTTR -->
+                    <GenericTile header="{i18n>kpiMttr}" subheader="{i18n>kpiMttrUnit}" frameType="OneByOne" class="sapUiTinyMarginEnd sapUiTinyMarginBottom">
+                        <TileContent>
+                            <NumericContent
+                                value="{dashboardData>/mttrDays}"
+                                valueColor="Neutral"
+                                icon="sap-icon://lead-time"/>
+                        </TileContent>
+                    </GenericTile>
+
+                    <!-- Reopen Rate % -->
+                    <GenericTile header="{i18n>kpiReopenRate}" frameType="OneByOne" class="sapUiTinyMarginEnd sapUiTinyMarginBottom">
+                        <TileContent unit="%">
+                            <NumericContent
+                                value="{dashboardData>/reopenRate}"
+                                valueColor="{= ${dashboardData>/reopenRate} > 20 ? 'Error' : (${dashboardData>/reopenRate} > 0 ? 'Critical' : 'Good') }"
+                                icon="sap-icon://history"/>
+                        </TileContent>
+                    </GenericTile>
+                </HBox>
+
+                <Text text="{i18n>dashboardKpiFallbackNote}" class="sapUiTinyMarginBottom sapMTextColorSecondary"/>
 
                 <core:HTML content="&lt;hr style='border: none; border-top: 1px solid #e5e5e5; margin: 1.5rem 0;' /&gt;"/>
 

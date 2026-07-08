@@ -133,6 +133,16 @@
           "name": "Dashboard",
           "pattern": "dashboard",
           "target": ["Dashboard"]
+        },
+        {
+          "name": "DeveloperWorklist",
+          "pattern": "developerWorklist",
+          "target": ["DeveloperWorklist"]
+        },
+        {
+          "name": "TesterWorklist",
+          "pattern": "testerWorklist",
+          "target": ["TesterWorklist"]
         }
       ],
       "targets": {
@@ -160,6 +170,16 @@
           "viewType": "XML",
           "viewName": "Dashboard",
           "viewLevel": 2
+        },
+        "DeveloperWorklist": {
+          "viewType": "XML",
+          "viewName": "DeveloperWorklist",
+          "viewLevel": 1
+        },
+        "TesterWorklist": {
+          "viewType": "XML",
+          "viewName": "TesterWorklist",
+          "viewLevel": 1
         }
       }
     }

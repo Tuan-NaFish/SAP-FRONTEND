@@ -76,6 +76,7 @@
         <Property Name="file_name" Type="Edm.String" MaxLength="255"/>
         <Property Name="mime_type" Type="Edm.String" MaxLength="50"/>
         <Property Name="file_size" Type="Edm.Int64"/>
+        <Property Name="file_content" Type="Edm.String"/>
         <Property Name="uploaded_by" Type="Edm.String" MaxLength="12"/>
         <Property Name="uploaded_at" Type="Edm.DateTimeOffset"/>
 

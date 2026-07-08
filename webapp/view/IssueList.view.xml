@@ -37,9 +37,10 @@
                 <contentRight>
                     <Title text="{i18n>appTitle}" titleStyle="H4" class="sapUiSmallMarginEnd"/>
                     <Text text="{userModel>/fullName}" visible="{= !!${userModel>/fullName} }" class="sapUiSmallMarginEnd"/>
-                    <Button icon="sap-icon://add" text="Create Ticket" press=".onGoToCreate" type="Emphasized" visible="{= ${userModel>/role} === 'Tester' || ${userModel>/role} === 'Manager' }"/>
-                    <Button icon="sap-icon://manager-insight" text="KPI Dashboard" press=".onGoToDashboard" visible="{= ${userModel>/role} === 'Manager' }"/>
-                    <Button icon="sap-icon://log" text="Logout" press=".onLogout" type="Transparent"/>
+                    <Button icon="sap-icon://task" text="{i18n>navMyWork}" press=".onGoToDeveloperWorklist" visible="{= ${userModel>/role} === 'Developer' }"/>
+                    <Button icon="sap-icon://inspection" text="{i18n>navVerification}" press=".onGoToTesterWorklist" visible="{= ${userModel>/role} === 'Tester' || ${userModel>/role} === 'Manager' }"/>
+                    <Button icon="sap-icon://add" text="{i18n>btnCreateTicket}" press=".onGoToCreate" type="Emphasized" visible="{= ${userModel>/role} === 'Tester' || ${userModel>/role} === 'Manager' }"/>
+                    <Button icon="sap-icon://manager-insight" text="{i18n>navDashboard}" press=".onGoToDashboard" visible="{= ${userModel>/role} === 'Manager' }"/>
                 </contentRight>
             </Bar>
         </customHeader>
@@ -75,14 +76,17 @@
 
                         <!-- Sort Button -->
                         <Button icon="sap-icon://sort" press=".onSortPress" type="Transparent"
-                            tooltip="Sort issues"/>
+                            tooltip="{i18n>tooltipSortIssues}"/>
 
                         <!-- Module Filter Dropdown -->
                         <Select id="filterModule" change=".onFilterModule" width="150px">
-                            <core:Item key="" text="All Modules" />
+                            <core:Item key="" text="{i18n>filterAllModules}" />
                             <core:Item key="FI" text="FI" />
                             <core:Item key="MM" text="MM" />
                             <core:Item key="SD" text="SD" />
+                            <core:Item key="HCM" text="HCM" />
+                            <core:Item key="PP" text="PP" />
+                            <core:Item key="QM" text="QM" />
                         </Select>
 
                         <!-- Search Field -->
@@ -116,6 +120,9 @@
                     </Column>
                     <Column width="7rem" hAlign="Center" demandPopin="true" minScreenWidth="Desktop">
                         <Text text="{i18n>columnDueDate}"/>
+                    </Column>
+                    <Column width="7rem" hAlign="Center" demandPopin="true" minScreenWidth="Tablet">
+                        <Text text="{i18n>columnSla}"/>
                     </Column>
                 </columns>
 
@@ -170,6 +177,12 @@
                                 path: 'due_date',
                                 formatter: '.formatter.formatDate'
                             }"/>
+
+                            <!-- Overdue indicator (Error when past due & not CLOSED) -->
+                            <ObjectStatus
+                                text="{ parts: ['due_date', 'status'], formatter: '.formatter.formatOverdueText' }"
+                                state="{ parts: ['due_date', 'status'], formatter: '.formatter.formatOverdueState' }"
+                                icon="{ parts: ['due_date', 'status'], formatter: '.formatter.formatOverdueIcon' }"/>
                         </cells>
                     </ColumnListItem>
                 </items>

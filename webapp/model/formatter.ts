@@ -121,6 +121,52 @@ function formatDateTime(oDate: Date | string | null | undefined): string {
     return sDay + "." + sMonth + "." + sYear + " " + sHour + ":" + sMin;
 }
 
+/**
+ * Returns true when an open issue is past its due date.
+ * CLOSED tickets are never treated as overdue in frontend reporting.
+ */
+function isIssueOverdue(
+    oDueDate: Date | string | null | undefined,
+    sStatus: string | null | undefined
+): boolean {
+    if (!oDueDate || sStatus === "CLOSED") { return false; }
+    const d = (oDueDate instanceof Date) ? oDueDate : new Date(oDueDate);
+    if (isNaN(d.getTime())) { return false; }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return d.getTime() < today.getTime();
+}
+
+/**
+ * Overdue status text for tables/worklists.
+ */
+function formatOverdueText(
+    oDueDate: Date | string | null | undefined,
+    sStatus: string | null | undefined
+): string {
+    return isIssueOverdue(oDueDate, sStatus) ? "Overdue" : "On Track";
+}
+
+/**
+ * ValueState for overdue status.
+ */
+function formatOverdueState(
+    oDueDate: Date | string | null | undefined,
+    sStatus: string | null | undefined
+): string {
+    return isIssueOverdue(oDueDate, sStatus) ? "Error" : "Success";
+}
+
+/**
+ * Icon for overdue status.
+ */
+function formatOverdueIcon(
+    oDueDate: Date | string | null | undefined,
+    sStatus: string | null | undefined
+): string {
+    return isIssueOverdue(oDueDate, sStatus) ? "sap-icon://alert" : "sap-icon://sys-enter-2";
+}
+
 // ================================================
 // FILE / ATTACHMENT FORMATTERS
 // ================================================
@@ -271,7 +317,8 @@ function isReassignVisible(
     sStatus: string | null | undefined,
     sRole: string | null | undefined
 ): boolean {
-    return sStatus === "REOPEN" && (sRole === "TESTER" || sRole === "MANAGER");
+    // Backend ZCL_BTTICKET_MANAGER->assign_issue requires MANAGER authorization.
+    return sStatus === "REOPEN" && sRole === "MANAGER";
 }
 
 // ================================================
@@ -335,7 +382,11 @@ const formatter = {
     isReassignVisible,
     isResolutionVisible,
     formatOptionalField,
-    formatReopenState
+    formatReopenState,
+    isIssueOverdue,
+    formatOverdueText,
+    formatOverdueState,
+    formatOverdueIcon
 };
 
 export default formatter;

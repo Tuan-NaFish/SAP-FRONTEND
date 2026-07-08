@@ -13,6 +13,10 @@ import Input from "sap/m/Input";
 import BaseController from "./BaseController";
 import formatter from "../model/formatter";
 import ODataListBinding from "sap/ui/model/odata/v4/ODataListBinding";
+import ODataModel from "sap/ui/model/odata/v4/ODataModel";
+import ODataContextBinding from "sap/ui/model/odata/v4/ODataContextBinding";
+import ODataV4Context from "sap/ui/model/odata/v4/Context";
+import Control from "sap/ui/core/Control";
 
 // ================================================================
 // SLA CONFIGURATION
@@ -60,7 +64,6 @@ export default class IssueDetail extends BaseController {
 
     private _oResolveDialog: Dialog | null = null;
     private _oReassignDialog: Dialog | null = null;
-    private _oReopenDialog: Dialog | null = null;
 
     // ============================================================
     // LIFECYCLE
@@ -120,12 +123,10 @@ export default class IssueDetail extends BaseController {
         const sPath = "/Issue(" + sIssueId + ")";
         this.getView()!.bindElement({
             path: sPath,
-            parameters: {
-                $$updateGroupId: "detailUpdateGroup"
-            },
             events: {
-                dataReceived: this._onDataReceived.bind(this),
-                change: this._onBindingChange.bind(this)
+                dataReceived: this._onDataReceived.bind(this)
+                // 'change' handler removed — dataReceived covers initial load;
+                // avoids running _calculateSLA + _updateVisibility twice per open.
             }
         });
 
@@ -183,21 +184,21 @@ export default class IssueDetail extends BaseController {
             btnStartTesting:  sStatus === "RESOLVED" && (sRole === "TESTER" || sRole === "MANAGER"),
             btnClose:         sStatus === "TESTING" && (sRole === "TESTER" || sRole === "MANAGER"),
             btnReopen:        (sStatus === "TESTING" || sStatus === "CLOSED") && (sRole === "TESTER" || sRole === "MANAGER"),
-            btnReassign:      sStatus === "REOPEN" && (sRole === "TESTER" || sRole === "MANAGER")
+            btnReassign:      formatter.isReassignVisible(sStatus, sRole)
         };
 
         for (const sId of Object.keys(mVisibility)) {
-            const oControl = this.byId(sId);
+            const oControl = this.byId(sId) as Control;
             if (oControl) {
-                (oControl as any).setVisible(mVisibility[sId]);
+                oControl.setVisible(mVisibility[sId]);
             }
         }
 
         // Resolution section visibility
         const bResolved = sStatus === "RESOLVED" || sStatus === "TESTING" || sStatus === "CLOSED";
-        const oSection = this.byId("resolutionSection");
+        const oSection = this.byId("resolutionSection") as unknown as Control;
         if (oSection) {
-            (oSection as any).setVisible(bResolved);
+            oSection.setVisible(bResolved);
         }
     }
 
@@ -391,170 +392,148 @@ export default class IssueDetail extends BaseController {
     }
 
     // ============================================================
-    // PHASE 2: WORKFLOW HANDLERS (ODATA V4 COMPLIANT)
+    // PHASE 2: WORKFLOW HANDLERS — OData V4 BOUND ACTIONS
+    //
+    // Migrated from the previous PATCH + setProperty pattern to the
+    // backend's bound RAP actions (assignIssue, startProgress,
+    // resolveIssue, startTesting, closeIssue, reopenIssue).
+    //
+    // The backend (ZCL_BTTICKET_MANAGER via ZBP_I_ISSUE) now owns:
+    //   - lifecycle transition validation
+    //   - fix_version auto-increment (get_next_version)
+    //   - fixed_by / fixed_at / closed_by / closed_at stamping
+    //   - reopen_count increment + affected_version reset on reopen
+    //   - full audit logging to zissue_history
+    // The frontend no longer computes any of these client-side.
     // ============================================================
 
     /**
-     * Generic status update helper.
-     * Uses OData V4 setProperty + submitBatch pattern.
+     * Generic bound-action invocation helper.
+     *
+     * Creates a deferred operation binding relative to the Issue's bound
+     * context ("<action>(...)"), sets any parameters, executes it, then
+     * refreshes the context so the backend-updated status/version/audit
+     * data flows back into the UI.
+     *
+     * @param sAction  Unqualified bound action name (e.g. "startProgress")
+     * @param mParams  Optional action parameters (matches the RAP parameter
+     *                 entity, e.g. Z_A_RESOLVE_ISSUE / Z_A_ASSIGN_ISSUE)
+     * @param sOkMsg   Optional success toast message
      */
-    private _updateIssueStatus(
-        sNewStatus: string,
-        mAdditionalProperties: Record<string, any> | null,
-        sSuccessMsg?: string
+    private _invokeAction(
+        sAction: string,
+        mParams?: Record<string, unknown>,
+        sOkMsg?: string
     ): void {
         const oView = this.getView()!;
-        const oContext = oView.getBindingContext();
-        if (!oContext) {
+        const oCtx = oView.getBindingContext() as ODataV4Context;
+        if (!oCtx) {
             return;
         }
 
-        const oModel = this.getModel()!;
-        const sIssueId = oContext.getProperty("issue_id") as string;
+        const oModel = this.getModel() as ODataModel;
+        const sIssueId = oCtx.getProperty("issue_id") as string;
         const that = this;
 
-        oView.setBusy(true);
+        // Deferred bound-action operation binding. "(...)" marks it deferred;
+        // $$inheritExpandSelect keeps the returned $self aligned with the
+        // fields already selected for the bound Issue context.
+        const oOperation = oModel.bindContext(
+            `ZUI_ISSUE_SRVDEF.${sAction}(...)`,
+            oCtx,
+            { $$inheritExpandSelect: true }
+        ) as ODataContextBinding;
 
-        // Set new status and other properties
-        (oContext as any).setProperty("status", sNewStatus);
-        if (mAdditionalProperties) {
-            Object.keys(mAdditionalProperties).forEach((key: string) => {
-                (oContext as any).setProperty(key, mAdditionalProperties[key]);
+        if (mParams) {
+            Object.keys(mParams).forEach((sKey) => {
+                oOperation.setParameter(sKey, mParams[sKey]);
             });
         }
 
-        // Submit OData V4 batch group
-        (oModel as any).submitBatch("detailUpdateGroup").then(() => {
-            oView.setBusy(false);
-            if (sSuccessMsg) {
-                MessageToast.show(sSuccessMsg);
-            }
-            // Trigger immediate UI visibility and SLA update
-            that._updateVisibility();
-            const oContextUpdated = oView.getBindingContext();
-            if (oContextUpdated) {
-                that._calculateSLA(oContextUpdated);
-            }
-            // Reload history and comments
-            that._loadHistory(sIssueId);
-            that._loadComments(sIssueId);
-        }).catch((oError: Error) => {
-            oView.setBusy(false);
-            MessageBox.error("Failed to update status: " + oError.message);
-        });
+        oView.setBusy(true);
+        oOperation.execute("$auto")
+            .then(() => (oModel as any).submitBatch("$auto"))
+            .then(() => {
+                oView.setBusy(false);
+                if (sOkMsg) {
+                    MessageToast.show(sOkMsg);
+                }
+                // Re-read the Issue — status/version/audit updated by backend.
+                oCtx.refresh();
+                that._loadHistory(sIssueId);
+            })
+            .catch((oError: unknown) => {
+                oView.setBusy(false);
+                that._showODataError(oError);
+            });
     }
 
     /**
-     * Start progress action (ASSIGNED -> IN_PROGRESS)
+     * Extract and display a structured OData V4 backend error.
+     * V4 wraps the RAP T100/ZCX_BTTICKET_ERROR message; prefer the
+     * structured error object (and its detail messages) over the raw
+     * technical message.
+     */
+    private _showODataError(oError: any): void {
+        let sText = (oError && oError.message) || "Unexpected error";
+        const oResp = oError?.error || oError?.cause?.error;
+        if (oResp?.message) {
+            sText = oResp.message;
+        }
+        if (oResp?.details?.length) {
+            sText += "\n\n" + oResp.details
+                .map((d: any) => "• " + d.message)
+                .join("\n");
+        }
+        MessageBox.error(sText, { title: "SAP Backend Error" });
+    }
+
+    /**
+     * Start progress action (ASSIGNED -> IN_PROGRESS).
+     * Bound action: startProgress (no parameters).
      */
     public onStartProgress(): void {
-        this._updateIssueStatus("IN_PROGRESS", null, "Status updated to In Progress");
+        this._invokeAction("startProgress", undefined, "Status updated to In Progress");
     }
 
     /**
-     * Start testing action (RESOLVED -> TESTING)
+     * Start testing action (RESOLVED -> TESTING).
+     * Bound action: startTesting (no parameters).
      */
     public onStartTesting(): void {
-        this._updateIssueStatus("TESTING", null, "Status updated to Testing");
+        this._invokeAction("startTesting", undefined, "Status updated to Testing");
     }
 
     /**
-     * Close action (TESTING -> CLOSED)
+     * Close action (TESTING -> CLOSED).
+     * Bound action: closeIssue (no parameters).
+     * Backend stamps closed_by (= sy-uname) and closed_at.
      */
     public onClose(): void {
         const that = this;
         MessageBox.confirm(this.getResourceBundle().getText("dialogCloseConfirm"), {
             onClose: function (sAction: string) {
                 if (sAction === MessageBox.Action.OK) {
-                    that._updateIssueStatus("CLOSED", {
-                        closed_by: "DEVELOPER",
-                        closed_at: new Date().toISOString()
-                    }, "Issue closed successfully");
+                    that._invokeAction("closeIssue", undefined, "Issue closed successfully");
                 }
             }
         });
     }
 
     /**
-     * Reopen action (TESTING/CLOSED -> REOPEN)
-     * Opens the Reopen Dialog to capture the reopen reason.
+     * Reopen action (TESTING/CLOSED/RESOLVED -> REOPEN).
+     * Bound action: reopenIssue (no parameters).
+     * Backend increments reopen_count and sets affected_version = fix_version.
      */
     public onReopen(): void {
-        const oView = this.getView()!;
         const that = this;
-
-        if (!this._oReopenDialog) {
-            this.loadFragment({
-                name: "sap.defectmgmt.view.fragment.ReopenDialog"
-            }).then((oDialog: Dialog) => {
-                that._oReopenDialog = oDialog;
-                oView.addDependent(that._oReopenDialog);
-                that._oReopenDialog.open();
-            });
-        } else {
-            this._oReopenDialog.open();
-        }
-    }
-
-    /**
-     * Cancel Reopen dialog.
-     */
-    public onReopenCancel(): void {
-        if (this._oReopenDialog) {
-            this._oReopenDialog.close();
-        }
-    }
-
-    /**
-     * Submit Reopen dialog.
-     * Validates inputs, posts Reopen Reason as a Comment, and updates status to REOPEN.
-     */
-    public onReopenSubmit(): void {
-        const oReopenReasonInput = this.byId("txtReopenReason") as TextArea;
-        const sReason = oReopenReasonInput.getValue().trim();
-
-        if (!sReason) {
-            oReopenReasonInput.setValueState("Error");
-            oReopenReasonInput.setValueStateText(this.getResourceBundle().getText("dialogReopenReasonRequired"));
-            return;
-        }
-        oReopenReasonInput.setValueState("None");
-
-        this._oReopenDialog!.close();
-        oReopenReasonInput.setValue("");
-
-        const oView = this.getView()!;
-        const oContext = oView.getBindingContext();
-        if (!oContext) { return; }
-
-        const sIssueId = oContext.getProperty("issue_id") as string;
-        const iCurrentReopenCount = (oContext.getProperty("reopen_count") as number) || 0;
-        const sFixVersion = oContext.getProperty("fix_version") as string;
-
-        // Post reopen reason as a comment
-        const oModel = this.getModel()!;
-        const oListBinding = oModel.bindList("/Comment") as ODataListBinding;
-        const oUserRoleModel = this.getOwnerComponent()!.getModel("userRole") as JSONModel;
-        const sRole = oUserRoleModel.getProperty("/role") || "TESTER";
-
-        // Create comment
-        oListBinding.create({
-            issue_id: sIssueId,
-            comment_text: "Reopen Reason: " + sReason,
-            comment_type: "GENERAL",
-            comment_by: sRole
+        MessageBox.confirm(this.getResourceBundle().getText("dialogReopenConfirm"), {
+            onClose: function (sAction: string) {
+                if (sAction === MessageBox.Action.OK) {
+                    that._invokeAction("reopenIssue", undefined, "Issue reopened successfully");
+                }
+            }
         });
-
-        const mProps: Record<string, any> = {
-            reopen_count: iCurrentReopenCount + 1
-        };
-        if (sFixVersion) {
-            mProps.affected_version = sFixVersion;
-            mProps.fix_version = ""; // Reset fix_version when reopened
-        }
-
-        // Send updates
-        this._updateIssueStatus("REOPEN", mProps, "Issue reopened successfully");
     }
 
     /**
@@ -627,38 +606,14 @@ export default class IssueDetail extends BaseController {
         oFixDescInput.setValue("");
         oNoteInput.setValue("");
 
-        const oContext = this.getView()!.getBindingContext();
-        const sAffectedVersion = oContext!.getProperty("affected_version") as string || "1.0";
-        const sNextVersion = this._calculateNextVersion(sAffectedVersion);
-        const sCurrentUser = oContext!.getProperty("assigned_to") as string || "DEVELOPER";
-
-        this._updateIssueStatus("RESOLVED", {
-            root_cause: sRootCause,
-            fix_description: sFixDesc,
-            resolution_note: sNote,
-            fixed_by: sCurrentUser,
-            fixed_at: new Date().toISOString(),
-            fix_version: sNextVersion
-        }, "Issue resolved. Fix Version: " + sNextVersion);
-    }
-
-    /**
-     * Auto-increment the patch version number.
-     * Example: "1.0" → "1.1", "1.2.3" → "1.2.4"
-     */
-    private _calculateNextVersion(sVersion: string): string {
-        if (!sVersion) {
-            return "1.0";
-        }
-        const aParts = sVersion.split(".");
-        const iLastIndex = aParts.length - 1;
-        const iLastNum = parseInt(aParts[iLastIndex], 10);
-        if (!isNaN(iLastNum)) {
-            aParts[iLastIndex] = String(iLastNum + 1);
-        } else {
-            aParts.push("1");
-        }
-        return aParts.join(".");
+        // Bound action: resolveIssue with parameter entity Z_A_RESOLVE_ISSUE.
+        // fix_version is computed server-side (get_next_version) — do NOT send it.
+        // fixed_by / fixed_at are stamped by the backend from sy-uname.
+        this._invokeAction("resolveIssue", {
+            root_cause:      sRootCause,   // MANDATORY (BR-004)
+            fix_description: sFixDesc,     // MANDATORY (BR-005)
+            resolution_note: sNote         // optional
+        }, "Issue resolved successfully");
     }
 
     /**
@@ -710,9 +665,11 @@ export default class IssueDetail extends BaseController {
 
         this._oReassignDialog!.close();
 
-        this._updateIssueStatus("ASSIGNED", {
-            assigned_to: sDeveloperId,
-            assigned_at: new Date().toISOString()
+        // Bound action: assignIssue with parameter entity Z_A_ASSIGN_ISSUE.
+        // Backend validates the developer (module + active), resets status to
+        // ASSIGNED, stamps assigned_at and writes the audit log.
+        this._invokeAction("assignIssue", {
+            developer: sDeveloperId
         }, "Issue reassigned to " + sDeveloperId);
     }
 
@@ -839,6 +796,56 @@ export default class IssueDetail extends BaseController {
         });
 
         (oModel as any).submitBatch(oListBinding.getUpdateGroupId());
+    }
+
+    /**
+     * Download an attachment from the loaded attachment JSON model.
+     *
+     * Contract: file_content can be supplied by the real backend as base64
+     * (Edm.String/rawstring exposure). The local MockServer intentionally has
+     * metadata-only attachments for most rows, so missing content is handled
+     * gracefully instead of breaking the detail page.
+     */
+    public onDownloadAttachment(oEvent: Event): void {
+        const oSource = oEvent.getSource() as any;
+        const oContext = oSource.getBindingContext("attachments");
+        const oAttachment = oContext?.getObject() as Record<string, any> | undefined;
+
+        if (!oAttachment) {
+            return;
+        }
+
+        const sFileName = oAttachment.file_name || "attachment";
+        const sMimeType = oAttachment.mime_type || "application/octet-stream";
+        const sContent = oAttachment.file_content as string;
+
+        if (!sContent) {
+            MessageBox.information(this.getResourceBundle().getText("attachmentNoContent"));
+            return;
+        }
+
+        try {
+            const sBase64 = sContent.indexOf(",") >= 0 ? sContent.split(",").pop()! : sContent;
+            const sBinary = window.atob(sBase64);
+            const aBytes = new Uint8Array(sBinary.length);
+            for (let i = 0; i < sBinary.length; i++) {
+                aBytes[i] = sBinary.charCodeAt(i);
+            }
+
+            const oBlob = new Blob([aBytes], { type: sMimeType });
+            const sUrl = URL.createObjectURL(oBlob);
+            const oAnchor = document.createElement("a");
+            oAnchor.href = sUrl;
+            oAnchor.download = sFileName;
+            document.body.appendChild(oAnchor);
+            oAnchor.click();
+            document.body.removeChild(oAnchor);
+            URL.revokeObjectURL(sUrl);
+
+            MessageToast.show(this.getResourceBundle().getText("attachmentDownloadStarted", [sFileName]));
+        } catch (oError: any) {
+            MessageBox.error(this.getResourceBundle().getText("attachmentDownloadFailed", [oError?.message || "Unknown error"]));
+        }
     }
 
     /**

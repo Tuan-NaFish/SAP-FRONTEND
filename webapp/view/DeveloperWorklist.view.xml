@@ -1,0 +1,105 @@
+<mvc:View
+    controllerName="sap.defectmgmt.controller.DeveloperWorklist"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core">
+
+    <Page
+        id="developerWorklistPage"
+        title="{i18n>devWorklistTitle}"
+        showNavButton="true"
+        navButtonPress=".onNavBack">
+
+        <headerContent>
+            <Button icon="sap-icon://refresh" tooltip="{i18n>dashboardRefreshTooltip}" press=".onRefresh"/>
+        </headerContent>
+
+        <content>
+            <MessageStrip
+                text="{i18n>devWorklistIntro}"
+                type="Information"
+                showIcon="true"
+                class="sapUiSmallMargin"/>
+
+            <Table
+                id="developerWorklistTable"
+                items="{/Issue}"
+                growing="true"
+                growingThreshold="20"
+                sticky="ColumnHeaders,HeaderToolbar"
+                class="sapUiSmallMargin">
+
+                <noData>
+                    <VBox alignItems="Center" justifyContent="Center" class="sapUiLargeMargin">
+                        <core:Icon src="sap-icon://accept" size="4rem" color="#107e3e" class="sapUiSmallMarginBottom"/>
+                        <Title text="{i18n>devWorklistNoData}" level="H4"/>
+                    </VBox>
+                </noData>
+
+                <headerToolbar>
+                    <OverflowToolbar>
+                        <Title text="{i18n>devWorklistTableTitle}" level="H3"/>
+                        <ToolbarSpacer/>
+                        <ObjectStatus
+                            text="{userModel>/fullName}"
+                            icon="sap-icon://employee"
+                            state="Information"/>
+                    </OverflowToolbar>
+                </headerToolbar>
+
+                <columns>
+                    <Column width="5.5rem" hAlign="Center">
+                        <Text text="{i18n>columnIssueNum}"/>
+                    </Column>
+                    <Column hAlign="Left">
+                        <Text text="{i18n>columnTitle}"/>
+                    </Column>
+                    <Column width="8rem" hAlign="Center" demandPopin="true" minScreenWidth="Tablet">
+                        <Text text="{i18n>columnModule}"/>
+                    </Column>
+                    <Column width="7rem" hAlign="Center" demandPopin="true" minScreenWidth="Tablet">
+                        <Text text="{i18n>columnSeverity}"/>
+                    </Column>
+                    <Column width="8rem" hAlign="Center">
+                        <Text text="{i18n>columnStatus}"/>
+                    </Column>
+                    <Column width="7rem" hAlign="Center" demandPopin="true" minScreenWidth="Desktop">
+                        <Text text="{i18n>columnDueDate}"/>
+                    </Column>
+                    <Column width="7rem" hAlign="Center">
+                        <Text text="{i18n>columnSla}"/>
+                    </Column>
+                </columns>
+
+                <items>
+                    <ColumnListItem type="Navigation" vAlign="Middle" press=".onIssuePress">
+                        <cells>
+                            <ObjectIdentifier title="#{issue_num}"/>
+                            <Text text="{title}" maxLines="2"/>
+                            <ObjectStatus
+                                class="uniformPill"
+                                inverted="true"
+                                text="{modulename}"
+                                state="Information"/>
+                            <ObjectStatus
+                                text="{severity}"
+                                state="{ path: 'severity', formatter: '.formatter.formatSeverityState' }"
+                                icon="{ path: 'severity', formatter: '.formatter.formatSeverityIcon' }"/>
+                            <ObjectStatus
+                                class="uniformPill"
+                                inverted="true"
+                                text="{ path: 'status', formatter: '.formatter.formatStatusText' }"
+                                state="{ path: 'status', formatter: '.formatter.formatStatusState' }"/>
+                            <Text text="{ path: 'due_date', formatter: '.formatter.formatDate' }"/>
+                            <ObjectStatus
+                                text="{ parts: ['due_date', 'status'], formatter: '.formatter.formatOverdueText' }"
+                                state="{ parts: ['due_date', 'status'], formatter: '.formatter.formatOverdueState' }"
+                                icon="{ parts: ['due_date', 'status'], formatter: '.formatter.formatOverdueIcon' }"/>
+                        </cells>
+                    </ColumnListItem>
+                </items>
+            </Table>
+        </content>
+    </Page>
+
+</mvc:View>

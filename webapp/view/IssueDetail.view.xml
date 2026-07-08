@@ -472,7 +472,8 @@
                                         title="{attachments>file_name}"
                                         number="{path: 'attachments>file_size', formatter: '.formatter.formatFileSize'}"
                                         icon="{path: 'attachments>mime_type', formatter: '.formatter.formatFileIcon'}"
-                                        type="Active">
+                                        type="Active"
+                                        press=".onDownloadAttachment">
                                         <attributes>
                                             <ObjectAttribute
                                                 text="{i18n>uploadedByPrefix} {attachments>uploaded_by}"/>

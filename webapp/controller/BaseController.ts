@@ -5,6 +5,7 @@ import Router from "sap/m/routing/Router";
 import Model from "sap/ui/model/Model";
 import ResourceBundle from "sap/base/i18n/ResourceBundle";
 import ResourceModel from "sap/ui/model/resource/ResourceModel";
+import JSONModel from "sap/ui/model/json/JSONModel";
 
 /**
  * @namespace sap.defectmgmt.controller
@@ -54,6 +55,16 @@ export default class BaseController extends Controller {
     public getResourceBundle(): any {
         const oModel = this.getOwnerComponent()?.getModel("i18n") as any as ResourceModel;
         return oModel.getResourceBundle();
+    }
+
+    /**
+     * Return the backend business user ID from the userModel.
+     * On a real SAP system this would be sy-uname; in dev/demo mode it is
+     * mapped from the login role (see Login.controller.ts).
+     */
+    protected getCurrentUser(): string {
+        const oModel = this.getOwnerComponent()?.getModel("userModel") as JSONModel;
+        return oModel?.getProperty("/username") as string || "";
     }
 
     /**

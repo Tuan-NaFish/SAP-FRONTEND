@@ -29,6 +29,7 @@ export default class App extends BaseController {
         const sStoredRole = sessionStorage.getItem("userRole") || "";
         const sStoredName = sessionStorage.getItem("userFullName") || "";
         const sStoredUser = sessionStorage.getItem("username") || "";
+        const sStoredLoginName = sessionStorage.getItem("loginName") || "";
 
         const oUserRoleModel = new JSONModel({
             role: sStoredRole.toUpperCase()
@@ -37,6 +38,7 @@ export default class App extends BaseController {
 
         const oUserModel = new JSONModel({
             username: sStoredUser,
+            loginName: sStoredLoginName,
             fullName: sStoredName,
             role: sStoredRole
         });

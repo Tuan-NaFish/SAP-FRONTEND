@@ -29,17 +29,26 @@ export default class Login extends Controller {
 
         let sRole = "";
         let sFullName = "";
+        // Backend business key (assigned_to / created_by).
+        // NOTE (dev-only): the simulated login maps each demo role to a sample
+        // SAP user ID so the Developer/Tester worklists have matching data on
+        // the local MockServer. On a real SAP backend the identity comes from
+        // sy-uname; this mapping must be replaced by the real logged-on user.
+        let sBackendUser = "";
 
         // --- KIỂM TRA PHÂN QUYỀN (ROLE-BASED AUTHENTICATION) ---
         if (sUser === "tester" && sPass === "123") {
             sRole = "Tester";
             sFullName = "QA Tester";
+            sBackendUser = "TESTER01";
         } else if (sUser === "dev" && sPass === "123") {
             sRole = "Developer";
             sFullName = "ABAP Developer";
+            sBackendUser = "DEV_MM_01";
         } else if (sUser === "manager" && sPass === "123") {
             sRole = "Manager";
             sFullName = "Project Manager";
+            sBackendUser = "MANAGER01";
         }
 
         if (sRole !== "") {
@@ -49,7 +58,8 @@ export default class Login extends Controller {
             // 1. Lưu Role vào biến toàn cục "userModel" để Fiori tự động ẩn/hiện UI
             const oUserModel = (this.getOwnerComponent() as any).getModel("userModel") as JSONModel;
             oUserModel.setData({
-                username: sUser,
+                username: sBackendUser,
+                loginName: sUser,
                 fullName: sFullName,
                 role: sRole
             });
@@ -63,7 +73,9 @@ export default class Login extends Controller {
             }
 
             // 3. Persist login state to sessionStorage so F5 refresh doesn't wipe it
-            sessionStorage.setItem("username", sUser);
+            //    "username" holds the backend business key (sy-uname equivalent).
+            sessionStorage.setItem("username", sBackendUser);
+            sessionStorage.setItem("loginName", sUser);
             sessionStorage.setItem("userFullName", sFullName);
             sessionStorage.setItem("userRole", sRole);
 
