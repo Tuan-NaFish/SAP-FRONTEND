@@ -119,8 +119,8 @@ export default class IssueDetail extends BaseController {
         );
 
         // Bind the entire view to the Issue entity by key
-        // OData V4 GUID key format: /Issue(550e8400-e29b-41d4-a716-446655440001)
-        const sPath = "/Issue(" + sIssueId + ")";
+        // OData V4 string keys require single quotes: /Issue('guid')
+        const sPath = "/Issue('" + sIssueId + "')";
         this.getView()!.bindElement({
             path: sPath,
             events: {

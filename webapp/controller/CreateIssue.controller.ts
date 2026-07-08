@@ -219,8 +219,12 @@ export default class CreateIssue extends BaseController {
         const oDueDate = new Date(sDueDateStr);
         const sFormattedDueDate = oDueDate.toISOString().split("T")[0] + "T00:00:00Z";
 
-        // Prepare payload
+        // Generate unique issue_id — SAP uses SYSUUID_C36 domain (36 chars with hyphens)
+        const sIssueId = crypto.randomUUID().toUpperCase();
+
+        // Prepare payload — send full record including key for 'create as update'
         const oPayload: Record<string, any> = {
+            issue_id: sIssueId,
             title: sTitle,
             description: sDescription,
             modulename: sModule,
