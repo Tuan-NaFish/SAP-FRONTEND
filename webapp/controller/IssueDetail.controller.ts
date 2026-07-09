@@ -435,11 +435,11 @@ export default class IssueDetail extends BaseController {
         const sIssueId = oCtx.getProperty("issue_id") as string;
         const that = this;
 
-        // Deferred bound-action operation binding. "(...)" marks it deferred;
-        // $$inheritExpandSelect keeps the returned $self aligned with the
-        // fields already selected for the bound Issue context.
+        // Deferred bound-action operation binding.
+        // Model uses groupId/updateGroupId = "$direct", so execute() fires immediately.
+        // Do NOT call submitBatch("$auto") — that throws "Group ID does not use batch requests".
         const oOperation = oModel.bindContext(
-            `ZUI_ISSUE_SRVDEF.${sAction}(...)`,
+            `com.sap.gateway.srvd.zui_issue_srvdef.v0001.${sAction}(...)`,
             oCtx,
             { $$inheritExpandSelect: true }
         ) as ODataContextBinding;
@@ -451,8 +451,7 @@ export default class IssueDetail extends BaseController {
         }
 
         oView.setBusy(true);
-        oOperation.execute("$auto")
-            .then(() => (oModel as any).submitBatch("$auto"))
+        oOperation.execute()
             .then(() => {
                 oView.setBusy(false);
                 if (sOkMsg) {
@@ -714,34 +713,27 @@ export default class IssueDetail extends BaseController {
             comment_text: sValue.trim(),
             comment_type: "GENERAL",
             comment_by: sRole,
-            comment_at: new Date()
+            comment_at: new Date().toISOString()
         });
 
+        // $direct mode: create() already fires the request; no submitBatch needed.
         oNewContext.created().then(() => {
             that.getView()!.setBusy(false);
             MessageToast.show(that.getResourceBundle().getText("createCommentSuccess"));
-            // Reload comments
             that._loadComments(sIssueId);
         }, (oError: Error) => {
             that.getView()!.setBusy(false);
-
             const sMessage = oError.message || "Unknown error occurred";
             if (sMessage.indexOf("Creating operations are disabled") >= 0 || sMessage.indexOf("SADL_ENTITY_RUNTIME/011") >= 0) {
                 MessageBox.warning(
-                    "Backend Limitation: The SAP backend OData service has 'create' operations disabled for Comments (SADL write constraint).\n\n" +
-                    "However, the frontend has successfully prepared and validated the comment text.\n\n" +
-                    "Comment: \n" + sValue.trim(),
-                    {
-                        title: "SAP Backend Write Constraint",
-                        actions: ["OK"]
-                    }
+                    "Backend Limitation: Comment create is disabled by SADL behavior definition.\n\n" +
+                    "Comment prepared: \n" + sValue.trim(),
+                    { title: "SAP Backend Write Constraint", actions: ["OK"] }
                 );
             } else {
                 MessageBox.error("Failed to add comment: " + sMessage);
             }
         });
-
-        (oModel as any).submitBatch(oListBinding.getUpdateGroupId());
     }
 
     /**
@@ -768,34 +760,27 @@ export default class IssueDetail extends BaseController {
             mime_type: oFile.type || "application/octet-stream",
             file_size: oFile.size,
             uploaded_by: sRole,
-            uploaded_at: new Date()
+            uploaded_at: new Date().toISOString()
         });
 
+        // $direct mode: create() already fires the request; no submitBatch needed.
         oNewContext.created().then(() => {
             that.getView()!.setBusy(false);
             MessageToast.show(that.getResourceBundle().getText("createAttachmentSuccess"));
-            // Reload attachments
             that._loadAttachments(sIssueId);
         }, (oError: Error) => {
             that.getView()!.setBusy(false);
-
             const sMessage = oError.message || "Unknown error occurred";
             if (sMessage.indexOf("Creating operations are disabled") >= 0 || sMessage.indexOf("SADL_ENTITY_RUNTIME/011") >= 0) {
                 MessageBox.warning(
-                    "Backend Limitation: The SAP backend OData service has 'create' operations disabled for Attachments (SADL write constraint).\n\n" +
-                    "However, the frontend has successfully prepared and validated the file metadata.\n\n" +
-                    "File Info: \n" + oFile.name + " (" + (oFile.size / 1024).toFixed(1) + " KB)",
-                    {
-                        title: "SAP Backend Write Constraint",
-                        actions: ["OK"]
-                    }
+                    "Backend Limitation: Attachment create is disabled by SADL behavior definition.\n\n" +
+                    "File prepared: \n" + oFile.name + " (" + (oFile.size / 1024).toFixed(1) + " KB)",
+                    { title: "SAP Backend Write Constraint", actions: ["OK"] }
                 );
             } else {
                 MessageBox.error("Failed to upload file: " + sMessage);
             }
         });
-
-        (oModel as any).submitBatch(oListBinding.getUpdateGroupId());
     }
 
     /**

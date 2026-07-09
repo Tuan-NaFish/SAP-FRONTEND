@@ -86,6 +86,82 @@ export default class BaseController extends Controller {
     }
 
     /**
+     * Refresh CSRF token from SAP Gateway and inject into the OData model.
+     * Gateway returns 400 (not 403) when token is missing, so the OData V4
+     * model will not auto-retry. Call this before write operations.
+     */
+    protected async ensureCsrfToken(): Promise<void> {
+        const sAuth = sessionStorage.getItem("sapAuthHeader") || "";
+        if (!sAuth) {
+            return;
+        }
+
+        const sServiceUrl =
+            "/sap/opu/odata4/sap/zui_issue_srvbind/srvd/sap/zui_issue_srvdef/0001/";
+
+        const oResponse = await fetch(sServiceUrl + "?sap-client=324", {
+            method: "GET",
+            credentials: "include",
+            headers: {
+                Authorization: sAuth,
+                Accept: "application/json",
+                "X-CSRF-Token": "Fetch"
+            }
+        });
+
+        if (!oResponse.ok) {
+            throw new Error("CSRF token refresh failed (HTTP " + oResponse.status + ")");
+        }
+
+        const sToken =
+            oResponse.headers.get("x-csrf-token") ||
+            oResponse.headers.get("X-CSRF-Token") ||
+            "";
+
+        if (!sToken || sToken.toLowerCase() === "required") {
+            throw new Error("SAP backend did not return a CSRF token");
+        }
+
+        sessionStorage.setItem("sapCsrfToken", sToken);
+
+        const oModel = this.getOwnerComponent()?.getModel() as any;
+        if (oModel && typeof oModel.changeHttpHeaders === "function") {
+            oModel.changeHttpHeaders({
+                Authorization: sAuth,
+                "X-CSRF-Token": sToken
+            });
+        }
+    }
+
+    /**
+     * Extract readable message from OData V4 / RAP error objects.
+     */
+    protected formatODataError(oError: any): string {
+        let sText = (oError && oError.message) || "Unexpected error";
+        const oResp = oError?.error || oError?.cause?.error || oError?.cause;
+        if (oResp?.message) {
+            sText = typeof oResp.message === "string"
+                ? oResp.message
+                : (oResp.message.value || sText);
+        }
+        if (oResp?.code) {
+            sText = "[" + oResp.code + "] " + sText;
+        }
+        if (oResp?.details?.length) {
+            sText += "\n\n" + oResp.details
+                .map((d: any) => "• " + (d.message || JSON.stringify(d)))
+                .join("\n");
+        }
+        // Include raw JSON when message is still generic (Communication error)
+        if (sText.indexOf("Communication error") >= 0 && oError) {
+            try {
+                sText += "\n\n" + JSON.stringify(oError, null, 2).substring(0, 1500);
+            } catch (_e) { /* ignore */ }
+        }
+        return sText;
+    }
+
+    /**
      * Clear user details and navigate back to the Login view.
      */
     public onLogout(): void {
@@ -93,6 +169,8 @@ export default class BaseController extends Controller {
         sessionStorage.removeItem("username");
         sessionStorage.removeItem("userFullName");
         sessionStorage.removeItem("userRole");
+        sessionStorage.removeItem("sapAuthHeader");
+        sessionStorage.removeItem("sapCsrfToken");
 
         // 2. Clear JSON models
         const oComponent = this.getOwnerComponent();

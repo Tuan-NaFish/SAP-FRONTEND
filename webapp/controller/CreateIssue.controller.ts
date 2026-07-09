@@ -10,9 +10,22 @@ import Select from "sap/m/Select";
 import DatePicker from "sap/m/DatePicker";
 import Item from "sap/ui/core/Item";
 import Text from "sap/m/Text";
+import FileUploader from "sap/ui/unified/FileUploader";
 import BaseController from "./BaseController";
 import ODataListBinding from "sap/ui/model/odata/v4/ODataListBinding";
 import JSONModel from "sap/ui/model/json/JSONModel";
+
+/**
+ * Pending file held in memory until the Issue is created.
+ */
+interface PendingFile {
+    name: string;
+    size: number;
+    sizeText: string;
+    type: string;
+    icon: string;
+    file: File;
+}
 
 /**
  * @namespace sap.defectmgmt.controller
@@ -22,31 +35,25 @@ import JSONModel from "sap/ui/model/json/JSONModel";
  * Handles:
  *   - Dynamic developer loading based on selected module
  *   - Form validation with all required fields
+ *   - Optional multi-file attachment (queued, uploaded after create)
  *   - OData V4 create operation via list binding
  *   - Auto-navigation to newly created issue detail
  */
 export default class CreateIssue extends BaseController {
 
-    /**
-     * Lifecycle hook — called when view is initialized.
-     */
     public onInit(): void {
-        // Register router target matched
+        // Pending attachments model — files chosen before submit
+        this.setModel(new JSONModel({ files: [] as PendingFile[] }), "pendingAttachments");
+
         this.getRouter()
             .getRoute("CreateIssue")
             .attachPatternMatched(this._onRouteMatched, this);
     }
 
-    /**
-     * Route match event handler. Resets form fields.
-     */
     private _onRouteMatched(): void {
         this._resetForm();
     }
 
-    /**
-     * Resets form values and validation states.
-     */
     private _resetForm(): void {
         (this.byId("inpTitle") as Input).setValue("").setValueState("None");
         (this.byId("txtDescription") as TextArea).setValue("").setValueState("None");
@@ -72,11 +79,15 @@ export default class CreateIssue extends BaseController {
         oDeveloperSelect.setSelectedKey("");
 
         (this.byId("txtDeveloperWorkloadInfo") as Text).setText("");
+
+        // Clear pending attachments
+        (this.getModel("pendingAttachments") as JSONModel).setData({ files: [] });
+        const oUploader = this.byId("fileUploader") as FileUploader;
+        if (oUploader) {
+            oUploader.clear();
+        }
     }
 
-    /**
-     * Triggered when any required input field changes. Resets value states.
-     */
     public onFieldChange(oEvent: Event): void {
         const oControl = oEvent.getSource() as Input | Select | DatePicker | TextArea;
         const sValue = (oControl as any).getValue ? (oControl as any).getValue() : (oControl as any).getSelectedKey();
@@ -86,9 +97,60 @@ export default class CreateIssue extends BaseController {
     }
 
     /**
-     * Triggered when module is changed.
-     * Dynamically queries developers for the selected module.
+     * FileUploader change — queue selected files into pendingAttachments model.
+     * Files are NOT uploaded yet; they wait until the Issue is created.
      */
+    public onFileChange(oEvent: Event): void {
+        const aFiles: FileList | null = (oEvent as any).getParameter("files");
+        if (!aFiles || aFiles.length === 0) {
+            return;
+        }
+
+        const oModel = this.getModel("pendingAttachments") as JSONModel;
+        const aPending: PendingFile[] = oModel.getProperty("/files") || [];
+
+        for (let i = 0; i < aFiles.length; i++) {
+            const oFile = aFiles[i];
+            // Skip duplicates by name+size
+            if (aPending.some((p) => p.name === oFile.name && p.size === oFile.size)) {
+                continue;
+            }
+            aPending.push({
+                name: oFile.name,
+                size: oFile.size,
+                sizeText: this._formatSize(oFile.size),
+                type: oFile.type || "application/octet-stream",
+                icon: this._iconForMime(oFile.type),
+                file: oFile
+            });
+        }
+
+        oModel.setProperty("/files", aPending);
+
+        // Clear the uploader so the same file can be re-added if removed
+        const oUploader = this.byId("fileUploader") as FileUploader;
+        if (oUploader) {
+            oUploader.clear();
+        }
+    }
+
+    /**
+     * Tap a pending file in the list to remove it.
+     */
+    public onRemovePendingFile(oEvent: Event): void {
+        const oItem = oEvent.getSource() as any;
+        const oCtx = oItem.getBindingContext("pendingAttachments");
+        if (!oCtx) {
+            return;
+        }
+        const sName = oCtx.getProperty("name") as string;
+        const iSize = oCtx.getProperty("size") as number;
+
+        const oModel = this.getModel("pendingAttachments") as JSONModel;
+        const aPending: PendingFile[] = oModel.getProperty("/files") || [];
+        oModel.setProperty("/files", aPending.filter((p) => !(p.name === sName && p.size === iSize)));
+    }
+
     public onModuleChange(oEvent: Event): void {
         const oSelect = oEvent.getSource() as Select;
         const sModule = oSelect.getSelectedKey();
@@ -111,26 +173,21 @@ export default class CreateIssue extends BaseController {
 
         oDeveloperSelect.setEnabled(true);
 
-        // Build dynamic filters for Developer list binding:
-        // 1. Modulename must equal the selected module (FI/MM/SD/HCM/PP/QM)
-        // 2. Developer must be active (is_active === 'X')
         const aFilters = [
             new Filter("modulename", FilterOperator.EQ, sModule),
             new Filter("is_active", FilterOperator.EQ, "X")
         ];
 
-        // Re-bind the items aggregation of select control
         const oBindInfo: any = {
             path: "/Developer",
             filters: aFilters,
-            sorter: [new Sorter("workload_score", false)], // Ascending workload score (lowest first)
+            sorter: [new Sorter("workload_score", false)],
             template: new Item({
                 key: "{developer_id}",
                 text: "{developer_id} (Workload: {workload_score})"
             }),
             events: {
                 dataReceived: () => {
-                    // After developers are loaded, select the first developer (lowest workload) automatically
                     const aItems = oDeveloperSelect.getItems();
                     if (aItems && aItems.length > 0) {
                         oDeveloperSelect.setSelectedItem(aItems[0]);
@@ -144,10 +201,6 @@ export default class CreateIssue extends BaseController {
         (oDeveloperSelect as any).bindItems(oBindInfo);
     }
 
-    /**
-     * Validates all required form inputs.
-     * @returns True if form is valid, false otherwise.
-     */
     private _validateForm(): boolean {
         let bValid = true;
         const oBundle = this.getResourceBundle();
@@ -193,9 +246,6 @@ export default class CreateIssue extends BaseController {
         return bValid;
     }
 
-    /**
-     * Submits the ticket form. Creates OData V4 record.
-     */
     public onSubmit(): void {
         const oBundle = this.getResourceBundle();
 
@@ -215,85 +265,157 @@ export default class CreateIssue extends BaseController {
         const sDueDateStr = (this.byId("dpDueDate") as DatePicker).getValue();
         const sDeveloper = (this.byId("selDeveloper") as Select).getSelectedKey();
 
-        // Format date for OData V4: YYYY-MM-DDT00:00:00Z
         const oDueDate = new Date(sDueDateStr);
         const sFormattedDueDate = oDueDate.toISOString().split("T")[0] + "T00:00:00Z";
 
-        // Generate unique issue_id — SAP uses SYSUUID_C36 domain (36 chars with hyphens)
-        const sIssueId = crypto.randomUUID().toUpperCase();
-
-        // Prepare payload — send full record including key for 'create as update'
-        const oPayload: Record<string, any> = {
-            issue_id: sIssueId,
-            title: sTitle,
-            description: sDescription,
-            modulename: sModule,
-            severity: sSeverity,
-            status: "ASSIGNED",
-            assigned_to: sDeveloper || null,
-            due_date: sFormattedDueDate,
-            affected_version: sAffectedVersion
-        };
-
-        const oModel = this.getModel()!;
-
-        // Create a list binding to /Issue with $direct update group.
-        // $direct bypasses $batch entirely — each request is sent as
-        // an individual HTTP call (no batching), which works with the
-        // mock server and SAP backends that don't support batch writes.
-        const oListBinding = oModel.bindList("/Issue", undefined, undefined, undefined, {
-            $$updateGroupId: "$direct"
-        }) as ODataListBinding;
-
-        // Create the entity — sent immediately as a direct POST request
-        const oContext = oListBinding.create(oPayload);
+        // Call RAP static action createIssue on real SAP backend.
+        // Backend generates issue_id (UUID), sets status=ASSIGNED,
+        // auto-assigns developer, and writes audit log.
         const that = this;
 
-        // Wait for OData V4 creation completion
-        oContext.created().then(() => {
-            oView.setBusy(false);
-            const sNewIssueId = oContext.getProperty("issue_id") as string;
-            MessageToast.show(oBundle.getText("createIssueSuccess"));
+        // Refresh CSRF right before write — Gateway returns 400 (not 403)
+        // when token is missing, so OData V4 model will not auto-retry.
+        this.ensureCsrfToken().then(() => {
+            const oModel = that.getModel()!;
 
-            // Navigate to details page, replacing the current history state
-            // so pressing "Back" returns to the issue list, not the create form
-            that.getRouter().navTo("IssueDetail", {
-                issueId: encodeURIComponent(sNewIssueId)
-            }, true);
-        }, (oError: Error) => {
-            oView.setBusy(false);
+            // Same qualified-name pattern as IssueDetail bound actions.
+            // Static action is bound to the Issue entity set (no instance key).
+            const oOperation = oModel.bindContext(
+                "/Issue/com.sap.gateway.srvd.zui_issue_srvdef.v0001.createIssue(...)"
+            );
 
-            // Backend creates might be disabled. Inspect the error payload.
-            const sMessage = oError.message || "Unknown error occurred";
-            if (sMessage.indexOf("Creating operations are disabled") >= 0 ||
-                sMessage.indexOf("SADL_ENTITY_RUNTIME/011") >= 0 ||
-                sMessage.indexOf("canceled") >= 0 ||
-                sMessage.indexOf("reset") >= 0) {
-                MessageBox.warning(
-                    "Backend Limitation: The SAP backend OData service has 'create' operations disabled (SADL behavior definition constraint).\n\n" +
-                    "However, the frontend has successfully prepared and validated the request payload.\n\n" +
-                    "Payload sent: \n" + JSON.stringify(oPayload, null, 2),
-                    {
-                        title: "SAP Backend Write Constraint",
-                        actions: ["OK"]
+            oOperation.setParameter("title", sTitle);
+            oOperation.setParameter("description", sDescription);
+            oOperation.setParameter("modulename", sModule);
+            oOperation.setParameter("severity", sSeverity);
+            oOperation.setParameter("affected_version", sAffectedVersion);
+            oOperation.setParameter("due_date", sFormattedDueDate);
+            oOperation.setParameter("developer", sDeveloper || "");
+
+            return oOperation.execute().then(async () => {
+                const oResult = oOperation.getBoundContext().getObject() as any;
+                // Result may be flat or nested under CreateIssue depending on metadata
+                const sNewIssueId = (
+                    oResult?.issue_id ||
+                    oResult?.CreateIssue?.issue_id ||
+                    oResult?.value?.issue_id
+                ) as string;
+
+                if (!sNewIssueId) {
+                    oView.setBusy(false);
+                    MessageBox.error(
+                        "Ticket may have been created but issue_id was not returned.\n\n" +
+                        "Raw result:\n" + JSON.stringify(oResult, null, 2).substring(0, 1000)
+                    );
+                    return;
+                }
+
+                // Upload any pending attachments against the new issue
+                const aPending: PendingFile[] =
+                    ((that.getModel("pendingAttachments") as JSONModel).getProperty("/files") as PendingFile[]) || [];
+
+                if (aPending.length > 0) {
+                    try {
+                        await that._uploadAttachments(sNewIssueId, aPending);
+                        MessageToast.show(
+                            oBundle.getText("createIssueSuccess") +
+                            " (" + aPending.length + " attachment(s) uploaded)"
+                        );
+                    } catch (oUploadErr: any) {
+                        MessageBox.warning(
+                            "Ticket created, but attachment upload failed:\n" +
+                            (oUploadErr?.message || String(oUploadErr)),
+                            { title: "Partial Success" }
+                        );
                     }
-                );
-            } else {
-                MessageBox.error("Failed to create ticket: " + sMessage);
-            }
+                } else {
+                    MessageToast.show(oBundle.getText("createIssueSuccess"));
+                }
+
+                oView.setBusy(false);
+                that.getRouter().navTo("IssueDetail", {
+                    issueId: encodeURIComponent(sNewIssueId)
+                }, true);
+            });
+        }).catch((oError: any) => {
+            oView.setBusy(false);
+            MessageBox.error(
+                "Failed to create ticket:\n\n" + that.formatODataError(oError),
+                { title: "SAP Backend Error" }
+            );
         });
     }
 
     /**
-     * Cancels defect creation and returns to issue list.
+     * Upload all pending files as Attachment entities for the given issue.
+     * Reads each File as base64 and POSTs metadata (+ content if BE accepts it).
      */
+    private async _uploadAttachments(sIssueId: string, aFiles: PendingFile[]): Promise<void> {
+        const oModel = this.getModel()!;
+        const sUploader = this.getCurrentUser() || "UNKNOWN";
+
+        for (const oPending of aFiles) {
+            const sBase64 = await this._readFileAsBase64(oPending.file);
+
+            const oListBinding = oModel.bindList("/Attachment", undefined, undefined, undefined, {
+                $$updateGroupId: "$direct"
+            }) as ODataListBinding;
+
+            const oCtx = oListBinding.create({
+                issue_id: sIssueId,
+                file_name: oPending.name,
+                mime_type: oPending.type,
+                file_size: oPending.size,
+                file_content: sBase64,
+                uploaded_by: sUploader,
+                uploaded_at: new Date().toISOString()
+            });
+
+            await oCtx.created();
+        }
+    }
+
+    /**
+     * Read a browser File as a base64 string (without data: prefix).
+     */
+    private _readFileAsBase64(oFile: File): Promise<string> {
+        return new Promise((resolve, reject) => {
+            const oReader = new FileReader();
+            oReader.onload = () => {
+                const sResult = String(oReader.result || "");
+                // strip "data:<mime>;base64," prefix if present
+                const iComma = sResult.indexOf(",");
+                resolve(iComma >= 0 ? sResult.substring(iComma + 1) : sResult);
+            };
+            oReader.onerror = () => reject(oReader.error || new Error("FileReader failed"));
+            oReader.readAsDataURL(oFile);
+        });
+    }
+
+    private _formatSize(iBytes: number): string {
+        if (!iBytes) { return "0 B"; }
+        const aUnits = ["B", "KB", "MB", "GB"];
+        let i = Math.floor(Math.log(iBytes) / Math.log(1024));
+        i = Math.min(i, aUnits.length - 1);
+        return (iBytes / Math.pow(1024, i)).toFixed(1) + " " + aUnits[i];
+    }
+
+    private _iconForMime(sMime: string | null | undefined): string {
+        if (!sMime) { return "sap-icon://document"; }
+        if (sMime.indexOf("image") >= 0) { return "sap-icon://picture"; }
+        if (sMime.indexOf("pdf") >= 0) { return "sap-icon://pdf-attachment"; }
+        if (sMime.indexOf("text") >= 0) { return "sap-icon://document-text"; }
+        if (sMime.indexOf("excel") >= 0 || sMime.indexOf("spreadsheet") >= 0) {
+            return "sap-icon://excel-attachment";
+        }
+        if (sMime.indexOf("word") >= 0) { return "sap-icon://doc-attachment"; }
+        return "sap-icon://document";
+    }
+
     public onCancel(): void {
         this.onNavBack();
     }
 
-    /**
-     * Navigate back to IssueList.
-     */
     public onNavBack(): void {
         super.onNavBack();
     }

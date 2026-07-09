@@ -4,7 +4,8 @@
     xmlns="sap.m"
     xmlns:core="sap.ui.core"
     xmlns:form="sap.ui.layout.form"
-    xmlns:layout="sap.ui.layout">
+    xmlns:layout="sap.ui.layout"
+    xmlns:u="sap.ui.unified">
 
     <Page
         id="createIssuePage"
@@ -102,6 +103,35 @@
                             <core:Item key="" text="{i18n>createIssueSelectDevFirst}"/>
                         </Select>
                         <Text id="txtDeveloperWorkloadInfo" text="" class="sapUiTinyMarginTop sapUiSubTemplates"/>
+
+                        <!-- Attachment (optional) — uploaded after ticket is created -->
+                        <Label text="{i18n>createIssueLabelAttachment}"/>
+                        <VBox>
+                            <u:FileUploader
+                                id="fileUploader"
+                                name="attachmentUpload"
+                                buttonOnly="false"
+                                icon="sap-icon://upload"
+                                iconFirst="true"
+                                buttonText="{i18n>createIssueUploadBtn}"
+                                placeholder="{i18n>createIssueUploadPlaceholder}"
+                                sameFilenameAllowed="true"
+                                multiple="true"
+                                change=".onFileChange"
+                                width="100%"/>
+                            <List
+                                id="pendingAttachmentList"
+                                items="{pendingAttachments>/files}"
+                                noDataText="{i18n>createIssueNoAttachment}"
+                                class="sapUiTinyMarginTop">
+                                <StandardListItem
+                                    title="{pendingAttachments>name}"
+                                    description="{pendingAttachments>sizeText}"
+                                    icon="{pendingAttachments>icon}"
+                                    type="Active"
+                                    press=".onRemovePendingFile"/>
+                            </List>
+                        </VBox>
                     </form:content>
                 </form:SimpleForm>
             </layout:VerticalLayout>
