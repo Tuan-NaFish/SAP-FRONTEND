@@ -108,11 +108,39 @@ function formatDate(oDate: Date | string | null | undefined): string {
 /**
  * Format date + time (DD.MM.YYYY HH:mm)
  * Used for timestamps like created_at, assigned_at, etc.
+ * Handles raw strings, Date objects, and OData V4 internal types.
  */
-function formatDateTime(oDate: Date | string | null | undefined): string {
+function formatDateTime(oDate: any): string {
     if (!oDate) { return "—"; }
-    const d = (oDate instanceof Date) ? oDate : new Date(oDate);
-    if (isNaN(d.getTime())) { return "—"; }
+
+    let sValue: string;
+
+    if (typeof oDate === "string") {
+        sValue = oDate;
+    } else if (oDate instanceof Date) {
+        if (isNaN(oDate.getTime())) { return "—"; }
+        const sDay   = String(oDate.getDate()).padStart(2, "0");
+        const sMonth = String(oDate.getMonth() + 1).padStart(2, "0");
+        const sYear  = oDate.getFullYear();
+        const sHour  = String(oDate.getHours()).padStart(2, "0");
+        const sMin   = String(oDate.getMinutes()).padStart(2, "0");
+        return sDay + "." + sMonth + "." + sYear + " " + sHour + ":" + sMin;
+    } else if (typeof oDate === "object") {
+        sValue = oDate.$date || oDate.value || oDate.toString();
+    } else {
+        sValue = String(oDate);
+    }
+
+    if (!sValue || sValue === "—") { return "—"; }
+
+    const d = new Date(sValue);
+
+    // If JS cannot parse the string (e.g. it is already localized like "9 thg 7, 2026"),
+    // return the localized string directly rather than failing.
+    if (isNaN(d.getTime())) {
+        return sValue;
+    }
+
     const sDay   = String(d.getDate()).padStart(2, "0");
     const sMonth = String(d.getMonth() + 1).padStart(2, "0");
     const sYear  = d.getFullYear();
