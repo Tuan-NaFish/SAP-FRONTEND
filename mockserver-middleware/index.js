@@ -2,6 +2,12 @@
 
 const path = require("node:path");
 const fs = require("node:fs");
+const https = require("node:https");
+const http = require("node:http");
+
+// Backend target — change this for your environment
+const BACKEND_URL = "https://s40lp1.ucc.cit.tum.de"; // or http://localhost:8080 for mock-only mode
+const BACKEND_CLIENT = "324";
 
 /**
  * UI5 Mock Middleware — OData V4 compatible
@@ -151,15 +157,46 @@ module.exports = async function ({ log, options, middlewareUtil }) {
   try { metadataContent = fs.readFileSync(metadataPath, "utf-8"); } catch (e) { /* ignore */ }
 
   return async (req, res, next) => {
-    // When mounted via mountPath in ui5.yaml, Express strips the prefix
-    // from req.url, so req.url is already the sub-path (e.g. "/Issue").
-    // When NOT mounted, req.url contains the full path including prefix.
+    if (req.url.startsWith("/auth-check")) {
+      const authHeader = req.headers.authorization;
+      if (!authHeader) {
+        res.status(400).json({ ok: false, message: "Missing Authorization header" });
+        return;
+      }
+
+      const url = new URL(`${BACKEND_URL}${servicePrefix}/Developer?sap-client=${BACKEND_CLIENT}&$top=1`);
+      const request = https.request({
+        hostname: url.hostname,
+        path: url.pathname + url.search,
+        method: "GET",
+        rejectUnauthorized: false,
+        headers: {
+          Authorization: authHeader,
+          Accept: "application/json"
+        }
+      }, (backendRes) => {
+        backendRes.resume();
+        backendRes.on("end", () => {
+          if (backendRes.statusCode >= 200 && backendRes.statusCode < 300) {
+            res.status(200).json({ ok: true });
+          } else {
+            res.status(401).json({ ok: false, message: "Invalid SAP username or password" });
+          }
+        });
+      });
+
+      request.on("error", (error) => {
+        res.status(502).json({ ok: false, message: error.message });
+      });
+      request.end();
+      return;
+    }
+
+    // Only handle mock OData paths explicitly. Other UI5 resources continue
+    // to the next middleware/serveResources handler.
     let subPath;
     if (req.url.startsWith(servicePrefix)) {
       subPath = req.url.slice(servicePrefix.length);
-    } else if (req.url.startsWith("/")) {
-      // Mounted mode — req.url is already the sub-path
-      subPath = req.url;
     } else {
       return next();
     }

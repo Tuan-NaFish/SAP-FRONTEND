@@ -19,7 +19,14 @@
                 <Input id="usernameInput" placeholder="{i18n>loginUsername}" class="sapUiSmallMarginBottom" />
 
                 <Label text="{i18n>loginPassword}" required="true"/>
-                <Input id="passwordInput" type="Password" placeholder="{i18n>loginPassword}" class="sapUiMediumMarginBottom" />
+                <Input id="passwordInput" type="Password" placeholder="{i18n>loginPassword}" class="sapUiSmallMarginBottom" />
+
+                <Label text="Role" required="true"/>
+                <Select id="roleSelect" selectedKey="Tester" width="100%" class="sapUiMediumMarginBottom">
+                    <core:Item key="Tester" text="Tester" />
+                    <core:Item key="Developer" text="Developer" />
+                    <core:Item key="Manager" text="Manager" />
+                </Select>
 
                 <Button text="{i18n>loginButton}" type="Emphasized" press=".onLogin" width="100%" />
                 

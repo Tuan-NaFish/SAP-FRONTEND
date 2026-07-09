@@ -35,9 +35,9 @@ server:
     # under /sap/opu/odata4/... BEFORE serveResources can handle them.
     # For connecting to a live SAP backend, remove this block and
     # add back @sap/ux-ui5-tooling with fiori-tools-proxy configuration.
-    # - name: ui5-middleware-mockserver
-    #   afterMiddleware: compression
-    #   mountPath: /sap/opu/odata4/sap/zui_issue_srvbind/srvd/sap/zui_issue_srvdef/0001
+    - name: ui5-middleware-mockserver
+      afterMiddleware: compression
+      mountPath: /
 
     # --- Proxy to real SAP backend ---
     # Forwards all /sap requests to the UCC SAP training system.

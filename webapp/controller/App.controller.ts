@@ -26,22 +26,20 @@ export default class App extends BaseController {
         // This model is set on the component so all views can access it.
         // The Login controller will overwrite the role when the user logs in.
         // On F5 refresh, restore from sessionStorage to avoid state loss.
-        const sStoredRole = sessionStorage.getItem("userRole") || "";
-        const sStoredName = sessionStorage.getItem("userFullName") || "";
         const sStoredUser = sessionStorage.getItem("username") || "";
         const sStoredLoginName = sessionStorage.getItem("loginName") || "";
+        const sStoredFullName = sessionStorage.getItem("userFullName") || "";
+        const sStoredRole = sessionStorage.getItem("userRole") || "";
 
-        const oUserRoleModel = new JSONModel({
-            role: sStoredRole.toUpperCase()
-        });
-        this.getOwnerComponent()?.setModel(oUserRoleModel, "userRole");
+        this.getOwnerComponent()?.setModel(new JSONModel({
+            role: sStoredRole ? sStoredRole.toUpperCase() : ""
+        }), "userRole");
 
-        const oUserModel = new JSONModel({
+        this.getOwnerComponent()?.setModel(new JSONModel({
             username: sStoredUser,
             loginName: sStoredLoginName,
-            fullName: sStoredName,
+            fullName: sStoredFullName,
             role: sStoredRole
-        });
-        this.getOwnerComponent()?.setModel(oUserModel, "userModel");
+        }), "userModel");
     }
 }
