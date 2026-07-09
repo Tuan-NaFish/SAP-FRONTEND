@@ -177,10 +177,13 @@ export default class IssueDetail extends BaseController {
         const oUserRoleModel = this.getOwnerComponent()!.getModel("userRole") as JSONModel;
         const sRole = oUserRoleModel ? oUserRoleModel.getProperty("/role") as string : "";
 
+        const sCurrentUser = this.getCurrentUser();
+        const bIsAssignedDev = sCurrentUser && (oContext.getProperty("assigned_to") === sCurrentUser);
+
         // Button visibility rules (status + role)
         const mVisibility: Record<string, boolean> = {
-            btnStartProgress: sStatus === "ASSIGNED" && (sRole === "DEVELOPER" || sRole === "MANAGER"),
-            btnResolve:       sStatus === "IN_PROGRESS" && (sRole === "DEVELOPER" || sRole === "MANAGER"),
+            btnStartProgress: sStatus === "ASSIGNED" && (sRole === "DEVELOPER" && bIsAssignedDev),
+            btnResolve:       sStatus === "IN_PROGRESS" && (sRole === "DEVELOPER" && bIsAssignedDev),
             btnStartTesting:  sStatus === "RESOLVED" && (sRole === "TESTER" || sRole === "MANAGER"),
             btnClose:         sStatus === "TESTING" && (sRole === "TESTER" || sRole === "MANAGER"),
             btnReopen:        (sStatus === "TESTING" || sStatus === "CLOSED") && (sRole === "TESTER" || sRole === "MANAGER"),
@@ -458,7 +461,13 @@ export default class IssueDetail extends BaseController {
                     MessageToast.show(sOkMsg);
                 }
                 // Re-read the Issue — status/version/audit updated by backend.
-                oCtx.refresh();
+                const oBinding = oCtx.getBinding() as any;
+                oBinding.attachEventOnce("dataReceived", () => {
+                    that._updateVisibility();
+                    that._calculateSLA(oCtx);
+                    that._loadComments(sIssueId);
+                });
+                oBinding.refresh();
                 that._loadHistory(sIssueId);
             })
             .catch((oError: unknown) => {

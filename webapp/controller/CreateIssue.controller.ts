@@ -71,6 +71,7 @@ export default class CreateIssue extends BaseController {
 
         const oDeveloperSelect = this.byId("selDeveloper") as Select;
         oDeveloperSelect.setEnabled(false);
+        oDeveloperSelect.unbindItems();
         oDeveloperSelect.destroyItems();
         (oDeveloperSelect as any).addItem(new Item({
             key: "",
@@ -161,6 +162,7 @@ export default class CreateIssue extends BaseController {
 
         if (!sModule) {
             oDeveloperSelect.setEnabled(false);
+            oDeveloperSelect.unbindItems();
             oDeveloperSelect.destroyItems();
             (oDeveloperSelect as any).addItem(new Item({
                 key: "",
@@ -277,36 +279,26 @@ export default class CreateIssue extends BaseController {
         // when token is missing, so OData V4 model will not auto-retry.
         this.ensureCsrfToken().then(() => {
             const oModel = that.getModel()!;
+            const oListBinding = oModel.bindList("/Issue") as ODataListBinding;
 
-            // Same qualified-name pattern as IssueDetail bound actions.
-            // Static action is bound to the Issue entity set (no instance key).
-            const oOperation = oModel.bindContext(
-                "/Issue/com.sap.gateway.srvd.zui_issue_srvdef.v0001.createIssue(...)"
-            );
+            // Create Issue using standard OData V4 create.
+            // We do NOT pass issue_id, letting the backend RAP framework generate the UUID.
+            const oContext = oListBinding.create({
+                title: sTitle,
+                description: sDescription,
+                modulename: sModule,
+                severity: sSeverity,
+                affected_version: sAffectedVersion,
+                due_date: sFormattedDueDate,
+                assigned_to: sDeveloper || undefined
+            });
 
-            oOperation.setParameter("title", sTitle);
-            oOperation.setParameter("description", sDescription);
-            oOperation.setParameter("modulename", sModule);
-            oOperation.setParameter("severity", sSeverity);
-            oOperation.setParameter("affected_version", sAffectedVersion);
-            oOperation.setParameter("due_date", sFormattedDueDate);
-            oOperation.setParameter("developer", sDeveloper || "");
-
-            return oOperation.execute().then(async () => {
-                const oResult = oOperation.getBoundContext().getObject() as any;
-                // Result may be flat or nested under CreateIssue depending on metadata
-                const sNewIssueId = (
-                    oResult?.issue_id ||
-                    oResult?.CreateIssue?.issue_id ||
-                    oResult?.value?.issue_id
-                ) as string;
+            return oContext.created().then(async () => {
+                const sNewIssueId = oContext.getProperty("issue_id") as string;
 
                 if (!sNewIssueId) {
                     oView.setBusy(false);
-                    MessageBox.error(
-                        "Ticket may have been created but issue_id was not returned.\n\n" +
-                        "Raw result:\n" + JSON.stringify(oResult, null, 2).substring(0, 1000)
-                    );
+                    MessageBox.error("Ticket created, but issue_id was not returned by the backend.");
                     return;
                 }
 

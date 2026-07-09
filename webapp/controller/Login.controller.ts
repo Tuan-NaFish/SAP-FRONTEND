@@ -14,7 +14,7 @@ const SERVICE_URL =
  */
 export default class Login extends Controller {
 
-    private getResourceBundle(): ResourceModel["ResourceBundle"] {
+    private getResourceBundle(): any {
         const oModel = this.getOwnerComponent()?.getModel("i18n");
         return (oModel as ResourceModel).getResourceBundle();
     }
@@ -137,7 +137,7 @@ export default class Login extends Controller {
             }
 
             MessageToast.show(oBundle.getText("loginWelcome") + ", " + sUser + " (" + sRole + ")!");
-            oComponent?.getRouter().navTo("IssueList");
+            (oComponent as any)?.getRouter().navTo("IssueList");
         }).catch((err) => {
             console.error("Auth check failed:", err);
             oUserInput.setValueState("Error");

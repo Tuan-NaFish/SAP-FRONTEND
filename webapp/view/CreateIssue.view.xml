@@ -94,11 +94,7 @@
                         <Label text="{i18n>createIssueLabelAssignDeveloper}" required="false"/>
                         <Select
                             id="selDeveloper"
-                            enabled="false"
-                            items="{
-                                path: '/Developer',
-                                sorters: [{path: 'workload_score', descending: false}]
-                            }">
+                            enabled="false">
                             <!-- Placeholder item to display if empty -->
                             <core:Item key="" text="{i18n>createIssueSelectDevFirst}"/>
                         </Select>

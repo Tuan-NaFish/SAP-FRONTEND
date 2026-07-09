@@ -346,7 +346,7 @@ function isReassignVisible(
     sRole: string | null | undefined
 ): boolean {
     // Backend ZCL_BTTICKET_MANAGER->assign_issue requires MANAGER authorization.
-    return sStatus === "REOPEN" && sRole === "MANAGER";
+    return (sStatus === "ASSIGNED" || sStatus === "REOPEN") && sRole === "MANAGER";
 }
 
 // ================================================
