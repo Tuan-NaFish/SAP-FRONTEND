@@ -27,10 +27,12 @@ export default class DeveloperWorklist extends BaseController {
     }
 
     private _onRouteMatched(): void {
-        this._applyWorklistFilters();
+        // Re-apply filters + force server re-read so status changes from
+        // IssueDetail (Start Progress / Resolve / Reopen) appear immediately.
+        this._applyWorklistFilters(true);
     }
 
-    private _applyWorklistFilters(): void {
+    private _applyWorklistFilters(bRefresh: boolean = false): void {
         const oTable = this.byId("developerWorklistTable") as Table;
         if (!oTable) { return; }
 
@@ -55,6 +57,10 @@ export default class DeveloperWorklist extends BaseController {
 
         oBinding.filter(aFilters);
         (oBinding as any).sort(new Sorter("due_date", false));
+
+        if (bRefresh) {
+            oBinding.refresh();
+        }
     }
 
     public onIssuePress(oEvent: Event): void {
@@ -69,10 +75,7 @@ export default class DeveloperWorklist extends BaseController {
 
     public onRefresh(): void {
         // Apply filters first so refresh re-reads filtered data (no race).
-        this._applyWorklistFilters();
-        const oTable = this.byId("developerWorklistTable") as Table;
-        const oBinding = oTable?.getBinding("items") as ListBinding;
-        if (oBinding) { oBinding.refresh(); }
+        this._applyWorklistFilters(true);
     }
 
     // NOTE: removed onNavBack override — inherits BaseController.onNavBack

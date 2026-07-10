@@ -28,11 +28,12 @@ export default class TesterWorklist extends BaseController {
     }
 
     private _onRouteMatched(): void {
-        this._applyMyTicketsFilter();
-        this._applyVerificationFilter();
+        // Force server re-read so status changes from IssueDetail appear immediately.
+        this._applyMyTicketsFilter(true);
+        this._applyVerificationFilter(true);
     }
 
-    private _applyMyTicketsFilter(): void {
+    private _applyMyTicketsFilter(bRefresh: boolean = false): void {
         const oTable = this.byId("testerMyTicketsTable") as Table;
         const oBinding = oTable?.getBinding("items") as ListBinding;
         if (!oBinding) { return; }
@@ -45,9 +46,13 @@ export default class TesterWorklist extends BaseController {
 
         oBinding.filter(aFilters);
         (oBinding as any).sort(new Sorter("created_at", true));
+
+        if (bRefresh) {
+            oBinding.refresh();
+        }
     }
 
-    private _applyVerificationFilter(): void {
+    private _applyVerificationFilter(bRefresh: boolean = false): void {
         const oTable = this.byId("testerVerificationTable") as Table;
         const oBinding = oTable?.getBinding("items") as ListBinding;
         if (!oBinding) { return; }
@@ -60,6 +65,10 @@ export default class TesterWorklist extends BaseController {
             and: false
         })]);
         (oBinding as any).sort(new Sorter("due_date", false));
+
+        if (bRefresh) {
+            oBinding.refresh();
+        }
     }
 
     public onIssuePress(oEvent: Event): void {
@@ -74,14 +83,8 @@ export default class TesterWorklist extends BaseController {
 
     public onRefresh(): void {
         // Apply filters first so refresh re-reads filtered data (no race).
-        this._applyMyTicketsFilter();
-        this._applyVerificationFilter();
-
-        ["testerMyTicketsTable", "testerVerificationTable"].forEach((sId) => {
-            const oTable = this.byId(sId) as Table;
-            const oBinding = oTable?.getBinding("items") as ListBinding;
-            if (oBinding) { oBinding.refresh(); }
-        });
+        this._applyMyTicketsFilter(true);
+        this._applyVerificationFilter(true);
     }
 
     // NOTE: removed onNavBack override — inherits BaseController.onNavBack

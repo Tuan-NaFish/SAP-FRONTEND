@@ -289,13 +289,13 @@ function formatHistoryIconColor(sActionType: string | null | undefined): string 
 // ================================================
 
 /**
- * "Start Progress" — visible when ASSIGNED and user is DEVELOPER or MANAGER
+ * "Start Progress" — visible when ASSIGNED/REOPEN and user is DEVELOPER or MANAGER
  */
 function isStartProgressVisible(
     sStatus: string | null | undefined,
     sRole: string | null | undefined
 ): boolean {
-    return sStatus === "ASSIGNED" && (sRole === "DEVELOPER" || sRole === "MANAGER");
+    return (sStatus === "ASSIGNED" || sStatus === "REOPEN") && (sRole === "DEVELOPER" || sRole === "MANAGER");
 }
 
 /**

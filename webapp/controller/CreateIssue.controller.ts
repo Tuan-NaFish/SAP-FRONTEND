@@ -348,47 +348,76 @@ export default class CreateIssue extends BaseController {
 
     /**
      * Upload all pending files as Attachment entities for the given issue.
-     * Reads each File as base64 and POSTs metadata (+ content if BE accepts it).
+     *
+     * RAP composition rule: create child attachments via
+     *   /Issue('<issueId>')/_Attachment
+     * not via root /Attachment.
+     *
+     * Backend currently stores metadata only (no file_content exposure).
+     * Multiple files are uploaded one-by-one in sequence.
      */
     private async _uploadAttachments(sIssueId: string, aFiles: PendingFile[]): Promise<void> {
+        if (!sIssueId || !aFiles.length) {
+            return;
+        }
+
         const oModel = this.getModel()!;
-        const sUploader = this.getCurrentUser() || "UNKNOWN";
+        const sUploader = (this.getCurrentUser() || "UNKNOWN").slice(0, 12);
+        const aErrors: string[] = [];
 
         for (const oPending of aFiles) {
-            const sBase64 = await this._readFileAsBase64(oPending.file);
+            try {
+                // Composition create path required by RAP behavior:
+                // association _Attachment { create; }
+                const oListBinding = oModel.bindList(
+                    "/Issue('" + sIssueId + "')/_Attachment",
+                    undefined,
+                    undefined,
+                    undefined,
+                    { $$updateGroupId: "$direct" }
+                ) as ODataListBinding;
 
-            const oListBinding = oModel.bindList("/Attachment", undefined, undefined, undefined, {
-                $$updateGroupId: "$direct"
-            }) as ODataListBinding;
+                // file_id is the key and has no determination — generate client-side UUID.
+                // mime_type is abap.char(50); long Office MIME types must be truncated.
+                const oCtx = oListBinding.create({
+                    file_id: this._generateUuid36(),
+                    issue_id: sIssueId,
+                    file_name: (oPending.name || "attachment").slice(0, 255),
+                    mime_type: (oPending.type || "application/octet-stream").slice(0, 50),
+                    file_size: String(oPending.size || 0),
+                    uploaded_by: sUploader,
+                    uploaded_at: new Date().toISOString()
+                });
 
-            const oCtx = oListBinding.create({
-                issue_id: sIssueId,
-                file_name: oPending.name,
-                mime_type: oPending.type,
-                file_size: oPending.size,
-                file_content: sBase64,
-                uploaded_by: sUploader,
-                uploaded_at: new Date().toISOString()
-            });
+                await oCtx.created();
+            } catch (oErr: any) {
+                aErrors.push(
+                    (oPending.name || "file") + ": " +
+                    (oErr?.message || this.formatODataError(oErr) || String(oErr))
+                );
+            }
+        }
 
-            await oCtx.created();
+        if (aErrors.length > 0) {
+            throw new Error(
+                aErrors.length + "/" + aFiles.length + " attachment(s) failed:\n" +
+                aErrors.join("\n")
+            );
         }
     }
 
     /**
-     * Read a browser File as a base64 string (without data: prefix).
+     * Generate a 36-char UUID string for attachment key file_id.
      */
-    private _readFileAsBase64(oFile: File): Promise<string> {
-        return new Promise((resolve, reject) => {
-            const oReader = new FileReader();
-            oReader.onload = () => {
-                const sResult = String(oReader.result || "");
-                // strip "data:<mime>;base64," prefix if present
-                const iComma = sResult.indexOf(",");
-                resolve(iComma >= 0 ? sResult.substring(iComma + 1) : sResult);
-            };
-            oReader.onerror = () => reject(oReader.error || new Error("FileReader failed"));
-            oReader.readAsDataURL(oFile);
+    private _generateUuid36(): string {
+        if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+            return crypto.randomUUID();
+        }
+        // Fallback UUID v4
+        return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+            const r = Math.random() * 16 | 0;
+            const v = c === "x" ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
         });
     }
 

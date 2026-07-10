@@ -64,6 +64,7 @@ export default class IssueDetail extends BaseController {
 
     private _oResolveDialog: Dialog | null = null;
     private _oReassignDialog: Dialog | null = null;
+    private _sCurrentIssueId = "";
 
     // ============================================================
     // LIFECYCLE
@@ -117,6 +118,7 @@ export default class IssueDetail extends BaseController {
         const sIssueId = decodeURIComponent(
             (oEvent as any).getParameter("arguments").issueId
         );
+        this._sCurrentIssueId = sIssueId;
 
         // Bind the entire view to the Issue entity by key
         // OData V4 string keys require single quotes: /Issue('guid')
@@ -182,7 +184,7 @@ export default class IssueDetail extends BaseController {
 
         // Button visibility rules (status + role)
         const mVisibility: Record<string, boolean> = {
-            btnStartProgress: sStatus === "ASSIGNED" && (sRole === "DEVELOPER" && bIsAssignedDev),
+            btnStartProgress: (sStatus === "ASSIGNED" || sStatus === "REOPEN") && (sRole === "DEVELOPER" && bIsAssignedDev),
             btnResolve:       sStatus === "IN_PROGRESS" && (sRole === "DEVELOPER" && bIsAssignedDev),
             btnStartTesting:  sStatus === "RESOLVED" && (sRole === "TESTER" || sRole === "MANAGER"),
             btnClose:         sStatus === "TESTING" && (sRole === "TESTER" || sRole === "MANAGER"),
@@ -216,6 +218,11 @@ export default class IssueDetail extends BaseController {
      * Filters the /Attachment entity set by issue_id.
      */
     private _loadAttachments(sIssueId: string): void {
+        if (!sIssueId) {
+            (this.getModel("attachments") as JSONModel).setData([]);
+            return;
+        }
+
         const oModel = this.getModel()!;
         const that = this;
 
@@ -239,6 +246,11 @@ export default class IssueDetail extends BaseController {
      * Sorted by comment_at descending (newest first).
      */
     private _loadComments(sIssueId: string): void {
+        if (!sIssueId) {
+            (this.getModel("comments") as JSONModel).setData([]);
+            return;
+        }
+
         const oModel = this.getModel()!;
         const that = this;
 
@@ -264,6 +276,11 @@ export default class IssueDetail extends BaseController {
      * Sorted by changed_at descending (most recent changes first).
      */
     private _loadHistory(sIssueId: string): void {
+        if (!sIssueId) {
+            (this.getModel("history") as JSONModel).setData([]);
+            return;
+        }
+
         const oModel = this.getModel()!;
         const that = this;
 
@@ -423,11 +440,11 @@ export default class IssueDetail extends BaseController {
      *                 entity, e.g. Z_A_RESOLVE_ISSUE / Z_A_ASSIGN_ISSUE)
      * @param sOkMsg   Optional success toast message
      */
-    private _invokeAction(
+    private async _invokeAction(
         sAction: string,
         mParams?: Record<string, unknown>,
         sOkMsg?: string
-    ): void {
+    ): Promise<void> {
         const oView = this.getView()!;
         const oCtx = oView.getBindingContext() as ODataV4Context;
         if (!oCtx) {
@@ -435,45 +452,70 @@ export default class IssueDetail extends BaseController {
         }
 
         const oModel = this.getModel() as ODataModel;
-        const sIssueId = oCtx.getProperty("issue_id") as string;
+        const sIssueId = (oCtx.getProperty("issue_id") as string) || this._sCurrentIssueId;
         const that = this;
 
-        // Deferred bound-action operation binding.
-        // Model uses groupId/updateGroupId = "$direct", so execute() fires immediately.
-        // Do NOT call submitBatch("$auto") — that throws "Group ID does not use batch requests".
-        const oOperation = oModel.bindContext(
-            `com.sap.gateway.srvd.zui_issue_srvdef.v0001.${sAction}(...)`,
-            oCtx,
-            { $$inheritExpandSelect: true }
-        ) as ODataContextBinding;
-
-        if (mParams) {
-            Object.keys(mParams).forEach((sKey) => {
-                oOperation.setParameter(sKey, mParams[sKey]);
-            });
-        }
-
         oView.setBusy(true);
-        oOperation.execute()
-            .then(() => {
-                oView.setBusy(false);
-                if (sOkMsg) {
-                    MessageToast.show(sOkMsg);
-                }
-                // Re-read the Issue — status/version/audit updated by backend.
-                const oBinding = oCtx.getBinding() as any;
-                oBinding.attachEventOnce("dataReceived", () => {
-                    that._updateVisibility();
-                    that._calculateSLA(oCtx);
-                    that._loadComments(sIssueId);
+
+        try {
+            // Gateway returns 400 (not 403) when CSRF is missing, so force-refresh first.
+            await this.ensureCsrfToken();
+
+            // Deferred bound-action operation binding.
+            // Model uses groupId/updateGroupId = "$direct", so execute() fires immediately.
+            const oOperation = oModel.bindContext(
+                `com.sap.gateway.srvd.zui_issue_srvdef.v0001.${sAction}(...)`,
+                oCtx,
+                { $$inheritExpandSelect: true }
+            ) as ODataContextBinding;
+
+            if (mParams) {
+                Object.keys(mParams).forEach((sKey) => {
+                    oOperation.setParameter(sKey, mParams[sKey]);
                 });
-                oBinding.refresh();
-                that._loadHistory(sIssueId);
-            })
-            .catch((oError: unknown) => {
-                oView.setBusy(false);
-                that._showODataError(oError);
-            });
+            }
+
+            await oOperation.execute();
+
+            // Prefer requestRefresh if available so UI waits for fresh entity data.
+            // Do NOT setProperty on OData V4 contexts — that can mark fields dirty and trigger PATCH.
+            const oBinding = oCtx.getBinding() as any;
+            if (typeof oCtx.requestRefresh === "function") {
+                await oCtx.requestRefresh();
+            } else if (oBinding && typeof oBinding.requestRefresh === "function") {
+                await oBinding.requestRefresh();
+            } else if (oBinding && typeof oBinding.refresh === "function") {
+                await new Promise<void>((resolve) => {
+                    oBinding.attachEventOnce("dataReceived", () => resolve());
+                    oBinding.refresh();
+                });
+            }
+
+            // Force rebind of detail page as last resort if cache still looks stale.
+            const sStatusAfter = oCtx.getProperty("status") as string;
+            if (!sStatusAfter) {
+                oView.unbindElement();
+                oView.bindElement({
+                    path: "/Issue('" + sIssueId + "')",
+                    events: {
+                        dataReceived: that._onDataReceived.bind(that)
+                    }
+                });
+            }
+
+            that._updateVisibility();
+            that._calculateSLA(oCtx);
+            that._loadComments(sIssueId);
+            that._loadHistory(sIssueId);
+
+            if (sOkMsg) {
+                MessageToast.show(sOkMsg);
+            }
+        } catch (oError: unknown) {
+            that._showODataError(oError);
+        } finally {
+            oView.setBusy(false);
+        }
     }
 
     /**
@@ -749,46 +791,83 @@ export default class IssueDetail extends BaseController {
      * Event handler: upload file (OData V4 compliant).
      */
     public onUploadFile(oEvent: Event): void {
-        const oFile = (oEvent as any).getParameter("files")[0] as File;
+        // FileUploader can return multiple files; upload all selected files.
+        const aFiles: FileList | null = (oEvent as any).getParameter("files");
         const oContext = this.getView()!.getBindingContext();
-        if (!oContext || !oFile) { return; }
+        if (!oContext || !aFiles || aFiles.length === 0) { return; }
 
-        const sIssueId = oContext.getProperty("issue_id") as string;
+        const sIssueId =
+            (oContext.getProperty("issue_id") as string) || this._sCurrentIssueId;
+        if (!sIssueId) {
+            MessageBox.error("Cannot upload attachment: missing issue_id.");
+            return;
+        }
+
         const oModel = this.getModel()!;
-        const oListBinding = oModel.bindList("/Attachment") as ODataListBinding;
-
         const that = this;
         this.getView()!.setBusy(true);
 
-        const oUserRoleModel = this.getOwnerComponent()!.getModel("userRole") as JSONModel;
-        const sRole = oUserRoleModel.getProperty("/role") || "TESTER";
+        const sUploader = (this.getCurrentUser() || "UNKNOWN").slice(0, 12);
 
-        const oNewContext = oListBinding.create({
-            issue_id: sIssueId,
-            file_name: oFile.name,
-            mime_type: oFile.type || "application/octet-stream",
-            file_size: oFile.size,
-            uploaded_by: sRole,
-            uploaded_at: new Date().toISOString()
-        });
+        // RAP composition create: /Issue('<id>')/_Attachment
+        const oListBinding = oModel.bindList(
+            "/Issue('" + sIssueId + "')/_Attachment",
+            undefined,
+            undefined,
+            undefined,
+            { $$updateGroupId: "$direct" }
+        ) as ODataListBinding;
 
-        // $direct mode: create() already fires the request; no submitBatch needed.
-        oNewContext.created().then(() => {
+        const aCreates: Promise<void>[] = [];
+        for (let i = 0; i < aFiles.length; i++) {
+            const oFile = aFiles[i];
+            const oNewContext = oListBinding.create({
+                file_id: that._generateUuid36(),
+                issue_id: sIssueId,
+                file_name: (oFile.name || "attachment").slice(0, 255),
+                mime_type: (oFile.type || "application/octet-stream").slice(0, 50),
+                file_size: String(oFile.size || 0),
+                uploaded_by: sUploader,
+                uploaded_at: new Date().toISOString()
+            });
+            aCreates.push(oNewContext.created());
+        }
+
+        Promise.allSettled(aCreates).then((aResults) => {
             that.getView()!.setBusy(false);
-            MessageToast.show(that.getResourceBundle().getText("createAttachmentSuccess"));
-            that._loadAttachments(sIssueId);
-        }, (oError: Error) => {
-            that.getView()!.setBusy(false);
-            const sMessage = oError.message || "Unknown error occurred";
-            if (sMessage.indexOf("Creating operations are disabled") >= 0 || sMessage.indexOf("SADL_ENTITY_RUNTIME/011") >= 0) {
-                MessageBox.warning(
-                    "Backend Limitation: Attachment create is disabled by SADL behavior definition.\n\n" +
-                    "File prepared: \n" + oFile.name + " (" + (oFile.size / 1024).toFixed(1) + " KB)",
-                    { title: "SAP Backend Write Constraint", actions: ["OK"] }
+            const iOk = aResults.filter((r) => r.status === "fulfilled").length;
+            const aFailed = aResults
+                .filter((r): r is PromiseRejectedResult => r.status === "rejected")
+                .map((r) => (r.reason?.message || String(r.reason)));
+
+            if (iOk > 0) {
+                MessageToast.show(
+                    that.getResourceBundle().getText("createAttachmentSuccess") +
+                    " (" + iOk + ")"
                 );
-            } else {
-                MessageBox.error("Failed to upload file: " + sMessage);
+                that._loadAttachments(sIssueId);
             }
+
+            if (aFailed.length > 0) {
+                MessageBox.error(
+                    "Some attachments failed to upload:\n\n" + aFailed.join("\n"),
+                    { title: "Attachment Upload Error" }
+                );
+            }
+        });
+    }
+
+    /**
+     * Generate a 36-char UUID string for attachment key file_id.
+     */
+    private _generateUuid36(): string {
+        if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+            return crypto.randomUUID();
+        }
+        return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+            const r = Math.random() * 16 | 0;
+            const v = c === "x" ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
         });
     }
 
