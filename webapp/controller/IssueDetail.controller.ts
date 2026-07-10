@@ -64,6 +64,7 @@ export default class IssueDetail extends BaseController {
 
     private _oResolveDialog: Dialog | null = null;
     private _oReassignDialog: Dialog | null = null;
+    private _oReopenDialog: Dialog | null = null;
     private _sCurrentIssueId = "";
 
     // ============================================================
@@ -573,17 +574,78 @@ export default class IssueDetail extends BaseController {
     /**
      * Reopen action (TESTING/CLOSED/RESOLVED -> REOPEN).
      * Bound action: reopenIssue (no parameters).
-     * Backend increments reopen_count and sets affected_version = fix_version.
+     * Opens the Reopen Dialog to capture reason and post it as a comment.
      */
     public onReopen(): void {
+        const oView = this.getView()!;
         const that = this;
-        MessageBox.confirm(this.getResourceBundle().getText("dialogReopenConfirm"), {
-            onClose: function (sAction: string) {
-                if (sAction === MessageBox.Action.OK) {
-                    that._invokeAction("reopenIssue", undefined, "Issue reopened successfully");
-                }
-            }
+
+        if (!this._oReopenDialog) {
+            this.loadFragment({
+                name: "sap.defectmgmt.view.fragment.ReopenDialog"
+            }).then((oDialog: Dialog) => {
+                that._oReopenDialog = oDialog;
+                oView.addDependent(that._oReopenDialog);
+                that._oReopenDialog.open();
+            });
+        } else {
+            this._oReopenDialog.open();
+        }
+    }
+
+    /**
+     * Submits the reopen action and posts the reason notes as a comment.
+     */
+    public onReopenSubmit(): void {
+        const oReasonInput = this.byId("txtReopenReason") as TextArea;
+        const sReason = oReasonInput.getValue().trim();
+
+        if (!sReason) {
+            oReasonInput.setValueState("Error");
+            oReasonInput.setValueStateText(this.getResourceBundle().getText("dialogReopenReasonRequired") || "Reopen reason is required");
+            return;
+        } else {
+            oReasonInput.setValueState("None");
+        }
+
+        this._oReopenDialog!.close();
+        oReasonInput.setValue("");
+
+        const that = this;
+        this.getView().setBusy(true);
+
+        this._invokeAction("reopenIssue", undefined, "Issue reopened successfully").then(() => {
+            const oModel = that.getModel()!;
+            const sIssueId = (that.getView().getBindingContext() as any).getProperty("issue_id") as string;
+            const oListBinding = oModel.bindList("/Comment") as ODataListBinding;
+
+            const oContext = oListBinding.create({
+                issue_id: sIssueId,
+                comment_text: "Reopen Reason: " + sReason,
+                comment_type: "NOTE",
+                comment_by: (that.getModel("userRole") as JSONModel).getProperty("/role") as string,
+                comment_at: new Date().toISOString()
+            });
+
+            oContext.created().then(() => {
+                that._loadComments(sIssueId);
+            }).catch(() => {
+                // Ignore comment failure silently as the reopen action succeeded
+            });
+        }).finally(() => {
+            that.getView().setBusy(false);
         });
+    }
+
+    /**
+     * Cancels the reopen action and closes the dialog.
+     */
+    public onReopenCancel(): void {
+        if (this._oReopenDialog) {
+            (this.byId("txtReopenReason") as TextArea).setValue("");
+            (this.byId("txtReopenReason") as TextArea).setValueState("None");
+            this._oReopenDialog.close();
+        }
     }
 
     /**
