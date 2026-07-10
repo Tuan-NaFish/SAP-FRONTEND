@@ -190,13 +190,14 @@ export default class CreateIssue extends BaseController {
             }),
             events: {
                 dataReceived: () => {
-                    const aItems = oDeveloperSelect.getItems();
-                    if (aItems && aItems.length > 0) {
-                        oDeveloperSelect.setSelectedItem(aItems[0]);
-                        oWorkloadInfo.setText("Lowest workload developer was pre-selected automatically.");
-                    } else {
-                        oWorkloadInfo.setText("No active developers found for module " + sModule);
-                    }
+                    setTimeout(() => {
+                        const aItems = oDeveloperSelect.getItems();
+                        if (aItems && aItems.length > 0) {
+                            oWorkloadInfo.setText("Lowest workload developer was pre-selected automatically.");
+                        } else {
+                            oWorkloadInfo.setText("No active developers found for module " + sModule);
+                        }
+                    }, 0);
                 }
             }
         };
