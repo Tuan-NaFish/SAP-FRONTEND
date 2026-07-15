@@ -5,7 +5,7 @@ const https = require("node:https");
 // Backend target for credential validation
 const BACKEND_HOST = "s40lp1.ucc.cit.tum.de";
 const BACKEND_PATH =
-  "/sap/opu/odata4/sap/zui_issue_srvbind/srvd/sap/zui_issue_srvdef/0001/Developer?sap-client=324&$top=1";
+  "/sap/opu/odata4/sap/zui_issue_bind/srvd/sap/zui_issue_srvdef/0001/Developer?sap-client=324&$top=1";
 
 /**
  * UI5 custom middleware: /auth-check

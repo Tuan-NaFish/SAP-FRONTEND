@@ -148,7 +148,7 @@ module.exports = async function ({ log, options, middlewareUtil }) {
   const metadataPath = path.join(localServiceDir, "metadata.xml");
   const mockDataDir = path.join(localServiceDir, "mockdata");
 
-  const servicePrefix = "/sap/opu/odata4/sap/zui_issue_srvbind/srvd/sap/zui_issue_srvdef/0001";
+  const servicePrefix = "/sap/opu/odata4/sap/zui_issue_bind/srvd/sap/zui_issue_srvdef/0001";
   const mockData = loadMockData(mockDataDir);
   log.info(`[mockserver] Loaded ${Object.keys(mockData).length} entity sets from ${mockDataDir}`);
 

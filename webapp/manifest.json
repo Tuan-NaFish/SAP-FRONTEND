@@ -13,7 +13,7 @@
 
     "dataSources": {
       "mainService": {
-        "uri": "/sap/opu/odata4/sap/zui_issue_srvbind/srvd/sap/zui_issue_srvdef/0001/",
+        "uri": "/sap/opu/odata4/sap/zui_issue_bind/srvd/sap/zui_issue_srvdef/0001/",
         "type": "OData",
         "settings": {
           "odataVersion": "4.0",

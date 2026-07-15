@@ -7,7 +7,7 @@ import ResourceModel from "sap/ui/model/resource/ResourceModel";
 import ODataModel from "sap/ui/model/odata/v4/ODataModel";
 
 const SERVICE_URL =
-    "/sap/opu/odata4/sap/zui_issue_srvbind/srvd/sap/zui_issue_srvdef/0001/";
+    "/sap/opu/odata4/sap/zui_issue_bind/srvd/sap/zui_issue_srvdef/0001/";
 
 /**
  * @namespace sap.defectmgmt.controller

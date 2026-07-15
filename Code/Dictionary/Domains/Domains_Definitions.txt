@@ -1,0 +1,47 @@
+====================================================================
+SAP DEFECT MANAGEMENT SYSTEM - DOMAINS DICTIONARY
+====================================================================
+
+1. Domain: ZCOMMENT_TYPE
+- Description: Ticket Comment Type
+- DataType: CHAR (10)
+- Output Length: 10
+- Value Range:
+* GENERAL - General Comment
+* NOTE - Technical Note
+* ROOT_CAUSE - Root Cause Explanation
+* RESOLUTION - Resolution Description
+
+2. Domain: ZISSUE_MODULE
+- Description: SAP Functional Modules List
+- DataType: CHAR (10)
+- Output Length: 10
+- Value Range:
+* FI - Financial Accounting
+* MM - Material Management
+* SD - Sales & Distribution
+* HCM - Human Capital Management
+* PP - Production Planning
+* QM - Quality Management
+
+3. Domain: ZISSUE_SEVERITY
+- Description: Defect Severity Levels
+- DataType: CHAR (10)
+- Output Length: 10
+- Value Range:
+* LOW - Low Severity
+* MEDIUM - Medium Severity
+* HIGH - High Severity
+* CRITICAL - Critical System Down Severity
+
+4. Domain: ZISSUE_STATUS
+- Description: Defect Issue Status Lifecycle
+- DataType: CHAR (15)
+- Output Length: 15
+- Value Range:
+* ASSIGNED - Assigned to Developer
+* IN_PROGRESS - Work in Progress
+* RESOLVED - Fixed & Root Cause Added
+* TESTING - Verifying by Tester
+* CLOSED - Closed / Verified OK
+* REOPEN - Reopened on Verification Failure

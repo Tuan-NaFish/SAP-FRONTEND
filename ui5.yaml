@@ -40,7 +40,7 @@ server:
     # Comment this block out when connecting to the real SAP backend.
     # - name: ui5-middleware-mockserver
     #   afterMiddleware: compression
-    #   mountPath: /sap/opu/odata4/sap/zui_issue_srvbind
+    #   mountPath: /sap/opu/odata4/sap/zui_issue_bind
 
     # --- Proxy to real SAP backend ---
     # Forwards all /sap requests to the UCC SAP training system.

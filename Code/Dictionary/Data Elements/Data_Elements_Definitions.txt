@@ -1,0 +1,45 @@
+====================================================================
+SAP DEFECT MANAGEMENT SYSTEM - DATA ELEMENTS DICTIONARY
+====================================================================
+
+1. Data Element: ZDE_COMMENT_TYPE
+- Label: Comment Type
+- Domain: ZCOMMENT_TYPE
+- DataType: CHAR (10)
+- Description: Type of comment (GENERAL, NOTE, ROOT_CAUSE, RESOLUTION)
+
+2. Data Element: ZDE_ISSUE_ID
+- Label: Issue Unique Identifier
+- Domain: SYSUUID_C36 (Standard SAP GUID Domain)
+- DataType: CHAR (36)
+- Description: Unique key for each defect ticket
+
+3. Data Element: ZDE_ISSUE_MODULE
+- Label: SAP Functional Module
+- Domain: ZISSUE_MODULE
+- DataType: CHAR (10)
+- Description: SAP Module (FI, MM, SD, HCM, PP, QM)
+
+4. Data Element: ZDE_ISSUE_NUM
+- Label: Issue Sequence Number
+- Domain: INT4
+- DataType: INT4 (Integer)
+- Description: Auto-incrementing / sequential human-readable number
+
+5. Data Element: ZDE_ISSUE_SEVERITY
+- Label: Defect Severity
+- Domain: ZISSUE_SEVERITY
+- DataType: CHAR (10)
+- Description: Severity levels (LOW, MEDIUM, HIGH, CRITICAL)
+
+6. Data Element: ZDE_ISSUE_STATUS
+- Label: Defect Issue Status
+- Domain: ZISSUE_STATUS
+- DataType: CHAR (15)
+- Description: Ticket Lifecycle Status (ASSIGNED, IN_PROGRESS, RESOLVED, TESTING, CLOSED, REOPEN)
+
+7. Data Element: ZDE_ISSUE_TITLE
+- Label: Defect Short Title
+- Domain: TEXT80 (Standard SAP TEXT80 Domain)
+- DataType: CHAR (80)
+- Description: Short summary of the defect

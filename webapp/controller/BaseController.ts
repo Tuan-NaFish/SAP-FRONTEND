@@ -97,7 +97,7 @@ export default class BaseController extends Controller {
         }
 
         const sServiceUrl =
-            "/sap/opu/odata4/sap/zui_issue_srvbind/srvd/sap/zui_issue_srvdef/0001/";
+            "/sap/opu/odata4/sap/zui_issue_bind/srvd/sap/zui_issue_srvdef/0001/";
 
         const oResponse = await fetch(sServiceUrl + "?sap-client=324", {
             method: "GET",

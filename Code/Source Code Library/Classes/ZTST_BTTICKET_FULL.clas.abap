@@ -1,0 +1,20 @@
+CLASS ZTST_BTTICKET_FULL DEFINITION
+  PUBLIC
+  FINAL
+  CREATE PUBLIC .
+
+  PUBLIC SECTION.
+    METHODS:
+      run_full_lifecycle_test.
+  PROTECTED SECTION.
+  PRIVATE SECTION.
+ENDCLASS.
+
+CLASS ZTST_BTTICKET_FULL IMPLEMENTATION.
+
+  METHOD run_full_lifecycle_test.
+    " Integration test logic for full defect lifecycle:
+    " ASSIGNED -> IN_PROGRESS -> RESOLVED -> TESTING -> CLOSED -> REOPEN
+  ENDMETHOD.
+
+ENDCLASS.
