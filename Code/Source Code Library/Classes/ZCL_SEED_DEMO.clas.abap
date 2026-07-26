@@ -19,7 +19,6 @@ CLASS zcl_seed_demo IMPLEMENTATION.
 
     " 1. Clear old seed data (DEV only!)
     DELETE FROM zdeveloper.
-    COMMIT WORK.
 
     " 2. Insert developers + mentor admin
     INSERT zdeveloper FROM TABLE @( VALUE #(
@@ -100,10 +99,22 @@ CLASS zcl_seed_demo IMPLEMENTATION.
       ( developer_id = 'DEV-012'     role_label = 'Manager' )
     ).
 
+    DATA lr_developer TYPE RANGE OF syuname.
+    lr_developer = VALUE #( FOR ls_check IN lt_check
+                            ( sign = 'I' option = 'EQ' low = ls_check-developer_id ) ).
+
+    SELECT developer_id, COUNT( * ) AS mod_cnt
+      FROM zdeveloper
+      WHERE developer_id IN @lr_developer
+      GROUP BY developer_id
+      INTO TABLE @DATA(lt_mod_cnt).
+
     LOOP AT lt_check INTO DATA(ls_check).
-      SELECT COUNT( * ) FROM zdeveloper
-        WHERE developer_id = @ls_check-developer_id
-        INTO @DATA(lv_mod_cnt).
+      DATA(lv_mod_cnt) = 0.
+      READ TABLE lt_mod_cnt INTO DATA(ls_mod_cnt) WITH KEY developer_id = ls_check-developer_id.
+      IF sy-subrc = 0.
+        lv_mod_cnt = ls_mod_cnt-mod_cnt.
+      ENDIF.
       out->write( |{ ls_check-role_label }: { ls_check-developer_id } → { lv_mod_cnt } module(s)| ).
     ENDLOOP.
 

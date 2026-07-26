@@ -611,30 +611,8 @@ export default class IssueDetail extends BaseController {
         this._oReopenDialog!.close();
         oReasonInput.setValue("");
 
-        const that = this;
-        this.getView().setBusy(true);
-
-        this._invokeAction("reopenIssue", undefined, "Issue reopened successfully").then(() => {
-            const oModel = that.getModel()!;
-            const sIssueId = (that.getView().getBindingContext() as any).getProperty("issue_id") as string;
-            const oListBinding = oModel.bindList("/Comment") as ODataListBinding;
-
-            const oContext = oListBinding.create({
-                issue_id: sIssueId,
-                comment_text: "Reopen Reason: " + sReason,
-                comment_type: "NOTE",
-                comment_by: (that.getModel("userRole") as JSONModel).getProperty("/role") as string,
-                comment_at: new Date().toISOString()
-            });
-
-            oContext.created().then(() => {
-                that._loadComments(sIssueId);
-            }).catch(() => {
-                // Ignore comment failure silently as the reopen action succeeded
-            });
-        }).finally(() => {
-            that.getView().setBusy(false);
-        });
+        // Bound action: reopenIssue.
+        this._invokeAction("reopenIssue", undefined, "Issue reopened successfully");
     }
 
     /**
@@ -718,6 +696,7 @@ export default class IssueDetail extends BaseController {
         oFixDescInput.setValue("");
         oNoteInput.setValue("");
 
+        const that = this;
         // Bound action: resolveIssue with parameter entity Z_A_RESOLVE_ISSUE.
         // fix_version is computed server-side (get_next_version) — do NOT send it.
         // fixed_by / fixed_at are stamped by the backend from sy-uname.
@@ -811,27 +790,28 @@ export default class IssueDetail extends BaseController {
         const oContext = this.getView()!.getBindingContext();
         if (!oContext || !sValue || !sValue.trim()) { return; }
 
+        const oSelect = this.byId("commentTypeSelect") as Select;
+        const sCommentType = oSelect ? oSelect.getSelectedKey() : "GENERAL";
+
         const sIssueId = oContext.getProperty("issue_id") as string;
         const oModel = this.getModel()!;
-        const oListBinding = oModel.bindList("/Comment") as ODataListBinding;
+        const oListBinding = oModel.bindList("/Issue('" + sIssueId + "')/_Comment") as ODataListBinding;
 
         const that = this;
         this.getView()!.setBusy(true);
 
-        const oUserRoleModel = this.getOwnerComponent()!.getModel("userRole") as JSONModel;
-        const sRole = oUserRoleModel.getProperty("/role") || "DEVELOPER";
-
         const oNewContext = oListBinding.create({
-            issue_id: sIssueId,
             comment_text: sValue.trim(),
-            comment_type: "GENERAL",
-            comment_by: sRole,
-            comment_at: new Date().toISOString()
+            comment_type: sCommentType,
+            comment_by: this.getCurrentUser()
         });
 
         // $direct mode: create() already fires the request; no submitBatch needed.
         oNewContext.created().then(() => {
             that.getView()!.setBusy(false);
+            if (oSelect) {
+                oSelect.setSelectedKey("GENERAL");
+            }
             MessageToast.show(that.getResourceBundle().getText("createCommentSuccess"));
             that._loadComments(sIssueId);
         }, (oError: Error) => {

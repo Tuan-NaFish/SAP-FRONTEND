@@ -253,6 +253,32 @@ function formatCommentType(sType: string | null | undefined): string {
     }
 }
 
+/**
+ * Map comment type code to UI5 ValueState for colored tag display
+ */
+function formatCommentState(sType: string | null | undefined): string {
+    switch (sType) {
+        case "GENERAL":    return "None";         // Grey
+        case "NOTE":       return "Warning";      // Orange
+        case "ROOT_CAUSE": return "Error";        // Red
+        case "RESOLUTION": return "Success";      // Green
+        default:           return "None";
+    }
+}
+
+/**
+ * Map comment type code to custom CSS class name for pastel color tags
+ */
+function formatCommentTagClass(sType: string | null | undefined): string {
+    switch (sType) {
+        case "GENERAL":    return "commentTag commentTagGeneral";
+        case "NOTE":       return "commentTag commentTagNote";
+        case "ROOT_CAUSE": return "commentTag commentTagRootCause";
+        case "RESOLUTION": return "commentTag commentTagResolution";
+        default:           return "commentTag commentTagGeneral";
+    }
+}
+
 // ================================================
 // HISTORY / AUDIT TRAIL FORMATTERS
 // ================================================
@@ -400,6 +426,8 @@ const formatter = {
     formatFileIcon,
     formatAttachmentCount,
     formatCommentType,
+    formatCommentState,
+    formatCommentTagClass,
     formatHistoryIcon,
     formatHistoryIconColor,
     isStartProgressVisible,

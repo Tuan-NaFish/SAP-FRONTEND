@@ -505,6 +505,15 @@
                     <uxap:ObjectPageSubSection title="{i18n>sectionComments}">
                         <uxap:blocks>
                             <VBox class="sapUiSmallMargin">
+                                <HBox alignItems="Center" class="sapUiSmallMarginBottom">
+                                    <Label text="Comment Type:" class="sapUiSmallMarginEnd" style="font-weight: bold;"/>
+                                    <Select id="commentTypeSelect" width="200px">
+                                        <core:Item key="GENERAL" text="General Comment"/>
+                                        <core:Item key="NOTE" text="Technical Note"/>
+                                        <core:Item key="ROOT_CAUSE" text="Root Cause Explanation"/>
+                                        <core:Item key="RESOLUTION" text="Resolution Description"/>
+                                    </Select>
+                                </HBox>
                                 <FeedInput
                                     post=".onPostComment"
                                     class="sapUiSmallMarginBottom"/>
