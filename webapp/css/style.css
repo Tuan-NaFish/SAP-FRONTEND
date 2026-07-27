@@ -109,3 +109,109 @@ html, body, #content {
 .sapMObjIdTitle {
     font-family: "72Mono", "SFMono-Regular", "Consolas", monospace;
 }
+
+/* ---- All Issues: reusable sortable/filterable table headers ---- */
+.thcRoot {
+    position: relative;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    line-height: 1.5rem;
+}
+
+.thcRoot.thcSortable {
+    cursor: pointer;
+}
+
+/* TableHeaderCell receives the Column's hAlign as a renderer class. This
+   keeps left-aligned headers flush with their data while centered headers use
+   a symmetric safe area around the absolute filter caret. */
+.thcRoot.thcAlignLeft,
+.thcRoot.thcAlignBegin {
+    justify-content: flex-start;
+}
+
+.thcRoot.thcAlignCenter {
+    justify-content: center;
+    padding: 0 1.5rem;
+}
+
+.thcRoot.thcAlignRight {
+    justify-content: flex-end;
+}
+
+.thcLabelGroup {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    max-width: calc(100% - 1.5rem);
+    margin-right: 1.5rem;
+    vertical-align: middle;
+}
+
+/* A centered group must not reserve only on its right, otherwise it appears
+   shifted left. The root padding already reserves both sides in this mode. */
+.thcRoot.thcAlignCenter .thcLabelGroup {
+    margin-right: 0;
+    max-width: 100%;
+}
+
+.thcLabel {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.thcLabel.thcSortable {
+    user-select: none;
+}
+
+.thcLabel.thcSortable:hover,
+.thcLabel.thcSortable:focus {
+    color: var(--sapButton_Hover_TextColor, #0854a0);
+    outline: none;
+}
+
+.thcSortArrow {
+    display: inline-flex;
+    align-items: center;
+    color: var(--sapContent_IconColor, #556b82);
+    font-size: 0.75rem;
+    line-height: 1;
+}
+
+.thcChevronSlot {
+    position: absolute;
+    top: 50%;
+    right: 0.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    visibility: hidden;
+    width: 1.25rem;
+    height: 1.25rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 0.75rem;
+    line-height: 1;
+    cursor: pointer;
+    transform: translateY(-50%);
+}
+
+.thcRoot:hover .thcChevronSlot,
+.thcRoot.thcHasActiveFilter .thcChevronSlot {
+    visibility: visible;
+}
+
+.thcRoot.thcHasActiveFilter .thcChevronSlot {
+    color: var(--sapContent_MarkerIconColor, #0854a0);
+}
+
+.thcChevronSlot:focus {
+    outline: 1px solid var(--sapContent_FocusColor, #0070f2);
+    outline-offset: 1px;
+}

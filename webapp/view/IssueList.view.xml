@@ -1,33 +1,15 @@
 <!--
-    IssueList.view.xml — Issue List Page
-
-    Navigation entry point: displays a table of all defect tickets.
-    Users click a row to navigate to the Issue Detail page.
-
-    Features:
-      - sap.m.Table bound to /Issue OData entity set
-      - Column headers: Issue #, Title, Module, Severity, Status, Assigned To, Due Date
-      - Status and Severity columns use ObjectStatus with color coding (via formatter)
-      - Search bar filters by title or module
-      - Module filter (FI/MM/SD) for narrowing results
-      - Sort button with ActionSheet
-      - Growing (lazy loading) enabled for performance
-
-    Note: Role selector removed — role is now managed globally by the Login page
-    via userModel/userRole JSON models.
+    IssueList.view.xml — All Issues table.
+    Every column uses the reusable TableHeaderCell for sort and filter actions.
 -->
 <mvc:View
     controllerName="sap.defectmgmt.controller.IssueList"
     xmlns:mvc="sap.ui.core.mvc"
     xmlns="sap.m"
-    xmlns:core="sap.ui.core">
+    xmlns:core="sap.ui.core"
+    xmlns:ctrl="sap.defectmgmt.control">
 
-    <Page
-        id="issueListPage"
-        title=""
-        showNavButton="false">
-
-        <!-- Custom Header: SAP logo + title on left, actions on right -->
+    <Page id="issueListPage" title="" showNavButton="false">
         <customHeader>
             <Bar>
                 <contentLeft>
@@ -47,11 +29,6 @@
         </customHeader>
 
         <content>
-            <!-- ================================================ -->
-            <!-- ISSUE TABLE                                       -->
-            <!-- Bound to /Issue entity set from OData model       -->
-            <!-- Growing enabled: loads 20 items at a time          -->
-            <!-- ================================================ -->
             <Table
                 id="issueTable"
                 items="{/Issue}"
@@ -60,126 +37,166 @@
                 sticky="ColumnHeaders,HeaderToolbar"
                 class="sapUiSmallMargin">
 
-                <!-- No Data State -->
                 <noData>
                     <VBox alignItems="Center" justifyContent="Center" class="sapUiLargeMargin">
                         <core:Icon src="sap-icon://search" size="4rem" color="#8a97a1" class="sapUiSmallMarginBottom" />
                         <Title text="No defects found" level="H4"/>
-                        <Text text="Try adjusting your search keyword or module filter." />
+                        <Text text="Try adjusting the column filters." />
                     </VBox>
                 </noData>
 
-                <!-- Table Toolbar: Title, Sort, Module Filter, Search -->
                 <headerToolbar>
                     <OverflowToolbar>
                         <Title text="{i18n>issueListTableTitle}" level="H3"/>
-                        <ToolbarSpacer/>
-
-                        <!-- Sort Button -->
-                        <Button icon="sap-icon://sort" press=".onSortPress" type="Transparent"
-                            tooltip="{i18n>tooltipSortIssues}"/>
-
-                        <!-- Module Filter Dropdown -->
-                        <Select id="filterModule" change=".onFilterModule" width="150px">
-                            <core:Item key="" text="{i18n>filterAllModules}" />
-                            <core:Item key="FI" text="FI" />
-                            <core:Item key="MM" text="MM" />
-                            <core:Item key="SD" text="SD" />
-                            <core:Item key="HCM" text="HCM" />
-                            <core:Item key="PP" text="PP" />
-                            <core:Item key="QM" text="QM" />
-                        </Select>
-
-                        <!-- Search Field -->
-                        <SearchField
-                            id="searchField"
-                            width="250px"
-                            placeholder="{i18n>searchPlaceholder}"
-                            search=".onSearch"/>
                     </OverflowToolbar>
                 </headerToolbar>
 
-                <!-- Column Definitions -->
                 <columns>
-                    <Column width="5.5rem" hAlign="Center">
-                        <Text text="{i18n>columnIssueNum}"/>
+                    <Column width="9rem" hAlign="Center">
+                        <header>
+                            <ctrl:TableHeaderCell
+                                text="{i18n>columnIssueNum}"
+                                columnKey="issue_num"
+                                sortField="issue_num"
+                                filterType="text"
+                                sortState="{filterState>/columns/issue_num/sortState}"
+                                filterActive="{= !!${filterState>/columns/issue_num/filter/query} }"
+                                filterValue="{filterState>/columns/issue_num/filter}"
+                                sortChange=".onHeaderSort"
+                                filterChange=".onHeaderFilter"
+                                filterClear=".onHeaderFilterClear"/>
+                        </header>
                     </Column>
                     <Column hAlign="Left">
-                        <Text text="{i18n>columnTitle}"/>
+                        <header>
+                            <ctrl:TableHeaderCell
+                                text="{i18n>columnTitle}"
+                                columnKey="title"
+                                sortField="title"
+                                filterType="text"
+                                sortState="{filterState>/columns/title/sortState}"
+                                filterActive="{= !!${filterState>/columns/title/filter/query} }"
+                                filterValue="{filterState>/columns/title/filter}"
+                                sortChange=".onHeaderSort"
+                                filterChange=".onHeaderFilter"
+                                filterClear=".onHeaderFilterClear"/>
+                        </header>
+                    </Column>
+                    <Column width="9.5rem" hAlign="Center" demandPopin="true" minScreenWidth="Tablet">
+                        <header>
+                            <ctrl:TableHeaderCell
+                                text="{i18n>columnModule}"
+                                columnKey="modulename"
+                                sortField="modulename"
+                                filterType="category"
+                                categoryOptions='[&quot;FI&quot;,&quot;MM&quot;,&quot;SD&quot;,&quot;HCM&quot;,&quot;PP&quot;,&quot;QM&quot;]'
+                                sortState="{filterState>/columns/modulename/sortState}"
+                                filterActive="{= ${filterState>/columns/modulename/filter/selected}.length > 0 }"
+                                filterValue="{filterState>/columns/modulename/filter}"
+                                sortChange=".onHeaderSort"
+                                filterChange=".onHeaderFilter"
+                                filterClear=".onHeaderFilterClear"/>
+                        </header>
+                    </Column>
+                    <Column width="9rem" hAlign="Center" demandPopin="true" minScreenWidth="Tablet">
+                        <header>
+                            <ctrl:TableHeaderCell
+                                text="{i18n>columnSeverity}"
+                                columnKey="severity"
+                                sortField="severity"
+                                filterType="category"
+                                categoryOptions='[&quot;CRITICAL&quot;,&quot;HIGH&quot;,&quot;MEDIUM&quot;,&quot;LOW&quot;]'
+                                sortState="{filterState>/columns/severity/sortState}"
+                                filterActive="{= ${filterState>/columns/severity/filter/selected}.length > 0 }"
+                                filterValue="{filterState>/columns/severity/filter}"
+                                sortChange=".onHeaderSort"
+                                filterChange=".onHeaderFilter"
+                                filterClear=".onHeaderFilterClear"/>
+                        </header>
+                    </Column>
+                    <Column width="9rem" hAlign="Center">
+                        <header>
+                            <ctrl:TableHeaderCell
+                                text="{i18n>columnStatus}"
+                                columnKey="status"
+                                sortField="status"
+                                filterType="category"
+                                categoryOptions='[&quot;ASSIGNED&quot;,&quot;IN_PROGRESS&quot;,&quot;RESOLVED&quot;,&quot;TESTING&quot;,&quot;CLOSED&quot;,&quot;REOPEN&quot;]'
+                                sortState="{filterState>/columns/status/sortState}"
+                                filterActive="{= ${filterState>/columns/status/filter/selected}.length > 0 }"
+                                filterValue="{filterState>/columns/status/filter}"
+                                sortChange=".onHeaderSort"
+                                filterChange=".onHeaderFilter"
+                                filterClear=".onHeaderFilterClear"/>
+                        </header>
+                    </Column>
+                    <Column width="11rem" hAlign="Center" demandPopin="true" minScreenWidth="Desktop">
+                        <header>
+                            <ctrl:TableHeaderCell
+                                text="{i18n>columnAssignedTo}"
+                                columnKey="assigned_to"
+                                sortField="assigned_to"
+                                filterType="text"
+                                sortState="{filterState>/columns/assigned_to/sortState}"
+                                filterActive="{= !!${filterState>/columns/assigned_to/filter/query} }"
+                                filterValue="{filterState>/columns/assigned_to/filter}"
+                                sortChange=".onHeaderSort"
+                                filterChange=".onHeaderFilter"
+                                filterClear=".onHeaderFilterClear"/>
+                        </header>
+                    </Column>
+                    <Column width="10rem" hAlign="Center" demandPopin="true" minScreenWidth="Desktop">
+                        <header>
+                            <ctrl:TableHeaderCell
+                                text="{i18n>columnDueDate}"
+                                columnKey="due_date"
+                                sortField="due_date"
+                                filterType="dateRange"
+                                sortState="{filterState>/columns/due_date/sortState}"
+                                filterActive="{= !!${filterState>/columns/due_date/filter/from} || !!${filterState>/columns/due_date/filter/to} }"
+                                filterValue="{filterState>/columns/due_date/filter}"
+                                sortChange=".onHeaderSort"
+                                filterChange=".onHeaderFilter"
+                                filterClear=".onHeaderFilterClear"/>
+                        </header>
                     </Column>
                     <Column width="8rem" hAlign="Center" demandPopin="true" minScreenWidth="Tablet">
-                        <Text text="{i18n>columnModule}"/>
-                    </Column>
-                    <Column width="7rem" hAlign="Center" demandPopin="true" minScreenWidth="Tablet">
-                        <Text text="{i18n>columnSeverity}"/>
-                    </Column>
-                    <Column width="8rem" hAlign="Center">
-                        <Text text="{i18n>columnStatus}"/>
-                    </Column>
-                    <Column width="8rem" hAlign="Center" demandPopin="true" minScreenWidth="Desktop">
-                        <Text text="{i18n>columnAssignedTo}"/>
-                    </Column>
-                    <Column width="7rem" hAlign="Center" demandPopin="true" minScreenWidth="Desktop">
-                        <Text text="{i18n>columnDueDate}"/>
-                    </Column>
-                    <Column width="7rem" hAlign="Center" demandPopin="true" minScreenWidth="Tablet">
-                        <Text text="{i18n>columnSla}"/>
+                        <header>
+                            <ctrl:TableHeaderCell
+                                text="{i18n>columnSla}"
+                                columnKey="sla"
+                                sortable="false"
+                                filterType="slaStatus"
+                                sortState="{filterState>/columns/sla/sortState}"
+                                filterActive="{= ${filterState>/columns/sla/filter/selection} !== 'all' }"
+                                filterValue="{filterState>/columns/sla/filter}"
+                                filterChange=".onHeaderFilter"
+                                filterClear=".onHeaderFilterClear"/>
+                        </header>
                     </Column>
                 </columns>
 
-                <!-- Row Template — each row navigates to detail on press -->
                 <items>
                     <ColumnListItem type="Navigation" vAlign="Middle" press=".onIssuePress">
                         <cells>
-                            <!-- Issue Number (formatted as #1001) -->
                             <ObjectIdentifier title="#{issue_num}"/>
-
-                            <!-- Title (truncated to 2 lines) -->
                             <Text text="{title}" maxLines="2"/>
-
-                            <!-- Module badge — ObjectStatus with inverted styling matching Status column -->
                             <ObjectStatus
                                 class="uniformPill"
                                 inverted="true"
                                 text="{modulename}"
-                                state="{= ${modulename} === 'FI' ? 'Indication01' : ${modulename} === 'MM' ? 'Indication02' : ${modulename} === 'SD' ? 'Indication03' : 'Indication04' }"
-                            />
-
-                            <!-- Severity with icon and color -->
+                                state="{= ${modulename} === 'FI' ? 'Indication01' : ${modulename} === 'MM' ? 'Indication02' : ${modulename} === 'SD' ? 'Indication03' : 'Indication04' }"/>
                             <ObjectStatus
                                 text="{severity}"
-                                state="{
-                                    path: 'severity',
-                                    formatter: '.formatter.formatSeverityState'
-                                }"
-                                icon="{
-                                    path: 'severity',
-                                    formatter: '.formatter.formatSeverityIcon'
-                                }"/>
-
-                            <!-- Status — consistent ObjectStatus with inverted pill styling -->
+                                state="{ path: 'severity', formatter: '.formatter.formatSeverityState' }"
+                                icon="{ path: 'severity', formatter: '.formatter.formatSeverityIcon' }"/>
                             <ObjectStatus
                                 class="uniformPill"
-                                text="{
-                                    path: 'status',
-                                    formatter: '.formatter.formatStatusText'
-                                }"
-                                state="{
-                                    path: 'status',
-                                    formatter: '.formatter.formatStatusState'
-                                }"
+                                text="{ path: 'status', formatter: '.formatter.formatStatusText' }"
+                                state="{ path: 'status', formatter: '.formatter.formatStatusState' }"
                                 inverted="true"/>
-
-                            <!-- Assigned Developer -->
                             <Text text="{assigned_to}"/>
-
-                            <!-- Due Date (formatted DD.MM.YYYY) -->
-                            <Text text="{
-                                path: 'due_date',
-                                formatter: '.formatter.formatDate'
-                            }"/>
-
-                            <!-- Overdue indicator (Error when past due & not CLOSED) -->
+                            <Text text="{ path: 'due_date', formatter: '.formatter.formatDate' }"/>
                             <ObjectStatus
                                 text="{ parts: ['due_date', 'status'], formatter: '.formatter.formatOverdueText' }"
                                 state="{ parts: ['due_date', 'status'], formatter: '.formatter.formatOverdueState' }"
@@ -189,7 +206,5 @@
                 </items>
             </Table>
         </content>
-
     </Page>
-
 </mvc:View>
