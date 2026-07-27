@@ -458,6 +458,7 @@
                                             buttonText="Upload File"
                                             icon="sap-icon://upload"
                                             change=".onUploadFile"
+                                            visible="false"
                                             class="sapUiTinyMarginEnd"/>
                                         <Label text="{
                                             parts: ['attachments>/'],
@@ -505,7 +506,7 @@
                     <uxap:ObjectPageSubSection title="{i18n>sectionComments}">
                         <uxap:blocks>
                             <VBox class="sapUiSmallMargin">
-                                <HBox alignItems="Center" class="sapUiSmallMarginBottom">
+                                <HBox id="commentTypeBox" alignItems="Center" class="sapUiSmallMarginBottom" visible="false">
                                     <Label text="Comment Type:" class="sapUiSmallMarginEnd" style="font-weight: bold;"/>
                                     <Select id="commentTypeSelect" width="200px">
                                         <core:Item key="GENERAL" text="General Comment"/>
@@ -515,7 +516,10 @@
                                     </Select>
                                 </HBox>
                                 <FeedInput
+                                    id="commentInput"
+                                    placeholder="Write a comment..."
                                     post=".onPostComment"
+                                    visible="false"
                                     class="sapUiSmallMarginBottom"/>
                                 <List
                                     id="commentList"

@@ -183,14 +183,22 @@ export default class IssueDetail extends BaseController {
         const sCurrentUser = this.getCurrentUser();
         const bIsAssignedDev = sCurrentUser && (oContext.getProperty("assigned_to") === sCurrentUser);
 
+        // When the ticket is CLOSED it becomes read-only: no reopen,
+        // no new attachments, no new comments.
+        const bClosed = sStatus === "CLOSED";
+
         // Button visibility rules (status + role)
         const mVisibility: Record<string, boolean> = {
             btnStartProgress: (sStatus === "ASSIGNED" || sStatus === "REOPEN") && (sRole === "DEVELOPER" && bIsAssignedDev),
             btnResolve:       sStatus === "IN_PROGRESS" && (sRole === "DEVELOPER" && bIsAssignedDev),
             btnStartTesting:  sStatus === "RESOLVED" && (sRole === "TESTER" || sRole === "MANAGER"),
             btnClose:         sStatus === "TESTING" && (sRole === "TESTER" || sRole === "MANAGER"),
-            btnReopen:        (sStatus === "TESTING" || sStatus === "CLOSED") && (sRole === "TESTER" || sRole === "MANAGER"),
-            btnReassign:      formatter.isReassignVisible(sStatus, sRole)
+            btnReopen:        sStatus === "TESTING" && (sRole === "TESTER" || sRole === "MANAGER"),
+            btnReassign:      formatter.isReassignVisible(sStatus, sRole),
+            // Attachments & comments authoring — hidden when the issue is closed.
+            fileUploader:     !bClosed,
+            commentInput:     !bClosed,
+            commentTypeBox:   !bClosed
         };
 
         for (const sId of Object.keys(mVisibility)) {
