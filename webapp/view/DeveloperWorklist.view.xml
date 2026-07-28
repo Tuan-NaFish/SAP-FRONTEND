@@ -2,7 +2,8 @@
     controllerName="sap.defectmgmt.controller.DeveloperWorklist"
     xmlns:mvc="sap.ui.core.mvc"
     xmlns="sap.m"
-    xmlns:core="sap.ui.core">
+    xmlns:core="sap.ui.core"
+    xmlns:ctrl="sap.defectmgmt.control">
 
     <Page
         id="developerWorklistPage"
@@ -49,26 +50,113 @@
                 </headerToolbar>
 
                 <columns>
-                    <Column width="5.5rem" hAlign="Center">
-                        <Text text="{i18n>columnIssueNum}"/>
+                    <Column width="7.5rem" hAlign="Center">
+                        <header>
+                            <ctrl:TableHeaderCell
+                                text="{i18n>columnIssueNum}"
+                                columnKey="issue_num"
+                                sortField="issue_num"
+                                filterType="text"
+                                sortState="{filterState>/columns/issue_num/sortState}"
+                                filterActive="{= !!${filterState>/columns/issue_num/filter/query} }"
+                                filterValue="{filterState>/columns/issue_num/filter}"
+                                sortChange=".onHeaderSort"
+                                filterChange=".onHeaderFilter"
+                                filterClear=".onHeaderFilterClear"/>
+                        </header>
                     </Column>
                     <Column hAlign="Left">
-                        <Text text="{i18n>columnTitle}"/>
+                        <header>
+                            <ctrl:TableHeaderCell
+                                text="{i18n>columnTitle}"
+                                columnKey="title"
+                                sortField="title"
+                                filterType="text"
+                                sortState="{filterState>/columns/title/sortState}"
+                                filterActive="{= !!${filterState>/columns/title/filter/query} }"
+                                filterValue="{filterState>/columns/title/filter}"
+                                sortChange=".onHeaderSort"
+                                filterChange=".onHeaderFilter"
+                                filterClear=".onHeaderFilterClear"/>
+                        </header>
+                    </Column>
+                    <Column width="8.5rem" hAlign="Center" demandPopin="true" minScreenWidth="Tablet">
+                        <header>
+                            <ctrl:TableHeaderCell
+                                text="{i18n>columnModule}"
+                                columnKey="modulename"
+                                sortField="modulename"
+                                filterType="category"
+                                categoryOptions='[&quot;FI&quot;,&quot;MM&quot;,&quot;SD&quot;,&quot;HCM&quot;,&quot;PP&quot;,&quot;QM&quot;]'
+                                sortState="{filterState>/columns/modulename/sortState}"
+                                filterActive="{= ${filterState>/columns/modulename/filter/selected}.length > 0 }"
+                                filterValue="{filterState>/columns/modulename/filter}"
+                                sortChange=".onHeaderSort"
+                                filterChange=".onHeaderFilter"
+                                filterClear=".onHeaderFilterClear"/>
+                        </header>
                     </Column>
                     <Column width="8rem" hAlign="Center" demandPopin="true" minScreenWidth="Tablet">
-                        <Text text="{i18n>columnModule}"/>
-                    </Column>
-                    <Column width="7rem" hAlign="Center" demandPopin="true" minScreenWidth="Tablet">
-                        <Text text="{i18n>columnSeverity}"/>
+                        <header>
+                            <ctrl:TableHeaderCell
+                                text="{i18n>columnSeverity}"
+                                columnKey="severity"
+                                sortField="severity"
+                                filterType="category"
+                                categoryOptions='[&quot;CRITICAL&quot;,&quot;HIGH&quot;,&quot;MEDIUM&quot;,&quot;LOW&quot;]'
+                                sortState="{filterState>/columns/severity/sortState}"
+                                filterActive="{= ${filterState>/columns/severity/filter/selected}.length > 0 }"
+                                filterValue="{filterState>/columns/severity/filter}"
+                                sortChange=".onHeaderSort"
+                                filterChange=".onHeaderFilter"
+                                filterClear=".onHeaderFilterClear"/>
+                        </header>
                     </Column>
                     <Column width="8rem" hAlign="Center">
-                        <Text text="{i18n>columnStatus}"/>
+                        <header>
+                            <ctrl:TableHeaderCell
+                                text="{i18n>columnStatus}"
+                                columnKey="status"
+                                sortField="status"
+                                filterType="category"
+                                categoryOptions='[&quot;ASSIGNED&quot;,&quot;IN_PROGRESS&quot;,&quot;REOPEN&quot;]'
+                                sortState="{filterState>/columns/status/sortState}"
+                                filterActive="{= ${filterState>/columns/status/filter/selected}.length > 0 }"
+                                filterValue="{filterState>/columns/status/filter}"
+                                sortChange=".onHeaderSort"
+                                filterChange=".onHeaderFilter"
+                                filterClear=".onHeaderFilterClear"/>
+                        </header>
                     </Column>
-                    <Column width="7rem" hAlign="Center" demandPopin="true" minScreenWidth="Desktop">
-                        <Text text="{i18n>columnDueDate}"/>
+                    <Column width="8rem" hAlign="Center" demandPopin="true" minScreenWidth="Desktop">
+                        <header>
+                            <ctrl:TableHeaderCell
+                                text="{i18n>columnDueDate}"
+                                columnKey="due_date"
+                                sortField="due_date"
+                                filterType="date"
+                                sortState="{filterState>/columns/due_date/sortState}"
+                                filterActive="{= !!${filterState>/columns/due_date/filter/from} || !!${filterState>/columns/due_date/filter/to} }"
+                                filterValue="{filterState>/columns/due_date/filter}"
+                                sortChange=".onHeaderSort"
+                                filterChange=".onHeaderFilter"
+                                filterClear=".onHeaderFilterClear"/>
+                        </header>
                     </Column>
-                    <Column width="7rem" hAlign="Center">
-                        <Text text="{i18n>columnSla}"/>
+                    <Column width="8rem" hAlign="Center">
+                        <header>
+                            <ctrl:TableHeaderCell
+                                text="{i18n>columnSla}"
+                                columnKey="sla"
+                                sortField="due_date"
+                                filterType="sla"
+                                sortState="{filterState>/columns/sla/sortState}"
+                                filterActive="{= ${filterState>/columns/sla/filter/selection} !== 'all' }"
+                                filterValue="{filterState>/columns/sla/filter}"
+                                sortChange=".onHeaderSort"
+                                filterChange=".onHeaderFilter"
+                                filterClear=".onHeaderFilterClear"/>
+                        </header>
                     </Column>
                 </columns>
 
