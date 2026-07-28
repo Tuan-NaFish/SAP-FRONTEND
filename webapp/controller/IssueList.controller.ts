@@ -83,18 +83,6 @@ export default class IssueList extends BaseController {
         oModel.setProperty(`/columns/${sColumnKey}/filter`, this._defaultFilterFor(sColumnKey));
     }
 
-    /** Trigger filtering update when any filter panel selection changes. */
-    public onFilterChange(): void {
-        this._applyStateToBinding();
-    }
-
-    /** Reset all filter inputs to default and refresh binding. */
-    public onClearAllFilters(): void {
-        const oModel = this.getView()!.getModel("filterState") as JSONModel;
-        oModel.setData(this._createDefaultFilterState());
-        this._applyStateToBinding();
-    }
-
     private _applyStateToBinding(): void {
         const oTable = this.byId("issueTable") as Table;
         const oBinding = oTable?.getBinding("items") as ListBinding;
