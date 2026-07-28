@@ -17,6 +17,7 @@
                         id="txtReopenReason"
                         rows="4"
                         width="100%"
+                        maxLength="1000"
                         placeholder="{i18n>dialogReopenReasonPlaceholder}"/>
                 </form:content>
             </form:SimpleForm>
