@@ -209,7 +209,7 @@ export default class IssueDetail extends BaseController {
         }
 
         // Resolution section visibility
-        const bResolved = sStatus === "RESOLVED" || sStatus === "TESTING" || sStatus === "CLOSED";
+        const bResolved = sStatus === "RESOLVED" || sStatus === "TESTING" || sStatus === "CLOSED" || sStatus === "REOPEN";
         const oSection = this.byId("resolutionSection") as unknown as Control;
         if (oSection) {
             oSection.setVisible(bResolved);
