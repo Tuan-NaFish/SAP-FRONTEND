@@ -50,7 +50,7 @@
                 </headerToolbar>
 
                 <columns>
-                    <Column width="7.5rem" hAlign="Center">
+                    <Column width="9rem" hAlign="Center">
                         <header>
                             <ctrl:TableHeaderCell
                                 text="{i18n>columnIssueNum}"
@@ -96,7 +96,7 @@
                                 filterClear=".onHeaderFilterClear"/>
                         </header>
                     </Column>
-                    <Column width="8rem" hAlign="Center" demandPopin="true" minScreenWidth="Tablet">
+                    <Column width="9rem" hAlign="Center" demandPopin="true" minScreenWidth="Tablet">
                         <header>
                             <ctrl:TableHeaderCell
                                 text="{i18n>columnSeverity}"
@@ -128,13 +128,13 @@
                                 filterClear=".onHeaderFilterClear"/>
                         </header>
                     </Column>
-                    <Column width="8rem" hAlign="Center" demandPopin="true" minScreenWidth="Desktop">
+                    <Column width="10rem" hAlign="Center" demandPopin="true" minScreenWidth="Desktop">
                         <header>
                             <ctrl:TableHeaderCell
                                 text="{i18n>columnDueDate}"
                                 columnKey="due_date"
                                 sortField="due_date"
-                                filterType="date"
+                                filterType="dateRange"
                                 sortState="{filterState>/columns/due_date/sortState}"
                                 filterActive="{= !!${filterState>/columns/due_date/filter/from} || !!${filterState>/columns/due_date/filter/to} }"
                                 filterValue="{filterState>/columns/due_date/filter}"
@@ -148,12 +148,10 @@
                             <ctrl:TableHeaderCell
                                 text="{i18n>columnSla}"
                                 columnKey="sla"
-                                sortField="due_date"
-                                filterType="sla"
-                                sortState="{filterState>/columns/sla/sortState}"
+                                sortable="false"
+                                filterType="slaStatus"
                                 filterActive="{= ${filterState>/columns/sla/filter/selection} !== 'all' }"
                                 filterValue="{filterState>/columns/sla/filter}"
-                                sortChange=".onHeaderSort"
                                 filterChange=".onHeaderFilter"
                                 filterClear=".onHeaderFilterClear"/>
                         </header>
