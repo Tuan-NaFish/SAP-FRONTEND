@@ -111,24 +111,26 @@ export default class IssueList extends BaseController {
         }
 
         const oState = (this.getView()!.getModel("filterState") as JSONModel).getData() as FilterState;
-        const aFilters: Filter[] = [];
+        const aServerFilters: Filter[] = [];
+        const aClientFilters: Filter[] = [];
         const mColumns = oState.columns;
 
-        this._addTextFilter(aFilters, "issue_num", mColumns.issue_num.filter.query, true);
-        this._addTextFilter(aFilters, "title", mColumns.title.filter.query);
-        this._addCategoryFilter(aFilters, "modulename", mColumns.modulename.filter.selected);
-        this._addCategoryFilter(aFilters, "severity", mColumns.severity.filter.selected);
-        this._addCategoryFilter(aFilters, "status", mColumns.status.filter.selected);
-        this._addTextFilter(aFilters, "assigned_to", mColumns.assigned_to.filter.query);
-        this._addDateRangeFilter(aFilters, mColumns.due_date.filter);
-        this._addSlaFilter(aFilters, mColumns.sla.filter.selection);
+        this._addTextFilter(aServerFilters, "issue_num", mColumns.issue_num.filter.query, true);
+        this._addTextFilter(aServerFilters, "title", mColumns.title.filter.query);
+        this._addCategoryFilter(aServerFilters, "modulename", mColumns.modulename.filter.selected);
+        this._addCategoryFilter(aServerFilters, "severity", mColumns.severity.filter.selected);
+        this._addCategoryFilter(aServerFilters, "status", mColumns.status.filter.selected);
+        this._addTextFilter(aServerFilters, "assigned_to", mColumns.assigned_to.filter.query);
+        this._addDateRangeFilter(aClientFilters, mColumns.due_date.filter);
+        this._addSlaFilter(aClientFilters, mColumns.sla.filter.selection);
 
         const aSorters = oState.sort.state === "none" || !oState.sort.sortField
             ? []
             : [new Sorter(oState.sort.sortField, oState.sort.state === "desc")];
 
         oBinding.sort(aSorters);
-        oBinding.filter(aFilters, FilterType.Application);
+        oBinding.filter(aServerFilters, FilterType.Application);
+        oBinding.filter(aClientFilters, FilterType.Control);
     }
 
     private _addTextFilter(aFilters: Filter[], sField: string, sQuery: string, bNumeric = false): void {

@@ -74,26 +74,28 @@ export default class DeveloperWorklist extends BaseController {
         const oState = oModel.getData() as FilterState;
         const mColumns = oState.columns;
 
-        const aColumnFilters: Filter[] = [];
-        this._addTextFilter(aColumnFilters, "issue_num", mColumns.issue_num.filter.query, true);
-        this._addTextFilter(aColumnFilters, "title", mColumns.title.filter.query);
-        this._addCategoryFilter(aColumnFilters, "modulename", mColumns.modulename.filter.selected);
-        this._addCategoryFilter(aColumnFilters, "severity", mColumns.severity.filter.selected);
-        this._addCategoryFilter(aColumnFilters, "status", mColumns.status.filter.selected);
-        this._addDateRangeFilter(aColumnFilters, mColumns.due_date.filter);
-        this._addSlaFilter(aColumnFilters, mColumns.sla.filter.selection);
+        const aColumnServerFilters: Filter[] = [];
+        const aClientFilters: Filter[] = [];
+        this._addTextFilter(aColumnServerFilters, "issue_num", mColumns.issue_num.filter.query, true);
+        this._addTextFilter(aColumnServerFilters, "title", mColumns.title.filter.query);
+        this._addCategoryFilter(aColumnServerFilters, "modulename", mColumns.modulename.filter.selected);
+        this._addCategoryFilter(aColumnServerFilters, "severity", mColumns.severity.filter.selected);
+        this._addCategoryFilter(aColumnServerFilters, "status", mColumns.status.filter.selected);
+        this._addDateRangeFilter(aClientFilters, mColumns.due_date.filter);
+        this._addSlaFilter(aClientFilters, mColumns.sla.filter.selection);
 
         // Combine base filters and column filters with AND
-        const aFinalFilters = [...aBaseFilters];
-        if (aColumnFilters.length > 0) {
-            aFinalFilters.push(new Filter({
-                filters: aColumnFilters,
+        const aFinalServerFilters = [...aBaseFilters];
+        if (aColumnServerFilters.length > 0) {
+            aFinalServerFilters.push(new Filter({
+                filters: aColumnServerFilters,
                 and: true
             }));
         }
 
         // Apply filters
-        oBinding.filter(aFinalFilters, FilterType.Application);
+        oBinding.filter(aFinalServerFilters, FilterType.Application);
+        oBinding.filter(aClientFilters, FilterType.Control);
 
         // Apply sorting
         const aSorters = oState.sort.state === "none" || !oState.sort.sortField
