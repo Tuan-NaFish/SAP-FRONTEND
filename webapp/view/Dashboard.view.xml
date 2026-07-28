@@ -38,35 +38,50 @@
 
                 <HBox wrap="Wrap" class="sapUiTinyMarginBottom">
                     <!-- Total Open KPI -->
-                    <GenericTile header="{i18n>kpiTotalOpen}" frameType="OneByOne" class="sapUiTinyMarginEnd sapUiTinyMarginBottom" press=".onFilterListByStatus" valueColor="Critical">
+                    <GenericTile header="{i18n>kpiTotalOpen}" frameType="OneByOne" class="sapUiTinyMarginEnd sapUiTinyMarginBottom" press=".onKpiTilePress" valueColor="Critical">
+                        <customData>
+                            <core:CustomData key="kpiType" value="totalOpen" />
+                        </customData>
                         <TileContent>
                             <NumericContent value="{dashboardData>/totalOpen}" valueColor="Critical" icon="sap-icon://active-folder"/>
                         </TileContent>
                     </GenericTile>
 
                     <!-- Overdue KPI -->
-                    <GenericTile header="{i18n>kpiOverdue}" frameType="OneByOne" class="sapUiTinyMarginEnd sapUiTinyMarginBottom" press=".onFilterListByOverdue">
+                    <GenericTile header="{i18n>kpiOverdue}" frameType="OneByOne" class="sapUiTinyMarginEnd sapUiTinyMarginBottom" press=".onKpiTilePress">
+                        <customData>
+                            <core:CustomData key="kpiType" value="overdue" />
+                        </customData>
                         <TileContent>
                             <NumericContent value="{dashboardData>/totalOverdue}" valueColor="Error" icon="sap-icon://alert"/>
                         </TileContent>
                     </GenericTile>
 
                     <!-- Critical SLA KPI -->
-                    <GenericTile header="{i18n>kpiCritical}" frameType="OneByOne" class="sapUiTinyMarginEnd sapUiTinyMarginBottom">
+                    <GenericTile header="{i18n>kpiCritical}" frameType="OneByOne" class="sapUiTinyMarginEnd sapUiTinyMarginBottom" press=".onKpiTilePress">
+                        <customData>
+                            <core:CustomData key="kpiType" value="critical" />
+                        </customData>
                         <TileContent>
                             <NumericContent value="{dashboardData>/totalCritical}" valueColor="Error" icon="sap-icon://warning2"/>
                         </TileContent>
                     </GenericTile>
 
                     <!-- Resolved (Waiting Test) KPI -->
-                    <GenericTile header="{i18n>kpiWaitingTesting}" frameType="OneByOne" class="sapUiTinyMarginEnd sapUiTinyMarginBottom">
+                    <GenericTile header="{i18n>kpiWaitingTesting}" frameType="OneByOne" class="sapUiTinyMarginEnd sapUiTinyMarginBottom" press=".onKpiTilePress">
+                        <customData>
+                            <core:CustomData key="kpiType" value="waitingTesting" />
+                        </customData>
                         <TileContent>
                             <NumericContent value="{dashboardData>/totalTesting}" valueColor="Neutral" icon="sap-icon://user-settings"/>
                         </TileContent>
                     </GenericTile>
 
                     <!-- Closed KPI -->
-                    <GenericTile header="{i18n>kpiClosed}" frameType="OneByOne" class="sapUiTinyMarginBottom">
+                    <GenericTile header="{i18n>kpiClosed}" frameType="OneByOne" class="sapUiTinyMarginBottom" press=".onKpiTilePress">
+                        <customData>
+                            <core:CustomData key="kpiType" value="closed" />
+                        </customData>
                         <TileContent>
                             <NumericContent value="{dashboardData>/totalClosed}" valueColor="Good" icon="sap-icon://accept"/>
                         </TileContent>

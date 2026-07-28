@@ -325,16 +325,50 @@ export default class Dashboard extends BaseController {
     }
 
     /**
-     * Navigate to issue list filtered by a specific status.
+     * Event handler for KPI Tile press. Navigates to the Issue List with filters,
+     * or does nothing if the KPI count is 0.
      */
-    public onFilterListByStatus(): void {
-        this.getRouter().navTo("IssueList");
-    }
+    public onKpiTilePress(oEvent: Event): void {
+        const oTile = oEvent.getSource() as any;
+        const sKpiType = oTile.data("kpiType") as string;
 
-    /**
-     * Navigate to issue list filtered by overdue.
-     */
-    public onFilterListByOverdue(): void {
-        this.getRouter().navTo("IssueList");
+        const oModel = this.getModel("dashboardData") as JSONModel;
+        const oStats = oModel.getData();
+        if (!oStats) { return; }
+
+        let iCount = 0;
+        let oQuery: Record<string, string> = {};
+
+        switch (sKpiType) {
+            case "totalOpen":
+                iCount = oStats.totalOpen;
+                oQuery = { status: "ASSIGNED,IN_PROGRESS,RESOLVED,TESTING,REOPEN" };
+                break;
+            case "overdue":
+                iCount = oStats.totalOverdue;
+                oQuery = { sla: "overdue" };
+                break;
+            case "critical":
+                iCount = oStats.totalCritical;
+                oQuery = { severity: "CRITICAL", status: "ASSIGNED,IN_PROGRESS,RESOLVED,TESTING,REOPEN" };
+                break;
+            case "waitingTesting":
+                iCount = oStats.totalTesting;
+                oQuery = { status: "TESTING" };
+                break;
+            case "closed":
+                iCount = oStats.totalClosed;
+                oQuery = { status: "CLOSED" };
+                break;
+        }
+
+        // If count is 0, do not navigate
+        if (iCount === 0) {
+            return;
+        }
+
+        this.getRouter().navTo("IssueList", {
+            "?query": oQuery
+        });
     }
 }

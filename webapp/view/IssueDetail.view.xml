@@ -221,29 +221,40 @@
                 title="{i18n>sectionGeneralInfo}">
                 <uxap:ObjectPageSubSection title="{i18n>sectionDescription}">
                     <uxap:blocks>
-                        <form:SimpleForm
-                            editable="false"
-                            layout="ResponsiveGridLayout"
-                            labelSpanXL="3" labelSpanL="3" labelSpanM="3" labelSpanS="12"
-                            emptySpanXL="4" emptySpanL="4" emptySpanM="4" emptySpanS="0"
-                            columnsXL="1" columnsL="1" columnsM="1">
+                        <VBox>
+                            <MessageStrip
+                                id="reopenReasonStrip"
+                                text="Reopen Reason: {detailState>/reopenReason}"
+                                type="Warning"
+                                showIcon="true"
+                                showCloseButton="false"
+                                class="sapUiSmallMarginBottom"
+                                visible="false"/>
 
-                            <form:toolbar>
-                                <Toolbar>
-                                    <Title text="{i18n>descriptionDetails}" level="H4"/>
-                                </Toolbar>
-                            </form:toolbar>
+                            <form:SimpleForm
+                                editable="false"
+                                layout="ResponsiveGridLayout"
+                                labelSpanXL="3" labelSpanL="3" labelSpanM="3" labelSpanS="12"
+                                emptySpanXL="4" emptySpanL="4" emptySpanM="4" emptySpanS="0"
+                                columnsXL="1" columnsL="1" columnsM="1">
 
-                            <!-- Issue ID (GUID) — useful for backend reference -->
-                            <Label text="{i18n>issueIdLabel}"/>
-                            <Text text="{issue_id}"/>
+                                <form:toolbar>
+                                    <Toolbar>
+                                        <Title text="{i18n>descriptionDetails}" level="H4"/>
+                                    </Toolbar>
+                                </form:toolbar>
 
-                            <!-- Description / Steps to Reproduce -->
-                            <!-- renderWhitespace preserves line breaks from the tester -->
-                            <Label text="{i18n>descriptionLabel}"/>
-                            <Text text="{description}" renderWhitespace="true"/>
+                                <!-- Issue ID (GUID) — useful for backend reference -->
+                                <Label text="{i18n>issueIdLabel}"/>
+                                <Text text="{issue_id}"/>
 
-                        </form:SimpleForm>
+                                <!-- Description / Steps to Reproduce -->
+                                <!-- renderWhitespace preserves line breaks from the tester -->
+                                <Label text="{i18n>descriptionLabel}"/>
+                                <Text text="{description}" renderWhitespace="true"/>
+
+                            </form:SimpleForm>
+                        </VBox>
                     </uxap:blocks>
                 </uxap:ObjectPageSubSection>
             </uxap:ObjectPageSection>

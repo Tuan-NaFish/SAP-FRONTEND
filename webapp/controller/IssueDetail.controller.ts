@@ -81,6 +81,7 @@ export default class IssueDetail extends BaseController {
         this.setModel(new JSONModel([]), "attachments");
         this.setModel(new JSONModel([]), "comments");
         this.setModel(new JSONModel([]), "history");
+        this.setModel(new JSONModel({ reopenReason: "" }), "detailState");
 
         // Initialize SLA display model with default values
         this.setModel(new JSONModel({
@@ -120,6 +121,9 @@ export default class IssueDetail extends BaseController {
             (oEvent as any).getParameter("arguments").issueId
         );
         this._sCurrentIssueId = sIssueId;
+
+        // Reset reopenReason
+        (this.getModel("detailState") as JSONModel).setProperty("/reopenReason", "");
 
         // Bind the entire view to the Issue entity by key
         // OData V4 string keys require single quotes: /Issue('guid')
@@ -209,10 +213,17 @@ export default class IssueDetail extends BaseController {
         }
 
         // Resolution section visibility
-        const bResolved = sStatus === "RESOLVED" || sStatus === "TESTING" || sStatus === "CLOSED" || sStatus === "REOPEN";
+        const bResolved = sStatus === "RESOLVED" || sStatus === "TESTING" || sStatus === "CLOSED" || sStatus === "REOPEN" || sStatus === "IN_PROGRESS";
         const oSection = this.byId("resolutionSection") as unknown as Control;
         if (oSection) {
             oSection.setVisible(bResolved);
+        }
+
+        // Reopen reason warning strip visibility
+        const oStrip = this.byId("reopenReasonStrip") as any;
+        if (oStrip) {
+            const sReopenReason = (this.getModel("detailState") as JSONModel).getProperty("/reopenReason") as string;
+            oStrip.setVisible(sStatus === "REOPEN" && !!sReopenReason && sReopenReason.trim() !== "");
         }
     }
 
@@ -273,7 +284,22 @@ export default class IssueDetail extends BaseController {
             const aData = aContexts.map((oContext: Context) => {
                 return oContext.getObject();
             });
-            (that.getModel("comments") as JSONModel).setData(aData);
+
+            // Find the latest reopen reason comment
+            const oReopenComment = aData.find((oComment: any) => {
+                return oComment.comment_text && oComment.comment_text.indexOf("[Reopen Reason] ") === 0;
+            });
+            const sReopenReason = oReopenComment 
+                ? oReopenComment.comment_text.substring("[Reopen Reason] ".length) 
+                : "";
+            (that.getModel("detailState") as JSONModel).setProperty("/reopenReason", sReopenReason);
+            that._updateVisibility();
+
+            // Filter out reopen reason comments so they do NOT appear in the Comments feed UI
+            const aUserComments = aData.filter((oComment: any) => {
+                return !oComment.comment_text || oComment.comment_text.indexOf("[Reopen Reason] ") !== 0;
+            });
+            (that.getModel("comments") as JSONModel).setData(aUserComments);
         }).catch((oError: Error) => {
             console.error("Failed to load comments: " + oError.message);
             (that.getModel("comments") as JSONModel).setData([]);
@@ -604,7 +630,7 @@ export default class IssueDetail extends BaseController {
     /**
      * Submits the reopen action and posts the reason notes as a comment.
      */
-    public onReopenSubmit(): void {
+    public async onReopenSubmit(): Promise<void> {
         const oReasonInput = this.byId("txtReopenReason") as TextArea;
         const sReason = oReasonInput.getValue().trim();
 
@@ -620,7 +646,28 @@ export default class IssueDetail extends BaseController {
         oReasonInput.setValue("");
 
         // Bound action: reopenIssue.
-        this._invokeAction("reopenIssue", undefined, "Issue reopened successfully");
+        try {
+            await this._invokeAction("reopenIssue", undefined, "Issue reopened successfully");
+
+            // Post Reopen Reason as a technical note comment
+            const oContext = this.getView()!.getBindingContext();
+            if (oContext) {
+                const sIssueId = (oContext.getProperty("issue_id") as string) || this._sCurrentIssueId;
+                const oModel = this.getModel()!;
+                const oListBinding = oModel.bindList("/Issue('" + sIssueId + "')/_Comment") as ODataListBinding;
+
+                const oNewContext = oListBinding.create({
+                    comment_text: "[Reopen Reason] " + sReason,
+                    comment_type: "NOTE",
+                    comment_by: this.getCurrentUser()
+                });
+
+                await oNewContext.created();
+                this._loadComments(sIssueId);
+            }
+        } catch (oError) {
+            console.error("Failed to post reopen comment: ", oError);
+        }
     }
 
     /**

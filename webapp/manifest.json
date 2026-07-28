@@ -116,7 +116,7 @@
         },
         {
           "name": "IssueList",
-          "pattern": "issues",
+          "pattern": "issues:?query:",
           "target": ["IssueList"]
         },
         {

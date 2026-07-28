@@ -279,19 +279,12 @@ export default class TesterWorklist extends BaseController {
             return;
         }
 
-        if (oFrom) {
-            oFrom.setHours(0, 0, 0, 0);
-        }
-        if (oTo) {
-            oTo.setHours(23, 59, 59, 999);
-        }
-
         if (oFrom && oTo) {
-            aFilters.push(new Filter("due_date", FilterOperator.BT, oFrom.toISOString(), oTo.toISOString()));
+            aFilters.push(new Filter("due_date", FilterOperator.BT, oFrom, oTo));
         } else if (oFrom) {
-            aFilters.push(new Filter("due_date", FilterOperator.GE, oFrom.toISOString()));
+            aFilters.push(new Filter("due_date", FilterOperator.GE, oFrom));
         } else if (oTo) {
-            aFilters.push(new Filter("due_date", FilterOperator.LE, oTo.toISOString()));
+            aFilters.push(new Filter("due_date", FilterOperator.LE, oTo));
         }
     }
 
@@ -302,12 +295,11 @@ export default class TesterWorklist extends BaseController {
 
         const oToday = new Date();
         oToday.setHours(0, 0, 0, 0);
-        const sToday = oToday.toISOString();
 
         if (sSelection === "overdue") {
             aFilters.push(new Filter({
                 filters: [
-                    new Filter("due_date", FilterOperator.LT, sToday),
+                    new Filter("due_date", FilterOperator.LT, oToday),
                     new Filter("status", FilterOperator.NE, "CLOSED")
                 ],
                 and: true
@@ -315,7 +307,7 @@ export default class TesterWorklist extends BaseController {
         } else if (sSelection === "onTrack") {
             aFilters.push(new Filter({
                 filters: [
-                    new Filter("due_date", FilterOperator.GE, sToday),
+                    new Filter("due_date", FilterOperator.GE, oToday),
                     new Filter("status", FilterOperator.EQ, "CLOSED")
                 ],
                 and: false
