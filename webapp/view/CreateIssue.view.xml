@@ -39,7 +39,7 @@
                         <Input
                             id="inpTitle"
                             placeholder="{i18n>createIssueTitlePlaceholder}"
-                            maxLength="100"
+                            maxLength="80"
                             liveChange=".onFieldChange"/>
 
                         <!-- Description Field -->
