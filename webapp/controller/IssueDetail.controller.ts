@@ -379,8 +379,11 @@ export default class IssueDetail extends BaseController {
         }
 
         // ---- Calculate time values ----
-        const oNow      = new Date();
-        const oDue      = (oDueDate instanceof Date) ? oDueDate : new Date(oDueDate);
+        const oNow = new Date();
+        const oDue = formatter.toDate(oDueDate);
+        if (!oDue) {
+            return;
+        }
         const iSlaHours = SLA_HOURS[sSeverity] || 72;
         const iSlaTotalMs = iSlaHours * 3600000; // Convert hours to milliseconds
 

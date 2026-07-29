@@ -91,14 +91,40 @@ function formatSeverityIcon(sSeverity: string): string {
 // Convert OData date values to display strings
 // ================================================
 
+type ODataDateValue = {
+    $date?: unknown;
+    value?: unknown;
+};
+
 /**
- * Format date only (DD.MM.YYYY)
- * Handles both Date objects and date strings
+ * Normalize date values received from OData V4 bindings before formatting or
+ * comparing them. Some adapters expose DateTimeOffset as a wrapper object.
  */
-function formatDate(oDate: Date | string | null | undefined): string {
-    if (!oDate) { return ""; }
-    const d = (oDate instanceof Date) ? oDate : new Date(oDate);
-    if (isNaN(d.getTime())) { return ""; }
+function toDate(oValue: unknown): Date | null {
+    if (!oValue) { return null; }
+
+    if (oValue instanceof Date) {
+        return isNaN(oValue.getTime()) ? null : new Date(oValue.getTime());
+    }
+
+    const oWrappedValue = oValue as ODataDateValue;
+    const vRawValue = typeof oValue === "object"
+        ? oWrappedValue.$date ?? oWrappedValue.value
+        : oValue;
+    if (typeof vRawValue !== "string" && typeof vRawValue !== "number") {
+        return null;
+    }
+
+    const oDate = new Date(vRawValue);
+    return isNaN(oDate.getTime()) ? null : oDate;
+}
+
+/**
+ * Format date only (DD.MM.YYYY).
+ */
+function formatDate(oDate: unknown): string {
+    const d = toDate(oDate);
+    if (!d) { return ""; }
     const sDay   = String(d.getDate()).padStart(2, "0");
     const sMonth = String(d.getMonth() + 1).padStart(2, "0");
     const sYear  = d.getFullYear();
@@ -110,35 +136,17 @@ function formatDate(oDate: Date | string | null | undefined): string {
  * Used for timestamps like created_at, assigned_at, etc.
  * Handles raw strings, Date objects, and OData V4 internal types.
  */
-function formatDateTime(oDate: any): string {
+function formatDateTime(oDate: unknown): string {
     if (!oDate) { return "—"; }
 
-    let sValue: string;
-
-    if (typeof oDate === "string") {
-        sValue = oDate;
-    } else if (oDate instanceof Date) {
-        if (isNaN(oDate.getTime())) { return "—"; }
-        const sDay   = String(oDate.getDate()).padStart(2, "0");
-        const sMonth = String(oDate.getMonth() + 1).padStart(2, "0");
-        const sYear  = oDate.getFullYear();
-        const sHour  = String(oDate.getHours()).padStart(2, "0");
-        const sMin   = String(oDate.getMinutes()).padStart(2, "0");
-        return sDay + "." + sMonth + "." + sYear + " " + sHour + ":" + sMin;
-    } else if (typeof oDate === "object") {
-        sValue = oDate.$date || oDate.value || oDate.toString();
-    } else {
-        sValue = String(oDate);
-    }
-
-    if (!sValue || sValue === "—") { return "—"; }
-
-    const d = new Date(sValue);
-
-    // If JS cannot parse the string (e.g. it is already localized like "9 thg 7, 2026"),
-    // return the localized string directly rather than failing.
-    if (isNaN(d.getTime())) {
-        return sValue;
+    const d = toDate(oDate);
+    if (!d) {
+        // Preserve localized/unparseable values rather than hiding them.
+        const oWrappedValue = oDate as ODataDateValue;
+        const vRawValue = typeof oDate === "object"
+            ? oWrappedValue.$date ?? oWrappedValue.value ?? oDate.toString()
+            : oDate;
+        return String(vRawValue || "—");
     }
 
     const sDay   = String(d.getDate()).padStart(2, "0");
@@ -154,25 +162,23 @@ function formatDateTime(oDate: any): string {
  * CLOSED tickets are never treated as overdue in frontend reporting.
  */
 function isIssueOverdue(
-    oDueDate: Date | string | null | undefined,
+    oDueDate: unknown,
     sStatus: string | null | undefined
 ): boolean {
-    if (!oDueDate || sStatus === "CLOSED") { return false; }
-    const d = (oDueDate instanceof Date) ? oDueDate : new Date(oDueDate);
-    if (isNaN(d.getTime())) { return false; }
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return d.getTime() < today.getTime();
+    if (sStatus === "CLOSED") { return false; }
+    const oDueDateValue = toDate(oDueDate);
+    return !!oDueDateValue && oDueDateValue.getTime() <= new Date().getTime();
 }
 
 /**
  * Overdue status text for tables/worklists.
  */
-function formatOverdueText(
-    oDueDate: Date | string | null | undefined,
-    sStatus: string | null | undefined
-): string {
-    return isIssueOverdue(oDueDate, sStatus) ? "Overdue" : "On Track";
+function getSlaCategory(oDueDate: unknown, sStatus: string | null | undefined): "overdue" | "onTrack" {
+    return isIssueOverdue(oDueDate, sStatus) ? "overdue" : "onTrack";
+}
+
+function formatOverdueText(oDueDate: unknown, sStatus: string | null | undefined): string {
+    return getSlaCategory(oDueDate, sStatus) === "overdue" ? "Overdue" : "On Track";
 }
 
 /**
@@ -420,6 +426,7 @@ const formatter = {
     formatStatusText,
     formatSeverityState,
     formatSeverityIcon,
+    toDate,
     formatDate,
     formatDateTime,
     formatFileSize,
@@ -440,6 +447,7 @@ const formatter = {
     formatOptionalField,
     formatReopenState,
     isIssueOverdue,
+    getSlaCategory,
     formatOverdueText,
     formatOverdueState,
     formatOverdueIcon

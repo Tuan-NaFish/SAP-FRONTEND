@@ -31,7 +31,7 @@
         <content>
             <Table
                 id="issueTable"
-                items="{/Issue}"
+                items="{/issues}"
                 growing="true"
                 growingThreshold="20"
                 sticky="ColumnHeaders,HeaderToolbar"

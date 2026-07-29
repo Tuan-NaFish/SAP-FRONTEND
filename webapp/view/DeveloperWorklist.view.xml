@@ -25,7 +25,7 @@
 
             <Table
                 id="developerWorklistTable"
-                items="{/Issue}"
+                items="{/issues}"
                 growing="true"
                 growingThreshold="20"
                 sticky="ColumnHeaders,HeaderToolbar"

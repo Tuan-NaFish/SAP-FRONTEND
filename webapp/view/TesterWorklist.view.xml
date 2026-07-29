@@ -26,7 +26,7 @@
                         text="{i18n>testerWorklistTabMyTickets}">
                         <Table
                             id="testerMyTicketsTable"
-                            items="{/Issue}"
+                            items="{/issues}"
                             growing="true"
                             growingThreshold="20"
                             sticky="ColumnHeaders">
@@ -167,7 +167,7 @@
                         text="{i18n>testerWorklistTabVerification}">
                         <Table
                             id="testerVerificationTable"
-                            items="{/Issue}"
+                            items="{/issues}"
                             growing="true"
                             growingThreshold="20"
                             sticky="ColumnHeaders">
