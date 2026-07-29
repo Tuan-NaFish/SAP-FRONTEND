@@ -110,6 +110,19 @@ html, body, #content {
     font-family: "72Mono", "SFMono-Regular", "Consolas", monospace;
 }
 
+/* ---- Attachment upload drop zones ---- */
+.attachmentDropZone {
+    border: 1px dashed var(--sapList_BorderColor, #89919a);
+    border-radius: 0.25rem;
+    padding: 0.5rem;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.attachmentDropZone.attachmentDropZoneActive {
+    border-color: var(--sapButton_Emphasized_Background, #0070f2);
+    background-color: var(--sapButton_Lite_Hover_Background, #ebf8ff);
+}
+
 /* ---- All Issues: reusable sortable/filterable table headers ---- */
 .thcRoot {
     position: relative;

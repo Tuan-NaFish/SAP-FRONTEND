@@ -102,7 +102,8 @@
 
                         <!-- Attachment (optional) — uploaded after ticket is created -->
                         <Label text="{i18n>createIssueLabelAttachment}"/>
-                        <VBox>
+                        <VBox id="createAttachmentDropZone" class="attachmentDropZone">
+                            <Text text="{i18n>attachmentDropHint}" class="sapUiTinyMarginBottom"/>
                             <u:FileUploader
                                 id="fileUploader"
                                 name="attachmentUpload"

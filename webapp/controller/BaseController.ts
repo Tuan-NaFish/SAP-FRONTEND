@@ -133,6 +133,24 @@ export default class BaseController extends Controller {
         }
     }
 
+    /** Convert a browser File to the Base64 form expected by Edm.Binary JSON. */
+    protected readFileAsBase64(oFile: File): Promise<string> {
+        return new Promise((resolve, reject) => {
+            const oReader = new FileReader();
+            oReader.onerror = () => reject(oReader.error || new Error("Unable to read attachment."));
+            oReader.onload = () => {
+                const sDataUrl = String(oReader.result || "");
+                const iComma = sDataUrl.indexOf(",");
+                if (iComma < 0) {
+                    reject(new Error("Attachment conversion did not produce Base64 content."));
+                    return;
+                }
+                resolve(sDataUrl.slice(iComma + 1));
+            };
+            oReader.readAsDataURL(oFile);
+        });
+    }
+
     /**
      * Extract readable message from OData V4 / RAP error objects.
      */

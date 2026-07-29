@@ -66,6 +66,10 @@ export default class IssueDetail extends BaseController {
     private _oReassignDialog: Dialog | null = null;
     private _oReopenDialog: Dialog | null = null;
     private _sCurrentIssueId = "";
+    private _oAttachmentDropZone?: HTMLElement;
+    private _fnAttachmentDragOver = (oEvent: DragEvent) => this._onAttachmentDragOver(oEvent);
+    private _fnAttachmentDragLeave = () => this._setAttachmentDropZoneActive(false);
+    private _fnAttachmentDrop = (oEvent: DragEvent) => this._onAttachmentDrop(oEvent);
 
     // ============================================================
     // LIFECYCLE
@@ -104,6 +108,49 @@ export default class IssueDetail extends BaseController {
         this.getRouter()
             .getRoute("IssueDetail")
             .attachPatternMatched(this._onObjectMatched, this);
+    }
+
+    public onAfterRendering(): void {
+        this._detachAttachmentDropZone();
+        this._oAttachmentDropZone = this.byId("attachmentList")?.getDomRef() as HTMLElement | undefined;
+        if (!this._oAttachmentDropZone) {
+            return;
+        }
+        this._oAttachmentDropZone.addEventListener("dragover", this._fnAttachmentDragOver);
+        this._oAttachmentDropZone.addEventListener("dragleave", this._fnAttachmentDragLeave);
+        this._oAttachmentDropZone.addEventListener("drop", this._fnAttachmentDrop);
+    }
+
+    public onExit(): void {
+        this._detachAttachmentDropZone();
+    }
+
+    private _detachAttachmentDropZone(): void {
+        if (!this._oAttachmentDropZone) {
+            return;
+        }
+        this._oAttachmentDropZone.removeEventListener("dragover", this._fnAttachmentDragOver);
+        this._oAttachmentDropZone.removeEventListener("dragleave", this._fnAttachmentDragLeave);
+        this._oAttachmentDropZone.removeEventListener("drop", this._fnAttachmentDrop);
+        this._oAttachmentDropZone = undefined;
+    }
+
+    private _onAttachmentDragOver(oEvent: DragEvent): void {
+        oEvent.preventDefault();
+        this._setAttachmentDropZoneActive(true);
+    }
+
+    private _onAttachmentDrop(oEvent: DragEvent): void {
+        oEvent.preventDefault();
+        this._setAttachmentDropZoneActive(false);
+        if (!oEvent.dataTransfer?.files?.length) {
+            return;
+        }
+        this._uploadFiles(oEvent.dataTransfer.files);
+    }
+
+    private _setAttachmentDropZoneActive(bActive: boolean): void {
+        this._oAttachmentDropZone?.classList.toggle("attachmentDropZoneActive", bActive);
     }
 
     // ============================================================
@@ -891,10 +938,15 @@ export default class IssueDetail extends BaseController {
      * Event handler: upload file (OData V4 compliant).
      */
     public onUploadFile(oEvent: Event): void {
-        // FileUploader can return multiple files; upload all selected files.
         const aFiles: FileList | null = (oEvent as any).getParameter("files");
+        if (aFiles?.length) {
+            void this._uploadFiles(aFiles);
+        }
+    }
+
+    private async _uploadFiles(aFiles: FileList): Promise<void> {
         const oContext = this.getView()!.getBindingContext();
-        if (!oContext || !aFiles || aFiles.length === 0) { return; }
+        if (!oContext || !aFiles.length) { return; }
 
         const sIssueId =
             (oContext.getProperty("issue_id") as string) || this._sCurrentIssueId;
@@ -904,57 +956,55 @@ export default class IssueDetail extends BaseController {
         }
 
         const oModel = this.getModel()!;
-        const that = this;
         this.getView()!.setBusy(true);
 
-        const sUploader = (this.getCurrentUser() || "UNKNOWN").slice(0, 12);
+        try {
+            await this.ensureCsrfToken();
+            const oListBinding = oModel.bindList(
+                "/Issue('" + sIssueId + "')/_Attachment",
+                undefined,
+                undefined,
+                undefined,
+                { $$updateGroupId: "$direct" }
+            ) as ODataListBinding;
+            const aResults: PromiseSettledResult<void>[] = [];
 
-        // RAP composition create: /Issue('<id>')/_Attachment
-        const oListBinding = oModel.bindList(
-            "/Issue('" + sIssueId + "')/_Attachment",
-            undefined,
-            undefined,
-            undefined,
-            { $$updateGroupId: "$direct" }
-        ) as ODataListBinding;
+            for (let i = 0; i < aFiles.length; i++) {
+                try {
+                    const oFile = aFiles[i];
+                    const sContent = await this.readFileAsBase64(oFile);
+                    const oNewContext = oListBinding.create({
+                        file_id: this._generateUuid36(),
+                        issue_id: sIssueId,
+                        file_name: (oFile.name || "attachment").slice(0, 255),
+                        mime_type: (oFile.type || "application/octet-stream").slice(0, 50),
+                        file_size: String(oFile.size || 0),
+                        file_content: sContent
+                    });
+                    await oNewContext.created();
+                    aResults.push({ status: "fulfilled", value: undefined });
+                } catch (oError) {
+                    aResults.push({ status: "rejected", reason: oError });
+                }
+            }
 
-        const aCreates: Promise<void>[] = [];
-        for (let i = 0; i < aFiles.length; i++) {
-            const oFile = aFiles[i];
-            const oNewContext = oListBinding.create({
-                file_id: that._generateUuid36(),
-                issue_id: sIssueId,
-                file_name: (oFile.name || "attachment").slice(0, 255),
-                mime_type: (oFile.type || "application/octet-stream").slice(0, 50),
-                file_size: String(oFile.size || 0),
-                uploaded_by: sUploader,
-                uploaded_at: new Date().toISOString()
-            });
-            aCreates.push(oNewContext.created());
-        }
-
-        Promise.allSettled(aCreates).then((aResults) => {
-            that.getView()!.setBusy(false);
             const iOk = aResults.filter((r) => r.status === "fulfilled").length;
             const aFailed = aResults
                 .filter((r): r is PromiseRejectedResult => r.status === "rejected")
-                .map((r) => (r.reason?.message || String(r.reason)));
-
+                .map((r) => (r.reason?.message || this.formatODataError(r.reason)));
             if (iOk > 0) {
-                MessageToast.show(
-                    that.getResourceBundle().getText("createAttachmentSuccess") +
-                    " (" + iOk + ")"
-                );
-                that._loadAttachments(sIssueId);
+                MessageToast.show(this.getResourceBundle().getText("createAttachmentSuccess") + " (" + iOk + ")");
+                this._loadAttachments(sIssueId);
             }
-
             if (aFailed.length > 0) {
-                MessageBox.error(
-                    "Some attachments failed to upload:\n\n" + aFailed.join("\n"),
-                    { title: "Attachment Upload Error" }
-                );
+                MessageBox.error("Some attachments failed to upload:\n\n" + aFailed.join("\n"), { title: "Attachment Upload Error" });
             }
-        });
+        } catch (oError) {
+            MessageBox.error("Failed to prepare attachment upload:\n\n" + this.formatODataError(oError));
+        } finally {
+            this.getView()!.setBusy(false);
+            (this.byId("fileUploader") as any)?.clear();
+        }
     }
 
     /**
@@ -979,46 +1029,80 @@ export default class IssueDetail extends BaseController {
      * metadata-only attachments for most rows, so missing content is handled
      * gracefully instead of breaking the detail page.
      */
-    public onDownloadAttachment(oEvent: Event): void {
+    public async onDownloadAttachment(oEvent: Event): Promise<void> {
         const oSource = oEvent.getSource() as any;
         const oContext = oSource.getBindingContext("attachments");
         const oAttachment = oContext?.getObject() as Record<string, any> | undefined;
-
-        if (!oAttachment) {
+        if (!oAttachment?.file_id) {
             return;
         }
 
         const sFileName = oAttachment.file_name || "attachment";
         const sMimeType = oAttachment.mime_type || "application/octet-stream";
-        const sContent = oAttachment.file_content as string;
-
-        if (!sContent) {
-            MessageBox.information(this.getResourceBundle().getText("attachmentNoContent"));
-            return;
-        }
 
         try {
-            const sBase64 = sContent.indexOf(",") >= 0 ? sContent.split(",").pop()! : sContent;
-            const sBinary = window.atob(sBase64);
-            const aBytes = new Uint8Array(sBinary.length);
-            for (let i = 0; i < sBinary.length; i++) {
-                aBytes[i] = sBinary.charCodeAt(i);
+            const sFileId = String(oAttachment.file_id).replace(/'/g, "''");
+            const oBinding = this.getModel()!.bindContext(
+                "/Attachment('" + sFileId + "')",
+                undefined,
+                { $select: "file_content,file_name,mime_type,file_size" }
+            ) as ODataContextBinding;
+            const oDownloaded = await oBinding.requestObject() as Record<string, any>;
+            const sContent = oDownloaded.file_content as string;
+            if (!sContent) {
+                MessageBox.information(
+                    this.getResourceBundle().getText("attachmentNoContent"),
+                    { title: this.getResourceBundle().getText("attachmentInfoTitle") }
+                );
+                return;
             }
 
-            const oBlob = new Blob([aBytes], { type: sMimeType });
+            const aBytes = this._decodeAttachmentContent(sContent);
+            const oBlob = new Blob([aBytes], { type: String(oDownloaded.mime_type || sMimeType) });
             const sUrl = URL.createObjectURL(oBlob);
             const oAnchor = document.createElement("a");
             oAnchor.href = sUrl;
-            oAnchor.download = sFileName;
+            oAnchor.download = String(oDownloaded.file_name || sFileName);
             document.body.appendChild(oAnchor);
             oAnchor.click();
             document.body.removeChild(oAnchor);
-            URL.revokeObjectURL(sUrl);
-
-            MessageToast.show(this.getResourceBundle().getText("attachmentDownloadStarted", [sFileName]));
+            window.setTimeout(() => URL.revokeObjectURL(sUrl), 1000);
+            MessageToast.show(this.getResourceBundle().getText("attachmentDownloadStarted", [oAnchor.download]));
         } catch (oError: any) {
-            MessageBox.error(this.getResourceBundle().getText("attachmentDownloadFailed", [oError?.message || "Unknown error"]));
+            MessageBox.error(this.getResourceBundle().getText("attachmentDownloadFailed", [this.formatODataError(oError)]));
         }
+    }
+
+    /** Convert OData Edm.Binary Base64/Base64url content into file bytes. */
+    private _decodeAttachmentContent(vContent: unknown): Uint8Array<ArrayBuffer> {
+        if (typeof vContent !== "string" || !vContent.trim()) {
+            throw new Error("Attachment content is missing or is not a binary string.");
+        }
+
+        let sEncoded = vContent.trim()
+            .replace(/^data:[^;,]+(?:;[^,]*)?;base64,/i, "")
+            .replace(/\s/g, "")
+            .replace(/-/g, "+")
+            .replace(/_/g, "/");
+
+        if (!/^[A-Za-z0-9+/]*={0,2}$/.test(sEncoded) || /=[^=]/.test(sEncoded) || sEncoded.length % 4 === 1) {
+            throw new Error("Attachment content is not valid Base64 data.");
+        }
+
+        if (sEncoded.includes("=")) {
+            if (sEncoded.length % 4 !== 0) {
+                throw new Error("Attachment content has invalid Base64 padding.");
+            }
+        } else {
+            sEncoded += "=".repeat((4 - sEncoded.length % 4) % 4);
+        }
+
+        const sBinary = window.atob(sEncoded);
+        const aBytes = new Uint8Array(sBinary.length);
+        for (let i = 0; i < sBinary.length; i++) {
+            aBytes[i] = sBinary.charCodeAt(i);
+        }
+        return aBytes;
     }
 
     /**

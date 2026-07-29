@@ -40,6 +40,10 @@ interface PendingFile {
  *   - Auto-navigation to newly created issue detail
  */
 export default class CreateIssue extends BaseController {
+    private _oCreateDropZone?: HTMLElement;
+    private _fnCreateDragOver = (oEvent: DragEvent) => this._onDragOver(oEvent);
+    private _fnCreateDragLeave = () => this._setCreateDropZoneActive(false);
+    private _fnCreateDrop = (oEvent: DragEvent) => this._onCreateDrop(oEvent);
 
     public onInit(): void {
         // Pending attachments model — files chosen before submit
@@ -89,6 +93,48 @@ export default class CreateIssue extends BaseController {
         }
     }
 
+    public onAfterRendering(): void {
+        this._detachCreateDropZone();
+        this._oCreateDropZone = this.byId("createAttachmentDropZone")?.getDomRef() as HTMLElement | undefined;
+        if (!this._oCreateDropZone) {
+            return;
+        }
+        this._oCreateDropZone.addEventListener("dragover", this._fnCreateDragOver);
+        this._oCreateDropZone.addEventListener("dragleave", this._fnCreateDragLeave);
+        this._oCreateDropZone.addEventListener("drop", this._fnCreateDrop);
+    }
+
+    public onExit(): void {
+        this._detachCreateDropZone();
+    }
+
+    private _detachCreateDropZone(): void {
+        if (!this._oCreateDropZone) {
+            return;
+        }
+        this._oCreateDropZone.removeEventListener("dragover", this._fnCreateDragOver);
+        this._oCreateDropZone.removeEventListener("dragleave", this._fnCreateDragLeave);
+        this._oCreateDropZone.removeEventListener("drop", this._fnCreateDrop);
+        this._oCreateDropZone = undefined;
+    }
+
+    private _onDragOver(oEvent: DragEvent): void {
+        oEvent.preventDefault();
+        this._setCreateDropZoneActive(true);
+    }
+
+    private _onCreateDrop(oEvent: DragEvent): void {
+        oEvent.preventDefault();
+        this._setCreateDropZoneActive(false);
+        if (oEvent.dataTransfer?.files?.length) {
+            this._queueFiles(oEvent.dataTransfer.files);
+        }
+    }
+
+    private _setCreateDropZoneActive(bActive: boolean): void {
+        this._oCreateDropZone?.classList.toggle("attachmentDropZoneActive", bActive);
+    }
+
     public onFieldChange(oEvent: Event): void {
         const oControl = oEvent.getSource() as Input | Select | DatePicker | TextArea;
         const sValue = (oControl as any).getValue ? (oControl as any).getValue() : (oControl as any).getSelectedKey();
@@ -107,17 +153,25 @@ export default class CreateIssue extends BaseController {
             return;
         }
 
+        this._queueFiles(aFiles);
+
+        // Clear the uploader so the same file can be re-added if removed
+        const oUploader = this.byId("fileUploader") as FileUploader;
+        if (oUploader) {
+            oUploader.clear();
+        }
+    }
+
+    private _queueFiles(aFiles: FileList): void {
         const oModel = this.getModel("pendingAttachments") as JSONModel;
         const aPending: PendingFile[] = oModel.getProperty("/files") || [];
-
         for (let i = 0; i < aFiles.length; i++) {
             const oFile = aFiles[i];
-            // Skip duplicates by name+size
             if (aPending.some((p) => p.name === oFile.name && p.size === oFile.size)) {
                 continue;
             }
             aPending.push({
-                name: oFile.name,
+                name: oFile.name.slice(0, 255),
                 size: oFile.size,
                 sizeText: this._formatSize(oFile.size),
                 type: oFile.type || "application/octet-stream",
@@ -125,14 +179,7 @@ export default class CreateIssue extends BaseController {
                 file: oFile
             });
         }
-
         oModel.setProperty("/files", aPending);
-
-        // Clear the uploader so the same file can be re-added if removed
-        const oUploader = this.byId("fileUploader") as FileUploader;
-        if (oUploader) {
-            oUploader.clear();
-        }
     }
 
     /**
@@ -353,8 +400,7 @@ export default class CreateIssue extends BaseController {
      *   /Issue('<issueId>')/_Attachment
      * not via root /Attachment.
      *
-     * Backend currently stores metadata only (no file_content exposure).
-     * Multiple files are uploaded one-by-one in sequence.
+     * Files are converted to Base64 and uploaded one-by-one in sequence.
      */
     private async _uploadAttachments(sIssueId: string, aFiles: PendingFile[]): Promise<void> {
         if (!sIssueId || !aFiles.length) {
@@ -362,13 +408,12 @@ export default class CreateIssue extends BaseController {
         }
 
         const oModel = this.getModel()!;
-        const sUploader = (this.getCurrentUser() || "UNKNOWN").slice(0, 12);
         const aErrors: string[] = [];
+        await this.ensureCsrfToken();
 
         for (const oPending of aFiles) {
             try {
-                // Composition create path required by RAP behavior:
-                // association _Attachment { create; }
+                const sContent = await this.readFileAsBase64(oPending.file);
                 const oListBinding = oModel.bindList(
                     "/Issue('" + sIssueId + "')/_Attachment",
                     undefined,
@@ -377,16 +422,13 @@ export default class CreateIssue extends BaseController {
                     { $$updateGroupId: "$direct" }
                 ) as ODataListBinding;
 
-                // file_id is the key and has no determination — generate client-side UUID.
-                // mime_type is abap.char(50); long Office MIME types must be truncated.
                 const oCtx = oListBinding.create({
                     file_id: this._generateUuid36(),
                     issue_id: sIssueId,
                     file_name: (oPending.name || "attachment").slice(0, 255),
                     mime_type: (oPending.type || "application/octet-stream").slice(0, 50),
                     file_size: String(oPending.size || 0),
-                    uploaded_by: sUploader,
-                    uploaded_at: new Date().toISOString()
+                    file_content: sContent
                 });
 
                 await oCtx.created();

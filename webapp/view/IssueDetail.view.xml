@@ -456,20 +456,22 @@
                                 id="attachmentList"
                                 items="{attachments>/}"
                                 noDataText="{i18n>noAttachments}"
-                                class="sapUiSmallMargin">
+                                class="sapUiSmallMargin attachmentDropZone">
 
                                 <!-- List Header: Title + file count + upload button -->
                                 <headerToolbar>
                                     <Toolbar>
                                         <Title text="{i18n>attachmentsTitle}" level="H4"/>
                                         <ToolbarSpacer/>
+                                        <Text text="{i18n>attachmentDropHint}" class="sapUiTinyMarginEnd"/>
                                         <unified:FileUploader
                                             id="fileUploader"
                                             buttonOnly="true"
                                             buttonText="Upload File"
                                             icon="sap-icon://upload"
+                                            multiple="true"
                                             change=".onUploadFile"
-                                            visible="false"
+                                            visible="true"
                                             class="sapUiTinyMarginEnd"/>
                                         <Label text="{
                                             parts: ['attachments>/'],
