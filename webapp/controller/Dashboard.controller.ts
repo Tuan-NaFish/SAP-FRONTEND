@@ -318,13 +318,6 @@ export default class Dashboard extends BaseController {
     }
 
     /**
-     * Navigate back to Issue List.
-     */
-    public onNavBack(): void {
-        this.getRouter().navTo("IssueList", {}, true);
-    }
-
-    /**
      * Event handler for KPI Tile press. Navigates to the Issue List with filters,
      * or does nothing if the KPI count is 0.
      */

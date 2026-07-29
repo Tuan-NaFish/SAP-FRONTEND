@@ -34,13 +34,13 @@ export default class IssueList extends BaseController {
     private async _onRouteMatched(oEvent: Event): Promise<void> {
         const oQuery = (oEvent as any).getParameter("arguments")["?query"];
         const oModel = this.getView()!.getModel("filterState") as JSONModel;
+        const oState = this._createDefaultFilterState();
         if (oQuery) {
-            const oState = this._createDefaultFilterState();
             if (oQuery.status) { oState.columns.status.filter.selected = oQuery.status.split(","); }
             if (oQuery.severity) { oState.columns.severity.filter.selected = oQuery.severity.split(","); }
             if (oQuery.sla) { oState.columns.sla.filter.selection = oQuery.sla; }
-            oModel.setData(oState);
         }
+        oModel.setData(oState);
         await this._reloadIssues();
     }
 
