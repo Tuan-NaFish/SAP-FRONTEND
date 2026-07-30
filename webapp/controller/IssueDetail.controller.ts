@@ -178,9 +178,8 @@ export default class IssueDetail extends BaseController {
         this.getView()!.bindElement({
             path: sPath,
             events: {
+                change: this._onBindingChange.bind(this),
                 dataReceived: this._onDataReceived.bind(this)
-                // 'change' handler removed — dataReceived covers initial load;
-                // avoids running _calculateSLA + _updateVisibility twice per open.
             }
         });
 
@@ -1071,6 +1070,46 @@ export default class IssueDetail extends BaseController {
         } catch (oError: any) {
             MessageBox.error(this.getResourceBundle().getText("attachmentDownloadFailed", [this.formatODataError(oError)]));
         }
+    }
+
+    /**
+     * Event handler: Delete an attachment.
+     * Prompts confirmation dialog before deleting from SAP OData /Attachment.
+     */
+    public onDeleteAttachment(oEvent: Event): void {
+        const oSource = oEvent.getSource() as any;
+        const oContext = oSource.getBindingContext("attachments");
+        const oAttachment = oContext?.getObject() as Record<string, any> | undefined;
+        if (!oAttachment?.file_id) {
+            return;
+        }
+
+        const sFileName = oAttachment.file_name || "file";
+        const sFileId = String(oAttachment.file_id).replace(/'/g, "''");
+        const that = this;
+
+        MessageBox.confirm(
+            this.getResourceBundle().getText("attachmentDeleteConfirm", [sFileName]) || ("Are you sure you want to delete '" + sFileName + "'?"),
+            {
+                title: this.getResourceBundle().getText("attachmentDeleteTitle") || "Delete Attachment",
+                actions: [MessageBox.Action.DELETE, MessageBox.Action.CANCEL],
+                emphasizedAction: MessageBox.Action.DELETE,
+                onClose: async (sAction: string) => {
+                    if (sAction !== MessageBox.Action.DELETE) {
+                        return;
+                    }
+
+                    try {
+                        const oBindingContext = that.getModel()!.bindContext("/Attachment('" + sFileId + "')").getBoundContext();
+                        await (oBindingContext as any).delete();
+                        MessageToast.show(that.getResourceBundle().getText("attachmentDeletedSuccess") || "Attachment deleted successfully.");
+                        that._loadAttachments(that._sCurrentIssueId);
+                    } catch (oError: any) {
+                        MessageBox.error(that.getResourceBundle().getText("attachmentDeleteFailed", [that.formatODataError(oError)]));
+                    }
+                }
+            }
+        );
     }
 
     /** Convert OData Edm.Binary Base64/Base64url content into file bytes. */

@@ -499,6 +499,15 @@
                                                 text="{attachments>mime_type}"
                                                 state="Information"/>
                                         </firstStatus>
+                                        <secondStatus>
+                                            <ObjectStatus
+                                                icon="sap-icon://delete"
+                                                state="Error"
+                                                active="true"
+                                                tooltip="{i18n>btnDeleteAttachment}"
+                                                press=".onDeleteAttachment"
+                                                visible="{= ${status} !== 'CLOSED' }"/>
+                                        </secondStatus>
                                     </ObjectListItem>
                                 </items>
                             </List>
