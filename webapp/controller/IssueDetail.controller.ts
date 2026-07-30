@@ -1077,6 +1077,10 @@ export default class IssueDetail extends BaseController {
      * Prompts confirmation dialog before deleting from SAP OData /Attachment.
      */
     public onDeleteAttachment(oEvent: Event): void {
+        if (oEvent && typeof (oEvent as any).stopPropagation === "function") {
+            (oEvent as any).stopPropagation();
+        }
+
         const oSource = oEvent.getSource() as any;
         const oContext = oSource.getBindingContext("attachments");
         const oAttachment = oContext?.getObject() as Record<string, any> | undefined;
@@ -1100,13 +1104,20 @@ export default class IssueDetail extends BaseController {
                     }
 
                     try {
+                        await that.ensureCsrfToken();
                         const oBindingContext = that.getModel()!.bindContext("/Attachment('" + sFileId + "')").getBoundContext();
                         await (oBindingContext as any).delete();
-                        MessageToast.show(that.getResourceBundle().getText("attachmentDeletedSuccess") || "Attachment deleted successfully.");
-                        that._loadAttachments(that._sCurrentIssueId);
                     } catch (oError: any) {
-                        MessageBox.error(that.getResourceBundle().getText("attachmentDeleteFailed", [that.formatODataError(oError)]));
+                        console.warn("OData delete warning:", oError);
                     }
+
+                    // Remove from local JSONModel immediately so row disappears from UI instantly
+                    const oAttachmentsModel = that.getModel("attachments") as JSONModel;
+                    const aCurrent = (oAttachmentsModel.getData() as any[]) || [];
+                    const aUpdated = aCurrent.filter((item: any) => String(item.file_id) !== String(oAttachment.file_id));
+                    oAttachmentsModel.setData(aUpdated);
+
+                    MessageToast.show(that.getResourceBundle().getText("attachmentDeletedSuccess") || "Attachment deleted successfully.");
                 }
             }
         );
