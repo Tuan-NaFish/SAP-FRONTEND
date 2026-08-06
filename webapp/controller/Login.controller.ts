@@ -54,6 +54,7 @@ export default class Login extends Controller {
     public onLogin(): void {
         const oBundle = this.getResourceBundle();
         const oUserInput = this.byId("usernameInput") as Input;
+        const oPassInput = this.byId("passwordInput") as Input;
         const sUser = oUserInput.getValue().trim().toUpperCase();
         const sPass = oPassInput.getValue();
         
