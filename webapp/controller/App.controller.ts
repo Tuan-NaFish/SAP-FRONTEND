@@ -22,24 +22,40 @@ export default class App extends BaseController {
             Device.support.touch ? "sapUiSizeCozy" : "sapUiSizeCompact"
         );
 
-        // Instantiate simulated global user role model.
-        // This model is set on the component so all views can access it.
-        // The Login controller will overwrite the role when the user logs in.
-        // On F5 refresh, restore from sessionStorage to avoid state loss.
-        const sStoredUser = sessionStorage.getItem("username") || "";
-        const sStoredLoginName = sessionStorage.getItem("loginName") || "";
-        const sStoredFullName = sessionStorage.getItem("userFullName") || "";
-        const sStoredRole = sessionStorage.getItem("userRole") || "";
+        // Auto-detect user context from SAP Fiori Launchpad (FLP SSO) or SessionStorage
+        let sUser = sessionStorage.getItem("username") || "";
+        let sRole = sessionStorage.getItem("userRole") || "";
+        let sFullName = sessionStorage.getItem("userFullName") || "";
+
+        // Check if running inside SAP Fiori Launchpad container
+        if ((window as any).sap?.ushell?.Container) {
+            try {
+                const oUserInfo = (window as any).sap.ushell.Container.getUser();
+                if (oUserInfo) {
+                    sUser = oUserInfo.getId().toUpperCase() || sUser;
+                    sFullName = oUserInfo.getFullName() || sUser;
+                }
+            } catch (e) {
+                console.log("FLP User Container detection note:", e);
+            }
+        }
+
+        // Fallback default user if not logged in (DEV-012 for SAP S/4HANA Server)
+        if (!sUser) {
+            sUser = "DEV-012";
+            sRole = "MANAGER";
+            sFullName = "Dev User 012";
+        }
 
         this.getOwnerComponent()?.setModel(new JSONModel({
-            role: sStoredRole ? sStoredRole.toUpperCase() : ""
+            role: sRole ? sRole.toUpperCase() : "MANAGER"
         }), "userRole");
 
         this.getOwnerComponent()?.setModel(new JSONModel({
-            username: sStoredUser,
-            loginName: sStoredLoginName,
-            fullName: sStoredFullName,
-            role: sStoredRole
+            username: sUser,
+            loginName: sUser,
+            fullName: sFullName,
+            role: sRole || "Manager"
         }), "userModel");
     }
 }

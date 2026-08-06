@@ -20,6 +20,22 @@
           "localUri": "localService/metadata.xml"
         }
       }
+    },
+
+    "crossNavigation": {
+      "inbounds": {
+        "Defect-manage": {
+          "semanticObject": "Defect",
+          "action": "manage",
+          "title": "SAP Defect Management System",
+          "subTitle": "Defect tracking & lifecycle management",
+          "icon": "sap-icon://quality-issue",
+          "signature": {
+            "parameters": {},
+            "additionalParameters": "allowed"
+          }
+        }
+      }
     }
   },
 
@@ -110,14 +126,14 @@
       },
       "routes": [
         {
-          "name": "Login",
+          "name": "IssueList",
           "pattern": "",
-          "target": ["Login"]
+          "target": ["IssueList"]
         },
         {
-          "name": "IssueList",
-          "pattern": "issues",
-          "target": ["IssueList"]
+          "name": "Login",
+          "pattern": "login",
+          "target": ["Login"]
         },
         {
           "name": "IssueDetail",

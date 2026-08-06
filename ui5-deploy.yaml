@@ -1,0 +1,24 @@
+specVersion: "3.0"
+metadata:
+  name: sap.defectmgmt
+type: application
+builder:
+  resources:
+    excludes:
+      - "/test/**"
+      - "/localService/**"
+  customTasks:
+    - name: deploy-to-abap
+      afterTask: generateCacheBusterInfo
+      configuration:
+        target:
+          url: https://s40lp1.ucc.cit.tum.de
+          client: "324"
+          auth:
+            user: DEV-012
+            password: 54321carem
+        app:
+          name: ZDEFECT_MGMT
+          description: SAP Defect Management System FE
+          package: $TMP
+          transport: ""

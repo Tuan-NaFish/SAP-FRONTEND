@@ -18,5 +18,8 @@
     "ui5-middleware-mockserver": "file:./mockserver-middleware",
     "ui5-middleware-simpleproxy": "^3.8.0",
     "ui5-tooling-transpile": "^3.0.0"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0"
   }
 }
