@@ -3,11 +3,21 @@
 /* Supplements the sap_horizon theme                   */
 /* ================================================== */
 
-/* ---- Global: Ensure full viewport height ---- */
-html, body, #content {
+/* ---- Global: Ensure full viewport height & full width stretch ---- */
+html, body, #content, .sapUiBody, .sapMApp, .sapMPage, .sapFDynamicPageHeader {
     height: 100%;
+    width: 100% !important;
+    max-width: 100% !important;
     margin: 0;
     padding: 0;
+}
+
+/* Ensure Fiori Launchpad application container stretches full width */
+.sapUiComponentContainer, .sapUShellApplicationContainer, .sapUShellApplicationContainer > iframe {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
 }
 
 /* ---- Uniform inverted-pill sizing for Module and Status columns ---- */

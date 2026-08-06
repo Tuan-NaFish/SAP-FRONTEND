@@ -52,6 +52,7 @@
   },
 
   "sap.ui5": {
+    "fullWidth": true,
     "flexEnabled": false,
 
     "rootView": {
