@@ -24,6 +24,14 @@ export default class IssueList extends BaseController {
     private _iLoadRequest = 0;
 
     public onInit(): void {
+        // If running inside SAP Fiori Launchpad container, destroy customHeader to eliminate duplicate header bar
+        if ((window as any).sap?.ushell?.Container) {
+            const oPage = this.byId("issueListPage") as any;
+            if (oPage && typeof oPage.destroyCustomHeader === "function") {
+                oPage.destroyCustomHeader();
+            }
+        }
+
         this.getView()!.setModel(new JSONModel(this._createDefaultFilterState()), "filterState");
         const oIssueData = new JSONModel({ issues: [] });
         this.getView()!.setModel(oIssueData, "issueData");

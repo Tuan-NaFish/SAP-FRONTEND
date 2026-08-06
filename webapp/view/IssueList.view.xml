@@ -11,7 +11,7 @@
 
     <Page id="issueListPage" title="" showNavButton="false">
         <customHeader>
-            <Bar>
+            <Bar id="appInnerHeader">
                 <contentLeft>
                     <Image src="https://ui5.sap.com/resources/sap/ui/documentation/sdk/images/logo_sap.png" height="1.5rem" class="sapUiSmallMarginBegin sapUiSmallMarginEnd" />
                     <Title text="{i18n>issueListTitle}" level="H2"/>
@@ -48,6 +48,11 @@
                 <headerToolbar>
                     <OverflowToolbar>
                         <Title text="{i18n>issueListTableTitle}" level="H3"/>
+                        <ToolbarSpacer />
+                        <Button icon="sap-icon://task" text="{i18n>navMyWork}" press=".onGoToDeveloperWorklist" visible="{= ${userModel>/role} === 'Developer' }"/>
+                        <Button icon="sap-icon://inspection" text="{i18n>navVerification}" press=".onGoToTesterWorklist" visible="{= ${userModel>/role} === 'Tester' || ${userModel>/role} === 'Manager' }"/>
+                        <Button icon="sap-icon://add" text="{i18n>btnCreateTicket}" press=".onGoToCreate" type="Emphasized" visible="{= ${userModel>/role} === 'Tester' || ${userModel>/role} === 'Manager' }"/>
+                        <Button icon="sap-icon://manager-insight" text="{i18n>navDashboard}" press=".onGoToDashboard" visible="{= ${userModel>/role} === 'Manager' }"/>
                     </OverflowToolbar>
                 </headerToolbar>
 

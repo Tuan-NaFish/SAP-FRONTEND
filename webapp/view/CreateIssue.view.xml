@@ -88,6 +88,7 @@
                             id="dpDueDate"
                             valueFormat="yyyy-MM-dd"
                             displayFormat="dd.MM.yyyy"
+                            showWeekNumbers="false"
                             change=".onFieldChange"/>
 
                         <!-- Developer Assignment -->

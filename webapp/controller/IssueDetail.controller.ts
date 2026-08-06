@@ -489,7 +489,7 @@ export default class IssueDetail extends BaseController {
             slaState:         sSlaState,
             slaRemainingText: sRemainingText,
             slaTotalTime:     iSlaHours + " hours",
-            slaOverdueText:   iRemainingMs <= 0 ? "Yes — Overdue!" : "No",
+            slaOverdueText:   iRemainingMs <= 0 ? "Yes - Overdue!" : "No",
             slaOverdueState:  iRemainingMs <= 0 ? "Error" : "Success",
             slaIconColor:     sIconColor
         });
