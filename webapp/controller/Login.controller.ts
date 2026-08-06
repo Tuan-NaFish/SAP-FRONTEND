@@ -54,12 +54,16 @@ export default class Login extends Controller {
     public onLogin(): void {
         const oBundle = this.getResourceBundle();
         const oUserInput = this.byId("usernameInput") as Input;
-        const oPassInput = this.byId("passwordInput") as Input;
-        const oRoleSelect = this.byId("roleSelect") as Select;
-
         const sUser = oUserInput.getValue().trim().toUpperCase();
         const sPass = oPassInput.getValue();
-        const sRole = oRoleSelect.getSelectedKey() || "Tester";
+        
+        // Auto-detect role from SAP Username
+        let sRole = "Manager";
+        if (sUser.includes("197") || sUser.includes("TESTER")) {
+            sRole = "Tester";
+        } else if (sUser.includes("198") || sUser.includes("DEV_") || sUser.includes("DEVELOPER")) {
+            sRole = "Developer";
+        }
 
         if (!sUser || !sPass) {
             MessageToast.show(oBundle.getText("loginEmpty"));
