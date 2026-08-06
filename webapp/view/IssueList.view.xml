@@ -35,7 +35,7 @@
                 growing="true"
                 growingThreshold="20"
                 sticky="ColumnHeaders,HeaderToolbar"
-                class="sapUiSmallMargin">
+                width="100%">
 
                 <noData>
                     <VBox alignItems="Center" justifyContent="Center" class="sapUiLargeMargin">

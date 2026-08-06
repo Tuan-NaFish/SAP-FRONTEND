@@ -3,19 +3,31 @@
 /* Supplements the sap_horizon theme                   */
 /* ================================================== */
 
-/* ---- Global: Ensure full viewport height & full width stretch ---- */
-html, body, #content, .sapUiBody, .sapMApp, .sapMPage, .sapFDynamicPageHeader {
+/* ---- Global: Ensure full viewport height & absolute 100% full width stretch ---- */
+html, body, #content, .sapUiBody, .sapMApp, .sapMPage, .sapMPageContent, .sapFDynamicPage, .sapFDynamicPageHeader, .sapFDynamicPageContent {
     height: 100%;
     width: 100% !important;
     max-width: 100% !important;
-    margin: 0;
-    padding: 0;
+    min-width: 100% !important;
+    margin: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    box-sizing: border-box !important;
 }
 
-/* Ensure Fiori Launchpad application container stretches full width */
-.sapUiComponentContainer, .sapUShellApplicationContainer, .sapUShellApplicationContainer > iframe {
+/* Ensure Fiori Launchpad application container & table stretch 100% to outer edges */
+.sapUiComponentContainer,
+.sapUShellApplicationContainer,
+.sapUShellApplicationContainerMain,
+.sapUShellCentralArea,
+.sapMTable,
+.sapMTableContainer,
+.sapMPageBgStandard {
     width: 100% !important;
     max-width: 100% !important;
+    min-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
     padding-left: 0 !important;
     padding-right: 0 !important;
 }
