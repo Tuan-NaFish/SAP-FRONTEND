@@ -91,9 +91,15 @@ const server = http.createServer((req, res) => {
             headers['cookie'] = cookieString;
         }
 
-        // Attach Basic Auth credentials if configured
-        if (SAP_USER && SAP_PASSWORD) {
+        // Attach Basic Auth credentials: prioritize incoming browser authorization header, fallback to config
+        if (!headers['authorization'] && SAP_USER && SAP_PASSWORD) {
             headers['authorization'] = 'Basic ' + Buffer.from(SAP_USER + ':' + SAP_PASSWORD).toString('base64');
+        }
+
+        // If client sends explicit Authorization, clear saved session cookies to allow fresh credential verification
+        if (req.headers['authorization']) {
+            delete headers['cookie'];
+            sapCookies = [];
         }
 
         const proxyOptions = {
@@ -102,7 +108,8 @@ const server = http.createServer((req, res) => {
             path: req.url,
             method: req.method,
             headers: headers,
-            rejectUnauthorized: false
+            rejectUnauthorized: false,
+            timeout: 15000
         };
 
         const proxyReq = https.request(proxyOptions, (proxyRes) => {

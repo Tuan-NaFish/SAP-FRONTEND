@@ -79,7 +79,7 @@ export default class Login extends Controller {
             SERVICE_URL + "Developer?sap-client=324&$top=1",
             {
                 method: "GET",
-                credentials: "include",
+                credentials: "omit",
                 headers: { Authorization: authHeader, Accept: "application/json" }
             }
         ).then(async (response) => {
@@ -88,8 +88,8 @@ export default class Login extends Controller {
                 oPassInput.setValueState("Error");
                 MessageToast.show(
                     response.status === 401
-                        ? "Sai tài khoản hoặc mật khẩu"
-                        : "Không kết nối được backend (HTTP " + response.status + ")"
+                        ? oBundle.getText("loginError")
+                        : "Connection error (HTTP " + response.status + ")"
                 );
                 return;
             }

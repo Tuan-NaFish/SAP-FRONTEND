@@ -49,7 +49,7 @@ function formatStatusText(sStatus: string): string {
         case "TESTING":     return "Testing";
         case "CLOSED":      return "Closed";
         case "REOPEN":      return "Reopened";
-        default:            return sStatus || "—";
+        default:            return sStatus || "-";
     }
 }
 
@@ -137,7 +137,7 @@ function formatDate(oDate: unknown): string {
  * Handles raw strings, Date objects, and OData V4 internal types.
  */
 function formatDateTime(oDate: unknown): string {
-    if (!oDate) { return "—"; }
+    if (!oDate) { return "-"; }
 
     const d = toDate(oDate);
     if (!d) {
@@ -146,7 +146,7 @@ function formatDateTime(oDate: unknown): string {
         const vRawValue = typeof oDate === "object"
             ? oWrappedValue.$date ?? oWrappedValue.value ?? oDate.toString()
             : oDate;
-        return String(vRawValue || "—");
+        return String(vRawValue || "-");
     }
 
     const sDay   = String(d.getDate()).padStart(2, "0");
@@ -404,7 +404,7 @@ function isResolutionVisible(sStatus: string | null | undefined): boolean {
  */
 function formatOptionalField(sValue: string | null | undefined): string {
     return (sValue !== null && sValue !== undefined && sValue !== "")
-           ? sValue : "—";
+           ? sValue : "-";
 }
 
 /**

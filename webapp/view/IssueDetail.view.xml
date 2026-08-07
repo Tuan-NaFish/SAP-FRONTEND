@@ -79,20 +79,7 @@
                     </HBox>
                 </uxap:snappedContent>
 
-                <!-- Expanded content (visible when header is expanded) -->
-                <uxap:expandedContent>
-                    <HBox alignItems="Center">
-                        <ObjectStatus
-                            text="{path: 'status', formatter: '.formatter.formatStatusText'}"
-                            state="{path: 'status', formatter: '.formatter.formatStatusState'}"
-                            inverted="true"
-                            class="sapUiSmallMarginEnd"/>
-                        <ObjectStatus
-                            text="{severity}"
-                            state="{path: 'severity', formatter: '.formatter.formatSeverityState'}"
-                            icon="{path: 'severity', formatter: '.formatter.formatSeverityIcon'}"/>
-                    </HBox>
-                </uxap:expandedContent>
+
 
                 <!-- ================================================ -->
                 <!-- PHASE 2 WORKFLOW ACTION BUTTONS                    -->
@@ -151,7 +138,7 @@
             <HBox wrap="Wrap">
 
                 <!-- Status Badge -->
-                <VBox class="sapUiMediumMarginEnd">
+                <VBox class="sapUiMediumMarginEnd" alignItems="Start">
                     <Label text="{i18n>statusLabel}" design="Bold"/>
                     <ObjectStatus
                         text="{path: 'status', formatter: '.formatter.formatStatusText'}"
@@ -160,7 +147,7 @@
                 </VBox>
 
                 <!-- Severity Badge -->
-                <VBox class="sapUiMediumMarginEnd">
+                <VBox class="sapUiMediumMarginEnd" alignItems="Start">
                     <Label text="{i18n>severityLabel}" design="Bold"/>
                     <ObjectStatus
                         text="{severity}"
@@ -169,7 +156,7 @@
                 </VBox>
 
                 <!-- Module -->
-                <VBox class="sapUiMediumMarginEnd">
+                <VBox class="sapUiMediumMarginEnd" alignItems="Start">
                     <Label text="{i18n>moduleLabel}" design="Bold"/>
                     <ObjectStatus text="{modulename}" inverted="true" state="Information"/>
                 </VBox>

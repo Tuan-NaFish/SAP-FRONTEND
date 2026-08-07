@@ -163,6 +163,12 @@ export default class IssueDetail extends BaseController {
      * loads all related data (attachments, comments, history).
      */
     private _onObjectMatched(oEvent: Event): void {
+        const sUserRole = sessionStorage.getItem("userRole");
+        if (!sUserRole) {
+            this.getRouter().navTo("Login", {}, true);
+            return;
+        }
+
         // Extract the issueId from the URL parameter
         const sIssueId = decodeURIComponent(
             (oEvent as any).getParameter("arguments").issueId
