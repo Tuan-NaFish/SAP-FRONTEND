@@ -19,10 +19,6 @@
                 <contentRight>
                     <Title text="{i18n>appTitle}" titleStyle="H4" class="sapUiSmallMarginEnd"/>
                     <Text text="{userModel>/fullName}" visible="{= !!${userModel>/fullName} }" class="sapUiSmallMarginEnd"/>
-                    <Button icon="sap-icon://task" text="{i18n>navMyWork}" press=".onGoToDeveloperWorklist" visible="{= ${userModel>/role} === 'Developer' }"/>
-                    <Button icon="sap-icon://inspection" text="{i18n>navVerification}" press=".onGoToTesterWorklist" visible="{= ${userModel>/role} === 'Tester' || ${userModel>/role} === 'Manager' }"/>
-                    <Button icon="sap-icon://add" text="{i18n>btnCreateTicket}" press=".onGoToCreate" type="Emphasized" visible="{= ${userModel>/role} === 'Tester' || ${userModel>/role} === 'Manager' }"/>
-                    <Button icon="sap-icon://manager-insight" text="{i18n>navDashboard}" press=".onGoToDashboard" visible="{= ${userModel>/role} === 'Manager' }"/>
                     <Button icon="sap-icon://log" text="Logout" press=".onLogout" type="Transparent"/>
                 </contentRight>
             </Bar>
