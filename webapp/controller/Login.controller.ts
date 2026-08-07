@@ -19,6 +19,11 @@ export default class Login extends Controller {
         return (oModel as ResourceModel).getResourceBundle();
     }
 
+    public onInputChange(): void {
+        (this.byId("usernameInput") as Input)?.setValueState("None");
+        (this.byId("passwordInput") as Input)?.setValueState("None");
+    }
+
     /**
      * SAP Gateway returns 400 CSRF_Token_Missing (not 403), so the OData V4
      * model does not auto-retry token fetch. Pre-fetch the token after login

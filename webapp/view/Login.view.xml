@@ -16,10 +16,10 @@
                 <Title text="{i18n>loginTitle}" level="H2" class="sapUiMediumMarginBottom" textAlign="Center" width="100%"/>
 
                 <Label text="{i18n>loginUsername}" required="true"/>
-                <Input id="usernameInput" placeholder="{i18n>loginUsername}" class="sapUiSmallMarginBottom" />
+                <Input id="usernameInput" placeholder="{i18n>loginUsername}" submit=".onLogin" liveChange=".onInputChange" class="sapUiSmallMarginBottom" />
 
                 <Label text="{i18n>loginPassword}" required="true"/>
-                <Input id="passwordInput" type="Password" placeholder="{i18n>loginPassword}" class="sapUiMediumMarginBottom" />
+                <Input id="passwordInput" type="Password" placeholder="{i18n>loginPassword}" submit=".onLogin" liveChange=".onInputChange" class="sapUiMediumMarginBottom" />
 
                 <Button text="{i18n>loginButton}" type="Emphasized" press=".onLogin" width="100%" />
                 
