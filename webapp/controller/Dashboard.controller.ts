@@ -325,39 +325,31 @@ export default class Dashboard extends BaseController {
         const oTile = oEvent.getSource() as any;
         const sKpiType = oTile.data("kpiType") as string;
 
-        const oModel = this.getModel("dashboardData") as JSONModel;
-        const oStats = oModel.getData();
-        if (!oStats) { return; }
-
-        let iCount = 0;
         let oQuery: Record<string, string> = {};
 
         switch (sKpiType) {
             case "totalOpen":
-                iCount = oStats.totalOpen;
-                oQuery = { status: "ASSIGNED,IN_PROGRESS,RESOLVED,TESTING,REOPEN" };
+                oQuery = { status: "ASSIGNED,IN_PROGRESS,REOPEN" };
                 break;
             case "overdue":
-                iCount = oStats.totalOverdue;
                 oQuery = { sla: "overdue" };
                 break;
             case "critical":
-                iCount = oStats.totalCritical;
-                oQuery = { severity: "CRITICAL", status: "ASSIGNED,IN_PROGRESS,RESOLVED,TESTING,REOPEN" };
+                oQuery = { severity: "CRITICAL" };
                 break;
             case "waitingTesting":
-                iCount = oStats.totalTesting;
-                oQuery = { status: "TESTING" };
+                oQuery = { status: "RESOLVED,TESTING" };
                 break;
             case "closed":
-                iCount = oStats.totalClosed;
                 oQuery = { status: "CLOSED" };
                 break;
+            default:
+                return;
         }
 
-        // If count is 0, do not navigate
-        if (iCount === 0) {
-            return;
+        const oComponent = this.getOwnerComponent();
+        if (oComponent) {
+            oComponent.setModel(new JSONModel(oQuery), "kpiFilterQuery");
         }
 
         this.getRouter().navTo("IssueList", {

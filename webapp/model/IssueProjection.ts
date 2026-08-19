@@ -29,13 +29,15 @@ export async function loadIssueProjection(
             break;
         }
 
-        aIssues.push(...aContexts.map((oContext) => {
+        const aPageIssues = aContexts.map((oContext) => {
             const oIssue = { ...oContext.getObject() } as Record<string, unknown>;
             return {
                 ...oIssue,
                 _slaCategory: formatter.getSlaCategory(oIssue.due_date, oIssue.status as string)
             } as IssueRow;
-        }));
+        }).filter((oIssue: any) => Number(oIssue.issue_num) !== 0 && oIssue.title !== "testing");
+
+        aIssues.push(...aPageIssues);
         if (aContexts.length < iPageSize) {
             break;
         }

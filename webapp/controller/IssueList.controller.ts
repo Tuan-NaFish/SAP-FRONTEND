@@ -40,7 +40,12 @@ export default class IssueList extends BaseController {
     }
 
     private async _onRouteMatched(oEvent: Event): Promise<void> {
-        const oQuery = (oEvent as any).getParameter("arguments")["?query"];
+        let oQuery = (oEvent as any).getParameter("arguments")["?query"];
+        const oKpiModel = this.getOwnerComponent()?.getModel("kpiFilterQuery") as JSONModel;
+        if (!oQuery && oKpiModel) {
+            oQuery = oKpiModel.getData();
+            this.getOwnerComponent()?.setModel(null as any, "kpiFilterQuery");
+        }
         const oModel = this.getView()!.getModel("filterState") as JSONModel;
         const oState = this._createDefaultFilterState();
         if (oQuery) {
@@ -48,8 +53,36 @@ export default class IssueList extends BaseController {
             if (oQuery.severity) { oState.columns.severity.filter.selected = oQuery.severity.split(","); }
             if (oQuery.sla) { oState.columns.sla.filter.selection = oQuery.sla; }
         }
+        const oUserModel = this.getOwnerComponent()?.getModel("userModel") as JSONModel;
+        if (oUserModel) {
+            const sUser = sessionStorage.getItem("username") || "DEV-012";
+            const sRole = sessionStorage.getItem("userRole") || "Manager";
+            oUserModel.setData({ username: sUser, loginName: sUser, fullName: sUser, role: sRole });
+            oUserModel.refresh(true);
+        }
         oModel.setData(oState);
+        this._updateRoleUI();
         await this._reloadIssues();
+    }
+
+    private _updateRoleUI(): void {
+        const sRoleRaw = sessionStorage.getItem("userRole") || "Manager";
+        const sRole = sRoleRaw.toUpperCase();
+        const bIsManager = sRole === "MANAGER";
+        const bIsTester = sRole === "TESTER";
+        const bIsDev = sRole === "DEVELOPER";
+
+        const btnCreate = this.byId("btnCreateTicket") as Control;
+        if (btnCreate) { btnCreate.setVisible(bIsTester); }
+
+        const btnMyWork = this.byId("btnMyWork") as Control;
+        if (btnMyWork) { btnMyWork.setVisible(bIsDev); }
+
+        const btnVerification = this.byId("btnVerification") as Control;
+        if (btnVerification) { btnVerification.setVisible(bIsTester); }
+
+        const btnDashboard = this.byId("btnDashboard") as Control;
+        if (btnDashboard) { btnDashboard.setVisible(bIsManager); }
     }
 
     public onIssuePress(oEvent: Event): void {
@@ -106,8 +139,9 @@ export default class IssueList extends BaseController {
         oTable?.setBusy(true);
         try {
             const aIssues = await loadIssueProjection(this.getModel() as ODataModel);
+            const aValidIssues = (aIssues || []).filter((oIssue: any) => oIssue.issue_num !== 0 && oIssue.title !== "testing");
             if (iRequest === this._iLoadRequest) {
-                (this.getView()!.getModel("issueData") as JSONModel).setProperty("/issues", aIssues);
+                (this.getView()!.getModel("issueData") as JSONModel).setProperty("/issues", aValidIssues);
                 this._applyStateToBinding();
             }
         } catch (oError) {

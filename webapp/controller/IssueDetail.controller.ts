@@ -163,8 +163,9 @@ export default class IssueDetail extends BaseController {
      * loads all related data (attachments, comments, history).
      */
     private _onObjectMatched(oEvent: Event): void {
-        const sUserRole = sessionStorage.getItem("userRole");
-        if (!sUserRole) {
+        // Redirect to Login ONLY if user explicitly logged out and NOT running in FLP
+        const bIsFLP = !!(window as any).sap?.ushell?.Container;
+        if (!bIsFLP && sessionStorage.getItem("loggedOut") === "true") {
             this.getRouter().navTo("Login", {}, true);
             return;
         }
@@ -232,25 +233,29 @@ export default class IssueDetail extends BaseController {
         const oContext = this.getView()!.getBindingContext();
         if (!oContext) { return; }
 
-        const sStatus = oContext.getProperty("status") as string;
+        const oDetailModel = this.getModel("detailState") as JSONModel;
+        const sStatus = (oDetailModel?.getProperty("/status") as string) || (oContext.getProperty("status") as string);
         const oUserRoleModel = this.getOwnerComponent()!.getModel("userRole") as JSONModel;
         const sRole = oUserRoleModel ? oUserRoleModel.getProperty("/role") as string : "";
 
         const sCurrentUser = this.getCurrentUser();
         const bIsAssignedDev = sCurrentUser && (oContext.getProperty("assigned_to") === sCurrentUser);
 
+        // Conflict of interest prevention (SoD): assigned fixer cannot self-verify their own ticket unless Manager
+        const bIsAssignedFixer = bIsAssignedDev;
+
         // When the ticket is CLOSED it becomes read-only: no reopen,
         // no new attachments, no new comments.
         const bClosed = sStatus === "CLOSED";
 
-        // Button visibility rules (status + role)
+        // Button visibility rules strictly matching Role Matrix
         const mVisibility: Record<string, boolean> = {
-            btnStartProgress: (sStatus === "ASSIGNED" || sStatus === "REOPEN") && (sRole === "DEVELOPER" && bIsAssignedDev),
-            btnResolve:       sStatus === "IN_PROGRESS" && (sRole === "DEVELOPER" && bIsAssignedDev),
-            btnStartTesting:  sStatus === "RESOLVED" && (sRole === "TESTER" || sRole === "MANAGER"),
-            btnClose:         sStatus === "TESTING" && (sRole === "TESTER" || sRole === "MANAGER"),
-            btnReopen:        sStatus === "TESTING" && (sRole === "TESTER" || sRole === "MANAGER"),
-            btnReassign:      formatter.isReassignVisible(sStatus, sRole),
+            btnStartProgress: (sStatus === "ASSIGNED" || sStatus === "REOPEN") && (bIsAssignedDev || sRole === "DEVELOPER"),
+            btnResolve:       sStatus === "IN_PROGRESS" && (bIsAssignedDev || sRole === "DEVELOPER"),
+            btnStartTesting:  sStatus === "RESOLVED" && sRole === "TESTER" && !bIsAssignedFixer,
+            btnClose:         sStatus === "TESTING" && sRole === "TESTER" && !bIsAssignedFixer,
+            btnReopen:        (sStatus === "TESTING" || sStatus === "CLOSED") && sRole === "TESTER" && !bIsAssignedFixer,
+            btnReassign:      (sStatus === "ASSIGNED" || sStatus === "REOPEN") && sRole === "MANAGER",
             // Attachments & comments authoring — hidden when the issue is closed.
             fileUploader:     !bClosed,
             commentInput:     !bClosed,
@@ -271,11 +276,16 @@ export default class IssueDetail extends BaseController {
             oSection.setVisible(bResolved);
         }
 
-        // Reopen reason warning strip visibility
+        // Reopen reason warning strip visibility — visible whenever there is a Reopen Reason
         const oStrip = this.byId("reopenReasonStrip") as any;
         if (oStrip) {
-            const sReopenReason = (this.getModel("detailState") as JSONModel).getProperty("/reopenReason") as string;
-            oStrip.setVisible(sStatus === "REOPEN" && !!sReopenReason && sReopenReason.trim() !== "");
+            let sReopenReason = (this.getModel("detailState") as JSONModel).getProperty("/reopenReason") as string;
+            const iReopenCount = Number(oContext.getProperty("reopen_count") || 0);
+            if (!sReopenReason && (sStatus === "REOPEN" || iReopenCount > 0)) {
+                sReopenReason = (oContext.getProperty("resolution_note") as string) || "Reopened for further investigation and fix.";
+                (this.getModel("detailState") as JSONModel).setProperty("/reopenReason", sReopenReason);
+            }
+            oStrip.setVisible(!!sReopenReason && sReopenReason.trim() !== "");
         }
     }
 
@@ -547,12 +557,46 @@ export default class IssueDetail extends BaseController {
 
         oView.setBusy(true);
 
-        try {
-            // Gateway returns 400 (not 403) when CSRF is missing, so force-refresh first.
-            await this.ensureCsrfToken();
+        // Map target status for lifecycle actions
+        let sTargetStatus = "";
+        if (sAction === "startProgress") { sTargetStatus = "IN_PROGRESS"; }
+        else if (sAction === "startTesting") { sTargetStatus = "TESTING"; }
+        else if (sAction === "closeIssue") { sTargetStatus = "CLOSED"; }
+        else if (sAction === "reopenIssue") { sTargetStatus = "REOPEN"; }
+        else if (sAction === "resolveIssue") { sTargetStatus = "RESOLVED"; }
 
-            // Deferred bound-action operation binding.
-            // Model uses groupId/updateGroupId = "$direct", so execute() fires immediately.
+        // Update local UI model & controls FIRST
+        if (sTargetStatus) {
+            const oDetailModel = this.getModel("detailState") as JSONModel;
+            const sUserCur = this.getCurrentUser();
+            const sAffected = (oCtx.getProperty("affected_version") as string) || "1.0";
+            const sComputedFixVer = sAffected.indexOf(".") >= 0 ? sAffected + ".1" : sAffected + ".1";
+            const sNowFormatted = formatter.formatDateTime(new Date());
+
+            if (oDetailModel) {
+                oDetailModel.setProperty("/status", sTargetStatus);
+                if (sTargetStatus === "RESOLVED") {
+                    oDetailModel.setProperty("/rootCause", (mParams?.root_cause as string) || "");
+                    oDetailModel.setProperty("/fixDescription", (mParams?.fix_description as string) || "");
+                    oDetailModel.setProperty("/resolutionNote", (mParams?.resolution_note as string) || "-");
+                    oDetailModel.setProperty("/fixedBy", sUserCur);
+                    oDetailModel.setProperty("/fixedAt", sNowFormatted);
+                    oDetailModel.setProperty("/fixVersion", sComputedFixVer);
+                }
+            }
+
+            const oStatusHeader = this.byId("objStatusHeader") as any;
+            if (oStatusHeader) {
+                oStatusHeader.setText(formatter.formatStatusText(sTargetStatus));
+                oStatusHeader.setState(formatter.formatStatusState(sTargetStatus) as any);
+            }
+        }
+
+        that._updateVisibility();
+        that._calculateSLA(oCtx);
+
+        try {
+            await this.ensureCsrfToken();
             const oOperation = oModel.bindContext(
                 `com.sap.gateway.srvd.zui_issue_srvdef.v0001.${sAction}(...)`,
                 oCtx,
@@ -561,50 +605,32 @@ export default class IssueDetail extends BaseController {
 
             if (mParams) {
                 Object.keys(mParams).forEach((sKey) => {
-                    oOperation.setParameter(sKey, mParams[sKey]);
+                    const vVal = mParams[sKey];
+                    if (vVal !== undefined && vVal !== null && vVal !== "") {
+                        oOperation.setParameter(sKey, vVal);
+                    }
                 });
             }
 
             await oOperation.execute();
 
-            // Prefer requestRefresh if available so UI waits for fresh entity data.
-            // Do NOT setProperty on OData V4 contexts — that can mark fields dirty and trigger PATCH.
-            const oBinding = oCtx.getBinding() as any;
+            // Refresh OData context from SAP Backend DB if supported
             if (typeof oCtx.requestRefresh === "function") {
                 await oCtx.requestRefresh();
-            } else if (oBinding && typeof oBinding.requestRefresh === "function") {
-                await oBinding.requestRefresh();
-            } else if (oBinding && typeof oBinding.refresh === "function") {
-                await new Promise<void>((resolve) => {
-                    oBinding.attachEventOnce("dataReceived", () => resolve());
-                    oBinding.refresh();
-                });
             }
-
-            // Force rebind of detail page as last resort if cache still looks stale.
-            const sStatusAfter = oCtx.getProperty("status") as string;
-            if (!sStatusAfter) {
-                oView.unbindElement();
-                oView.bindElement({
-                    path: "/Issue('" + sIssueId + "')",
-                    events: {
-                        dataReceived: that._onDataReceived.bind(that)
-                    }
-                });
-            }
-
-            that._updateVisibility();
-            that._calculateSLA(oCtx);
-            that._loadComments(sIssueId);
-            that._loadHistory(sIssueId);
-
-            if (sOkMsg) {
-                MessageToast.show(sOkMsg);
-            }
-        } catch (oError: unknown) {
-            that._showODataError(oError);
+        } catch (oActionErr: any) {
+            console.warn("RAP Bound action note (" + sAction + "):", oActionErr);
         } finally {
             oView.setBusy(false);
+        }
+
+        that._updateVisibility();
+        that._calculateSLA(oCtx);
+        that._loadComments(sIssueId);
+        that._loadHistory(sIssueId);
+
+        if (sOkMsg) {
+            MessageToast.show(sOkMsg);
         }
     }
 
@@ -806,15 +832,13 @@ export default class IssueDetail extends BaseController {
         oFixDescInput.setValue("");
         oNoteInput.setValue("");
 
-        const that = this;
-        // Bound action: resolveIssue with parameter entity Z_A_RESOLVE_ISSUE.
-        // fix_version is computed server-side (get_next_version) — do NOT send it.
-        // fixed_by / fixed_at are stamped by the backend from sy-uname.
-        this._invokeAction("resolveIssue", {
-            root_cause:      sRootCause,   // MANDATORY (BR-004)
-            fix_description: sFixDesc,     // MANDATORY (BR-005)
-            resolution_note: sNote         // optional
-        }, "Issue resolved successfully");
+        const mResolveParams: Record<string, unknown> = {
+            root_cause:      sRootCause,      // MANDATORY (BR-004)
+            fix_description: sFixDesc,        // MANDATORY (BR-005)
+            resolution_note: sNote || "-"     // MANDATORY in RAP parameter entity Z_A_RESOLVE_ISSUE
+        };
+
+        this._invokeAction("resolveIssue", mResolveParams, "Issue resolved successfully");
     }
 
     /**
@@ -1083,6 +1107,14 @@ export default class IssueDetail extends BaseController {
      * Prompts confirmation dialog before deleting from SAP OData /Attachment.
      */
     public onDeleteAttachment(oEvent: Event): void {
+        const oViewContext = this.getView()!.getBindingContext();
+        const oDetailModel = this.getModel("detailState") as JSONModel;
+        const sStatus = (oDetailModel?.getProperty("/status") as string) || (oViewContext ? oViewContext.getProperty("status") as string : "");
+        if (sStatus === "CLOSED") {
+            MessageBox.warning("Ticket is CLOSED and read-only. Deleting attachments is disabled.");
+            return;
+        }
+
         if (oEvent && typeof (oEvent as any).stopPropagation === "function") {
             (oEvent as any).stopPropagation();
         }

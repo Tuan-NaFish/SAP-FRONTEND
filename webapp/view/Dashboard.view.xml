@@ -13,12 +13,6 @@
         showNavButton="true"
         navButtonPress=".onNavBack">
 
-        <headerContent>
-            <!-- Refresh button -->
-            <Button icon="sap-icon://refresh" tooltip="{i18n>dashboardRefreshTooltip}" press=".onRefreshData"/>
-            <Button icon="sap-icon://log" text="Logout" press=".onLogout" type="Transparent"/>
-        </headerContent>
-
         <content>
             <!-- ======================================================== -->
             <!-- 1. KPI TILES CONTAINER                                   -->
@@ -278,7 +272,7 @@
 
                 <HBox wrap="Wrap" class="sapUiTinyMarginBottom">
                     <!-- SLA Compliance % -->
-                    <GenericTile header="{i18n>kpiSlaCompliance}" frameType="OneByOne" class="sapUiTinyMarginEnd sapUiTinyMarginBottom">
+                    <GenericTile header="{i18n>kpiSlaCompliance}" frameType="OneByOne" class="sapUiTinyMarginEnd sapUiTinyMarginBottom nonInteractiveTile">
                         <TileContent unit="%">
                             <NumericContent
                                 value="{dashboardData>/slaCompliance}"
@@ -288,7 +282,7 @@
                     </GenericTile>
 
                     <!-- MTTR -->
-                    <GenericTile header="{i18n>kpiMttr}" subheader="{i18n>kpiMttrUnit}" frameType="OneByOne" class="sapUiTinyMarginEnd sapUiTinyMarginBottom">
+                    <GenericTile header="{i18n>kpiMttr}" subheader="{i18n>kpiMttrUnit}" frameType="OneByOne" class="sapUiTinyMarginEnd sapUiTinyMarginBottom nonInteractiveTile">
                         <TileContent>
                             <NumericContent
                                 value="{dashboardData>/mttrDays}"
@@ -298,7 +292,7 @@
                     </GenericTile>
 
                     <!-- Reopen Rate % -->
-                    <GenericTile header="{i18n>kpiReopenRate}" frameType="OneByOne" class="sapUiTinyMarginEnd sapUiTinyMarginBottom">
+                    <GenericTile header="{i18n>kpiReopenRate}" frameType="OneByOne" class="sapUiTinyMarginEnd sapUiTinyMarginBottom nonInteractiveTile">
                         <TileContent unit="%">
                             <NumericContent
                                 value="{dashboardData>/reopenRate}"
@@ -322,27 +316,27 @@
                         sorters: [{path: 'workload_score', descending: true}]
                     }"
                     sticky="ColumnHeaders"
-                    class="sapUiResponsiveMargin">
+                    width="100%">
 
                     <headerToolbar>
                         <OverflowToolbar>
                             <Title text="{i18n>dashboardWorkloadTitle}" level="H2"/>
                             <ToolbarSpacer/>
-                            <Text text="{i18n>dashboardWorkloadNote}" class="sapUiSubTemplates"/>
+                            <Label text="{i18n>dashboardWorkloadNote}" displayOnly="true" class="sapUiSubTemplates sapUiSmallMarginEnd" width="auto"/>
                         </OverflowToolbar>
                     </headerToolbar>
 
                     <columns>
-                        <Column>
+                        <Column width="18rem">
                             <Text text="{i18n>dashboardColDevId}"/>
                         </Column>
-                        <Column hAlign="Center">
+                        <Column hAlign="Center" width="10rem">
                             <Text text="{i18n>dashboardColModule}"/>
                         </Column>
-                        <Column hAlign="Center" width="8rem">
+                        <Column hAlign="Center" width="10rem">
                             <Text text="{i18n>dashboardColStatus}"/>
                         </Column>
-                        <Column hAlign="Center" width="18rem">
+                        <Column hAlign="Center">
                             <Text text="{i18n>dashboardColWorkload}"/>
                         </Column>
                     </columns>

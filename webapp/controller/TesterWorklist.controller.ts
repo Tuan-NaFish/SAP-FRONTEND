@@ -95,7 +95,10 @@ export default class TesterWorklist extends BaseController {
         finally { if (iRequest === this._mLoadRequests[sTab]) { oTable?.setBusy(false); } }
     }
 
-    private _myTicketScope(): Filter[] { const sUser = this.getCurrentUser(); return sUser ? [new Filter("created_by", FilterOperator.EQ, sUser)] : []; }
+    private _myTicketScope(): Filter[] {
+        const sUser = this.getCurrentUser() || "DEV-197";
+        return [new Filter("assigned_to", FilterOperator.EQ, sUser)];
+    }
     private _verificationScope(): Filter[] { return [new Filter({ filters: [new Filter("status", FilterOperator.EQ, "RESOLVED"), new Filter("status", FilterOperator.EQ, "TESTING")], and: false })]; }
 
     private _applyTabFilters(sTab: TabKey): void {

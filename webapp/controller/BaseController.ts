@@ -183,7 +183,8 @@ export default class BaseController extends Controller {
      * Clear user details and navigate back to the Login view.
      */
     public onLogout(): void {
-        // 1. Clear session storage
+        // 1. Clear session storage & set loggedOut flag
+        sessionStorage.setItem("loggedOut", "true");
         sessionStorage.removeItem("username");
         sessionStorage.removeItem("userFullName");
         sessionStorage.removeItem("userRole");

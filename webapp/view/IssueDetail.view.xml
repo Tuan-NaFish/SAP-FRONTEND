@@ -35,9 +35,6 @@
     <!-- SAP Fiori standard for detail/object pages                    -->
     <!-- ============================================================ -->
     <Page showHeader="true" showNavButton="true" navButtonPress=".onNavBack" title="Issue Details" enableScrolling="false" class="sapUiNoContentPadding">
-        <headerContent>
-            <Button icon="sap-icon://log" text="Logout" press=".onLogout" type="Transparent"/>
-        </headerContent>
         <uxap:ObjectPageLayout
             id="issueObjectPage"
             upperCaseAnchorBar="false"
@@ -135,19 +132,20 @@
         <!-- Visible below the title when the header is expanded       -->
         <!-- ======================================================== -->
         <uxap:headerContent>
-            <HBox wrap="Wrap">
+            <HBox wrap="Wrap" alignItems="Start">
 
                 <!-- Status Badge -->
-                <VBox class="sapUiMediumMarginEnd" alignItems="Start">
+                <VBox class="headerFacetVBox sapUiMediumMarginEnd" alignItems="Start">
                     <Label text="{i18n>statusLabel}" design="Bold"/>
                     <ObjectStatus
+                        id="objStatusHeader"
                         text="{path: 'status', formatter: '.formatter.formatStatusText'}"
                         state="{path: 'status', formatter: '.formatter.formatStatusState'}"
                         inverted="true"/>
                 </VBox>
 
                 <!-- Severity Badge -->
-                <VBox class="sapUiMediumMarginEnd" alignItems="Start">
+                <VBox class="headerFacetVBox sapUiMediumMarginEnd" alignItems="Start">
                     <Label text="{i18n>severityLabel}" design="Bold"/>
                     <ObjectStatus
                         text="{severity}"
@@ -156,13 +154,13 @@
                 </VBox>
 
                 <!-- Module -->
-                <VBox class="sapUiMediumMarginEnd" alignItems="Start">
+                <VBox class="headerFacetVBox sapUiMediumMarginEnd" alignItems="Start">
                     <Label text="{i18n>moduleLabel}" design="Bold"/>
                     <ObjectStatus text="{modulename}" inverted="true" state="Information"/>
                 </VBox>
 
                 <!-- Assigned Developer -->
-                <VBox class="sapUiMediumMarginEnd">
+                <VBox class="headerFacetVBox sapUiMediumMarginEnd" alignItems="Start">
                     <Label text="{i18n>assignedToLabel}" design="Bold"/>
                     <HBox alignItems="Center">
                         <core:Icon src="sap-icon://employee" class="sapUiTinyMarginEnd"/>
@@ -171,7 +169,7 @@
                 </VBox>
 
                 <!-- Due Date -->
-                <VBox class="sapUiMediumMarginEnd">
+                <VBox class="headerFacetVBox sapUiMediumMarginEnd" alignItems="Start">
                     <Label text="{i18n>dueDateLabel}" design="Bold"/>
                     <HBox alignItems="Center">
                         <core:Icon src="sap-icon://date-time" class="sapUiTinyMarginEnd"/>
@@ -180,13 +178,13 @@
                 </VBox>
 
                 <!-- Created By -->
-                <VBox class="sapUiMediumMarginEnd">
+                <VBox class="headerFacetVBox sapUiMediumMarginEnd" alignItems="Start">
                     <Label text="{i18n>createdByLabel}" design="Bold"/>
                     <Text text="{created_by}"/>
                 </VBox>
 
                 <!-- Created At -->
-                <VBox>
+                <VBox class="headerFacetVBox" alignItems="Start">
                     <Label text="{i18n>createdAtLabel}" design="Bold"/>
                     <Text text="{path: 'created_at', formatter: '.formatter.formatDateTime'}"/>
                 </VBox>
@@ -402,26 +400,26 @@
 
                             <!-- Root Cause (mandatory for resolve) -->
                             <Label text="{i18n>rootCauseLabel}" design="Bold"/>
-                            <Text text="{root_cause}" renderWhitespace="true"/>
+                            <Text text="{= ${detailState>/rootCause} || ${root_cause} }" renderWhitespace="true"/>
 
                             <!-- Fix Description (mandatory for resolve) -->
                             <Label text="{i18n>fixDescriptionLabel}" design="Bold"/>
-                            <Text text="{fix_description}" renderWhitespace="true"/>
+                            <Text text="{= ${detailState>/fixDescription} || ${fix_description} }" renderWhitespace="true"/>
 
                             <!-- Resolution Note (optional) -->
                             <Label text="{i18n>resolutionNoteLabel}"/>
-                            <Text text="{path: 'resolution_note', formatter: '.formatter.formatOptionalField'}" renderWhitespace="true"/>
+                            <Text text="{= ${detailState>/resolutionNote} || ${path: 'resolution_note', formatter: '.formatter.formatOptionalField'} }" renderWhitespace="true"/>
 
                             <!-- Fixed By (developer who resolved) -->
                             <Label text="{i18n>fixedByLabel}"/>
                             <HBox alignItems="Center">
-                                <core:Icon src="sap-icon://employee" class="sapUiTinyMarginEnd"/>
-                                <Text text="{fixed_by}"/>
+                                <core:Icon src="sap-icon://employee" class="sapUiTinyMarginEnd" visible="{= !!${detailState>/fixedBy} || !!${fixed_by} }"/>
+                                <Text text="{= ${detailState>/fixedBy} || ${path: 'fixed_by', formatter: '.formatter.formatOptionalField'} }"/>
                             </HBox>
 
                             <!-- Fixed At timestamp -->
                             <Label text="{i18n>fixedAtLabel}"/>
-                            <Text text="{path: 'fixed_at', formatter: '.formatter.formatDateTime'}"/>
+                            <Text text="{= ${detailState>/fixedAt} || ${path: 'fixed_at', formatter: '.formatter.formatDateTime'} }"/>
 
                         </form:SimpleForm>
                     </uxap:blocks>
@@ -491,9 +489,9 @@
                                                 icon="sap-icon://delete"
                                                 state="Error"
                                                 active="true"
+                                                visible="{= ${detailState>/status} !== 'CLOSED' }"
                                                 tooltip="{i18n>btnDeleteAttachment}"
-                                                press=".onDeleteAttachment"
-                                                visible="{= ${status} !== 'CLOSED' }"/>
+                                                press=".onDeleteAttachment"/>
                                         </secondStatus>
                                     </ObjectListItem>
                                 </items>

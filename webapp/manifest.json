@@ -128,7 +128,7 @@
       "routes": [
         {
           "name": "IssueList",
-          "pattern": "",
+          "pattern": ":?query:",
           "target": ["IssueList"]
         },
         {

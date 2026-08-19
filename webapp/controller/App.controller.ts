@@ -29,11 +29,25 @@ export default class App extends BaseController {
 
         // Check if running inside SAP Fiori Launchpad container
         if ((window as any).sap?.ushell?.Container) {
+            sessionStorage.removeItem("loggedOut");
             try {
                 const oUserInfo = (window as any).sap.ushell.Container.getUser();
                 if (oUserInfo) {
-                    sUser = oUserInfo.getId().toUpperCase() || sUser;
+                    sUser = oUserInfo.getId().toUpperCase();
                     sFullName = oUserInfo.getFullName() || sUser;
+
+                    // Always re-detect role directly from FLP SAP username to override stale sessionStorage
+                    if (sUser.includes("012") || sUser.includes("MANAGER") || sUser.includes("ADMIN")) {
+                        sRole = "Manager";
+                    } else if (sUser.includes("197") || sUser.includes("TESTER") || sUser.includes("TEST")) {
+                        sRole = "Tester";
+                    } else {
+                        sRole = "Developer";
+                    }
+
+                    sessionStorage.setItem("username", sUser);
+                    sessionStorage.setItem("userRole", sRole);
+                    sessionStorage.setItem("userFullName", sFullName);
                 }
             } catch (e) {
                 console.log("FLP User Container detection note:", e);
@@ -43,12 +57,12 @@ export default class App extends BaseController {
         // Fallback default user if not logged in (DEV-012 for SAP S/4HANA Server)
         if (!sUser) {
             sUser = "DEV-012";
-            sRole = "MANAGER";
+            sRole = "Manager";
             sFullName = "Dev User 012";
         }
 
         this.getOwnerComponent()?.setModel(new JSONModel({
-            role: sRole ? sRole.toUpperCase() : "MANAGER"
+            role: sRole ? sRole.toUpperCase() : "DEVELOPER"
         }), "userRole");
 
         this.getOwnerComponent()?.setModel(new JSONModel({

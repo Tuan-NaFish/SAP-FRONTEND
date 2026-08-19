@@ -64,10 +64,12 @@ export default class Login extends Controller {
         const sPass = oPassInput.getValue();
         
         // Auto-detect role from SAP Username
-        let sRole = "Manager";
-        if (sUser.includes("197") || sUser.includes("TESTER")) {
+        let sRole = "Developer";
+        if (sUser.includes("012") || sUser.includes("MANAGER") || sUser.includes("ADMIN")) {
+            sRole = "Manager";
+        } else if (sUser.includes("197") || sUser.includes("TESTER") || sUser.includes("TEST")) {
             sRole = "Tester";
-        } else if (sUser.includes("198") || sUser.includes("DEV_") || sUser.includes("DEVELOPER")) {
+        } else {
             sRole = "Developer";
         }
 
@@ -129,13 +131,18 @@ export default class Login extends Controller {
             oComponent?.setModel(oAuthModel);
 
             const oUserModel = oComponent?.getModel("userModel") as JSONModel;
-            oUserModel?.setData({ username: sUser, loginName: sUser, fullName: sUser, role: sRole });
+            if (oUserModel) {
+                oUserModel.setData({ username: sUser, loginName: sUser, fullName: sUser, role: sRole });
+                oUserModel.refresh(true);
+            }
 
             const oUserRoleModel = oComponent?.getModel("userRole") as JSONModel;
             if (oUserRoleModel) {
                 oUserRoleModel.setData({ role: sRole.toUpperCase() });
+                oUserRoleModel.refresh(true);
             }
 
+            sessionStorage.removeItem("loggedOut");
             sessionStorage.setItem("username", sUser);
             sessionStorage.setItem("loginName", sUser);
             sessionStorage.setItem("userFullName", sUser);

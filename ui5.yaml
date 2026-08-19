@@ -26,22 +26,6 @@ server:
         transformModulesToUI5:
           autoConvertAllExtendClasses: true
 
-    # --- Auth-check proxy (no browser Basic Auth popup) ---
-    # FE Login form calls GET /auth-check with Authorization header.
-    # This middleware validates against the real SAP backend and returns
-    # 200/401 WITHOUT a WWW-Authenticate header, so the browser never
-    # shows its native "Please Sign In" popup.
-    - name: ui5-middleware-auth-check
-      afterMiddleware: compression
-      mountPath: /auth-check
-
-    # --- OData V4 Mock Middleware (LOCAL DEV ONLY) ---
-    # Serves local mock data so the app works offline without a live BE.
-    # Comment this block out when connecting to the real SAP backend.
-    # - name: ui5-middleware-mockserver
-    #   afterMiddleware: compression
-    #   mountPath: /sap/opu/odata4/sap/zui_issue_bind
-
     # --- Proxy to real SAP backend ---
     # Forwards all /sap requests to the UCC SAP training system.
     - name: ui5-middleware-simpleproxy

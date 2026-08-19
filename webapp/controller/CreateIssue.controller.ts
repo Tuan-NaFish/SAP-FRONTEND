@@ -55,6 +55,12 @@ export default class CreateIssue extends BaseController {
     }
 
     private _onRouteMatched(): void {
+        const sRoleRaw = sessionStorage.getItem("userRole") || "Tester";
+        if (sRoleRaw.toUpperCase() !== "TESTER") {
+            MessageToast.show("Only Tester role is authorized to create defect tickets.");
+            this.getRouter().navTo("IssueList");
+            return;
+        }
         this._resetForm();
     }
 
@@ -315,8 +321,10 @@ export default class CreateIssue extends BaseController {
         const sDueDateStr = (this.byId("dpDueDate") as DatePicker).getValue();
         const sDeveloper = (this.byId("selDeveloper") as Select).getSelectedKey();
 
-        const oDueDate = new Date(sDueDateStr);
-        const sFormattedDueDate = oDueDate.toISOString().split("T")[0] + "T00:00:00Z";
+        let sFormattedDueDate = sDueDateStr;
+        if (sDueDateStr && sDueDateStr.indexOf("T") === -1) {
+            sFormattedDueDate = sDueDateStr + "T00:00:00Z";
+        }
 
         // Call RAP static action createIssue on real SAP backend.
         // Backend generates issue_id (UUID), sets status=ASSIGNED,
@@ -327,9 +335,6 @@ export default class CreateIssue extends BaseController {
         // when token is missing, so OData V4 model will not auto-retry.
         this.ensureCsrfToken().then(() => {
             const oModel = that.getModel()!;
-
-            // Same qualified-name pattern as IssueDetail bound actions.
-            // Static action is bound to the Issue entity set (no instance key).
             const oOperation = oModel.bindContext(
                 "/Issue/com.sap.gateway.srvd.zui_issue_srvdef.v0001.createIssue(...)"
             ) as any;
@@ -360,10 +365,14 @@ export default class CreateIssue extends BaseController {
             }).catch(async (oActionErr: any) => {
                 console.warn("RAP static action createIssue failed, trying entity set create fallback:", oActionErr);
                 
-                // Fallback: Create entity via standard OData V4 ListBinding create
                 try {
+                    const sUniqueId = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+                        ? crypto.randomUUID().replace(/-/g, "").toUpperCase()
+                        : "ID_" + Date.now();
+
                     const oListBinding = oModel.bindList("/Issue") as ODataListBinding;
                     const oNewContext = oListBinding.create({
+                        issue_id: sUniqueId,
                         title: sTitle,
                         description: sDescription,
                         modulename: sModule,
@@ -373,7 +382,16 @@ export default class CreateIssue extends BaseController {
                         assigned_to: sDeveloper || "DEV-198"
                     });
 
-                    await oNewContext.created();
+                    // Force submit batch to ensure request goes to backend immediately
+                    if (typeof (oModel as any).submitBatch === "function") {
+                        (oModel as any).submitBatch("$auto");
+                    }
+
+                    await Promise.race([
+                        oNewContext.created(),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout creating ticket")), 8000))
+                    ]);
+
                     const sFallbackIssueId = (oNewContext.getProperty("issue_id") as string) || "1001";
                     await that._handlePostCreateSuccess(sFallbackIssueId, oBundle, oView);
                 } catch (oFallbackErr: any) {
