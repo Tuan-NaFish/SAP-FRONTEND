@@ -38,6 +38,7 @@
         <Property Name="description" Type="Edm.String"/>
         <Property Name="modulename" Type="Edm.String" MaxLength="10"/>
         <Property Name="severity" Type="Edm.String" MaxLength="10"/>
+        <Property Name="priority" Type="Edm.String" MaxLength="10" Nullable="false"/>
         <Property Name="status" Type="Edm.String" MaxLength="15"/>
         <Property Name="created_by" Type="Edm.String" MaxLength="12"/>
         <Property Name="created_at" Type="Edm.DateTimeOffset"/>

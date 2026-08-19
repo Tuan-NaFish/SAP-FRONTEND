@@ -65,6 +65,7 @@ export default class IssueDetail extends BaseController {
     private _oResolveDialog: Dialog | null = null;
     private _oReassignDialog: Dialog | null = null;
     private _oReopenDialog: Dialog | null = null;
+    private _oCloseNotDefectDialog: Dialog | null = null;
     private _sCurrentIssueId = "";
     private _oAttachmentDropZone?: HTMLElement;
     private _fnAttachmentDragOver = (oEvent: DragEvent) => this._onAttachmentDragOver(oEvent);
@@ -250,12 +251,14 @@ export default class IssueDetail extends BaseController {
 
         // Button visibility rules strictly matching Role Matrix
         const mVisibility: Record<string, boolean> = {
-            btnStartProgress: (sStatus === "ASSIGNED" || sStatus === "REOPEN") && (bIsAssignedDev || sRole === "DEVELOPER"),
-            btnResolve:       sStatus === "IN_PROGRESS" && (bIsAssignedDev || sRole === "DEVELOPER"),
+            btnAccept:        sStatus === "OPEN" && sRole === "TESTER",
+            btnCloseNotDefect: sStatus === "OPEN" && sRole === "TESTER",
+            btnStartProgress: (sStatus === "ASSIGNED" || sStatus === "REOPEN") && bIsAssignedDev && sRole === "DEVELOPER",
+            btnResolve:       sStatus === "IN_PROGRESS" && bIsAssignedDev && sRole === "DEVELOPER",
             btnStartTesting:  sStatus === "RESOLVED" && sRole === "TESTER" && !bIsAssignedFixer,
             btnClose:         sStatus === "TESTING" && sRole === "TESTER" && !bIsAssignedFixer,
             btnReopen:        (sStatus === "TESTING" || sStatus === "CLOSED") && sRole === "TESTER" && !bIsAssignedFixer,
-            btnReassign:      (sStatus === "ASSIGNED" || sStatus === "REOPEN") && sRole === "MANAGER",
+            btnReassign:      (sStatus === "ACCEPTED" || sStatus === "ASSIGNED" || sStatus === "REOPEN") && sRole === "MANAGER",
             // Attachments & comments authoring — hidden when the issue is closed.
             fileUploader:     !bClosed,
             commentInput:     !bClosed,
@@ -557,44 +560,6 @@ export default class IssueDetail extends BaseController {
 
         oView.setBusy(true);
 
-        // Map target status for lifecycle actions
-        let sTargetStatus = "";
-        if (sAction === "startProgress") { sTargetStatus = "IN_PROGRESS"; }
-        else if (sAction === "startTesting") { sTargetStatus = "TESTING"; }
-        else if (sAction === "closeIssue") { sTargetStatus = "CLOSED"; }
-        else if (sAction === "reopenIssue") { sTargetStatus = "REOPEN"; }
-        else if (sAction === "resolveIssue") { sTargetStatus = "RESOLVED"; }
-
-        // Update local UI model & controls FIRST
-        if (sTargetStatus) {
-            const oDetailModel = this.getModel("detailState") as JSONModel;
-            const sUserCur = this.getCurrentUser();
-            const sAffected = (oCtx.getProperty("affected_version") as string) || "1.0";
-            const sComputedFixVer = sAffected.indexOf(".") >= 0 ? sAffected + ".1" : sAffected + ".1";
-            const sNowFormatted = formatter.formatDateTime(new Date());
-
-            if (oDetailModel) {
-                oDetailModel.setProperty("/status", sTargetStatus);
-                if (sTargetStatus === "RESOLVED") {
-                    oDetailModel.setProperty("/rootCause", (mParams?.root_cause as string) || "");
-                    oDetailModel.setProperty("/fixDescription", (mParams?.fix_description as string) || "");
-                    oDetailModel.setProperty("/resolutionNote", (mParams?.resolution_note as string) || "-");
-                    oDetailModel.setProperty("/fixedBy", sUserCur);
-                    oDetailModel.setProperty("/fixedAt", sNowFormatted);
-                    oDetailModel.setProperty("/fixVersion", sComputedFixVer);
-                }
-            }
-
-            const oStatusHeader = this.byId("objStatusHeader") as any;
-            if (oStatusHeader) {
-                oStatusHeader.setText(formatter.formatStatusText(sTargetStatus));
-                oStatusHeader.setState(formatter.formatStatusState(sTargetStatus) as any);
-            }
-        }
-
-        that._updateVisibility();
-        that._calculateSLA(oCtx);
-
         try {
             await this.ensureCsrfToken();
             const oOperation = oModel.bindContext(
@@ -619,7 +584,8 @@ export default class IssueDetail extends BaseController {
                 await oCtx.requestRefresh();
             }
         } catch (oActionErr: any) {
-            console.warn("RAP Bound action note (" + sAction + "):", oActionErr);
+            this._showODataError(oActionErr);
+            return;
         } finally {
             oView.setBusy(false);
         }
@@ -652,6 +618,43 @@ export default class IssueDetail extends BaseController {
                 .join("\n");
         }
         MessageBox.error(sText, { title: "SAP Backend Error" });
+    }
+
+    public onAccept(): void {
+        this._invokeAction("acceptIssue", undefined, "Defect accepted");
+    }
+
+    public onCloseAsNotDefect(): void {
+        if (!this._oCloseNotDefectDialog) {
+            this.loadFragment({
+                name: "sap.defectmgmt.view.fragment.CloseNotDefectDialog"
+            }).then((oDialog: Dialog) => {
+                this._oCloseNotDefectDialog = oDialog;
+                this.getView()!.addDependent(oDialog);
+                oDialog.open();
+            });
+        } else {
+            this._oCloseNotDefectDialog.open();
+        }
+    }
+
+    public onCloseAsNotDefectCancel(): void {
+        this._oCloseNotDefectDialog?.close();
+    }
+
+    public async onCloseAsNotDefectSubmit(): Promise<void> {
+        const oReason = this.byId("txtNotDefectReason") as TextArea;
+        const sReason = oReason.getValue().trim();
+        if (!sReason) {
+            oReason.setValueState("Error");
+            return;
+        }
+        this._oCloseNotDefectDialog?.close();
+        await this._invokeAction(
+            "closeAsNotDefect",
+            { reason: sReason },
+            "Ticket closed as not a defect"
+        );
     }
 
     /**

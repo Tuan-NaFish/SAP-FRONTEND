@@ -75,6 +75,28 @@
                             <core:Item key="CRITICAL" text="{i18n>severityCritical}"/>
                         </Select>
 
+                        <!-- Priority Selection -->
+                        <Label text="Priority" required="true"/>
+                        <Select id="selPriority" change=".onFieldChange">
+                            <core:Item key="" text="Select Priority"/>
+                            <core:Item key="Highest" text="Highest"/>
+                            <core:Item key="High" text="High"/>
+                            <core:Item key="Medium" text="Medium"/>
+                            <core:Item key="Low" text="Low"/>
+                            <core:Item key="Lowest" text="Lowest"/>
+                        </Select>
+
+                        <!-- Priority Selection -->
+                        <Label text="Priority" required="true"/>
+                        <Select id="selPriority" change=".onFieldChange">
+                            <core:Item key="" text="Select Priority"/>
+                            <core:Item key="Highest" text="Highest"/>
+                            <core:Item key="High" text="High"/>
+                            <core:Item key="Medium" text="Medium"/>
+                            <core:Item key="Low" text="Low"/>
+                            <core:Item key="Lowest" text="Lowest"/>
+                        </Select>
+
                         <!-- Affected Version -->
                         <Label text="{i18n>createIssueLabelAffectedVersion}"/>
                         <Input
@@ -90,15 +112,16 @@
                             displayFormat="dd.MM.yyyy"
                             change=".onFieldChange"/>
 
-                        <!-- Developer Assignment -->
-                        <Label text="{i18n>createIssueLabelAssignDeveloper}" required="false"/>
+                        <!-- Developer assignment happens after triage/acceptance -->
+                        <Label text="Developer assignment (after acceptance)" required="false"/>
                         <Select
                             id="selDeveloper"
-                            enabled="false">
+                            enabled="false"
+                            visible="false">
                             <!-- Placeholder item to display if empty -->
                             <core:Item key="" text="{i18n>createIssueSelectDevFirst}"/>
                         </Select>
-                        <Text id="txtDeveloperWorkloadInfo" text="" class="sapUiTinyMarginTop sapUiSubTemplates"/>
+                        <Text id="txtDeveloperWorkloadInfo" text="Developer is assigned after the ticket is accepted." class="sapUiTinyMarginTop sapUiSubTemplates" visible="false"/>
 
                         <!-- Attachment (optional) — uploaded after ticket is created -->
                         <Label text="{i18n>createIssueLabelAttachment}"/>

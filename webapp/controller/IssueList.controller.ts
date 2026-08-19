@@ -8,6 +8,7 @@ import ListBinding from "sap/ui/model/ListBinding";
 import JSONModel from "sap/ui/model/json/JSONModel";
 import ODataModel from "sap/ui/model/odata/v4/ODataModel";
 import BaseController from "./BaseController";
+import Control from "sap/ui/core/Control";
 import formatter from "../model/formatter";
 import { loadIssueProjection } from "../model/IssueProjection";
 

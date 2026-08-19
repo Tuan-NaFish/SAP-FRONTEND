@@ -26,6 +26,8 @@
  */
 function formatStatusState(sStatus: string): string {
     switch (sStatus) {
+        case "OPEN":        return "None";        // Neutral
+        case "ACCEPTED":    return "Information"; // Blue
         case "ASSIGNED":    return "Information"; // Blue
         case "IN_PROGRESS": return "Warning";     // Orange
         case "RESOLVED":    return "Success";     // Green
@@ -43,6 +45,8 @@ function formatStatusState(sStatus: string): string {
  */
 function formatStatusText(sStatus: string): string {
     switch (sStatus) {
+        case "OPEN":        return "Open";
+        case "ACCEPTED":    return "Accepted";
         case "ASSIGNED":    return "Assigned";
         case "IN_PROGRESS": return "In Progress";
         case "RESOLVED":    return "Resolved";

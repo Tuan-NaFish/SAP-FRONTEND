@@ -73,6 +73,7 @@ export default class CreateIssue extends BaseController {
         oSelModule.setValueState("None");
 
         (this.byId("selSeverity") as Select).setSelectedKey("LOW");
+        (this.byId("selPriority") as Select).setSelectedKey("");
         (this.byId("inpAffectedVersion") as Input).setValue("1.0");
 
         const oDpDueDate = this.byId("dpDueDate") as DatePicker;
@@ -282,6 +283,13 @@ export default class CreateIssue extends BaseController {
             bValid = false;
         }
 
+        const oSelPriority = this.byId("selPriority") as Select;
+        if (!oSelPriority.getSelectedKey()) {
+            oSelPriority.setValueState("Error");
+            oSelPriority.setValueStateText("Priority is required");
+            bValid = false;
+        }
+
         const oDpDueDate = this.byId("dpDueDate") as DatePicker;
         const sDateVal = oDpDueDate.getValue();
         if (!sDateVal) {
@@ -317,9 +325,9 @@ export default class CreateIssue extends BaseController {
         const sDescription = (this.byId("txtDescription") as TextArea).getValue().trim();
         const sModule = (this.byId("selModule") as Select).getSelectedKey();
         const sSeverity = (this.byId("selSeverity") as Select).getSelectedKey();
+        const sPriority = (this.byId("selPriority") as Select).getSelectedKey();
         const sAffectedVersion = (this.byId("inpAffectedVersion") as Input).getValue().trim() || "1.0";
         const sDueDateStr = (this.byId("dpDueDate") as DatePicker).getValue();
-        const sDeveloper = (this.byId("selDeveloper") as Select).getSelectedKey();
 
         let sFormattedDueDate = sDueDateStr;
         if (sDueDateStr && sDueDateStr.indexOf("T") === -1) {
@@ -343,9 +351,9 @@ export default class CreateIssue extends BaseController {
             oOperation.setParameter("description", sDescription);
             oOperation.setParameter("modulename", sModule);
             oOperation.setParameter("severity", sSeverity);
+            oOperation.setParameter("priority", sPriority);
             oOperation.setParameter("affected_version", sAffectedVersion);
             oOperation.setParameter("due_date", sFormattedDueDate);
-            oOperation.setParameter("developer", sDeveloper || "");
 
             return oOperation.execute().then(async () => {
                 const oResult = oOperation.getBoundContext().getObject() as any;
@@ -362,45 +370,12 @@ export default class CreateIssue extends BaseController {
                 }
 
                 await that._handlePostCreateSuccess(sNewIssueId, oBundle, oView);
-            }).catch(async (oActionErr: any) => {
-                console.warn("RAP static action createIssue failed, trying entity set create fallback:", oActionErr);
-                
-                try {
-                    const sUniqueId = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-                        ? crypto.randomUUID().replace(/-/g, "").toUpperCase()
-                        : "ID_" + Date.now();
-
-                    const oListBinding = oModel.bindList("/Issue") as ODataListBinding;
-                    const oNewContext = oListBinding.create({
-                        issue_id: sUniqueId,
-                        title: sTitle,
-                        description: sDescription,
-                        modulename: sModule,
-                        severity: sSeverity,
-                        affected_version: sAffectedVersion,
-                        due_date: sFormattedDueDate,
-                        assigned_to: sDeveloper || "DEV-198"
-                    });
-
-                    // Force submit batch to ensure request goes to backend immediately
-                    if (typeof (oModel as any).submitBatch === "function") {
-                        (oModel as any).submitBatch("$auto");
-                    }
-
-                    await Promise.race([
-                        oNewContext.created(),
-                        new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout creating ticket")), 8000))
-                    ]);
-
-                    const sFallbackIssueId = (oNewContext.getProperty("issue_id") as string) || "1001";
-                    await that._handlePostCreateSuccess(sFallbackIssueId, oBundle, oView);
-                } catch (oFallbackErr: any) {
-                    oView.setBusy(false);
-                    MessageBox.error(
-                        "Failed to create ticket:\n\n" + that.formatODataError(oActionErr || oFallbackErr),
-                        { title: "SAP Backend Error" }
-                    );
-                }
+            }).catch((oActionErr: any) => {
+                oView.setBusy(false);
+                MessageBox.error(
+                    "Failed to create ticket:\n\n" + that.formatODataError(oActionErr),
+                    { title: "SAP Backend Error" }
+                );
             });
         }).catch((oError: any) => {
             oView.setBusy(false);
