@@ -1,5 +1,0 @@
-CLASS zcl_btticket_behavior DEFINITION PUBLIC ABSTRACT FINAL FOR BEHAVIOR OF z_i_issue.
-ENDCLASS.
-
-CLASS zcl_btticket_behavior IMPLEMENTATION.
-ENDCLASS.

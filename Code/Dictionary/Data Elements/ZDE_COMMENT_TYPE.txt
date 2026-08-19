@@ -1,4 +1,0 @@
-Data Element: ZDE_COMMENT_TYPE
-Description: Comment Type for Issue
-Domain: ZCOMMENT_TYPE
-Technical Settings: CHAR(10)

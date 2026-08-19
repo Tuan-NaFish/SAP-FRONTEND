@@ -1,8 +1,0 @@
-@EndUserText.label: 'OData Service Definition for Issue Management'
-define service ZUI_ISSUE_SRVDEF {
-  expose Z_I_ISSUE as Issue;
-  expose Z_I_ISSUE_HISTORY as History;
-  expose Z_I_COMMENT as Comment;
-  expose Z_I_ATTACHMENT as Attachment;
-  expose Z_I_DEVELOPER as Developer;
-}
