@@ -86,17 +86,6 @@
                             <core:Item key="Lowest" text="Lowest"/>
                         </Select>
 
-                        <!-- Priority Selection -->
-                        <Label text="Priority" required="true"/>
-                        <Select id="selPriority" change=".onFieldChange">
-                            <core:Item key="" text="Select Priority"/>
-                            <core:Item key="Highest" text="Highest"/>
-                            <core:Item key="High" text="High"/>
-                            <core:Item key="Medium" text="Medium"/>
-                            <core:Item key="Low" text="Low"/>
-                            <core:Item key="Lowest" text="Lowest"/>
-                        </Select>
-
                         <!-- Affected Version -->
                         <Label text="{i18n>createIssueLabelAffectedVersion}"/>
                         <Input
