@@ -174,8 +174,533 @@ html, body, #content, .sapUiBody, .sapMApp, .sapMPage, .sapMPageContent, .sapFDy
     overflow: hidden;
 }
 
-.dashboardChartPanel .sapSuiteUiMicroChart {
+.dashboardCustomChart {
+    display: block;
     width: 100%;
+}
+
+.dashboardChartTotal {
+    display: block;
+    padding: 0.7rem 1.25rem 0;
+    color: var(--sapContent_LabelColor, #556b82);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.dashboardInsight {
+    border-radius: 0.5rem;
+}
+
+.dashboardMatrixWrap {
+    padding: 1.1rem 1.25rem 1.25rem;
+}
+
+.dashboardMatrixIntro {
+    margin: 0 0 1rem;
+    color: var(--sapContent_LabelColor, #556b82);
+    font-size: 0.75rem;
+}
+
+.dashboardMatrix {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 0.45rem;
+    table-layout: fixed;
+}
+
+.dashboardMatrix th,
+.dashboardMatrix td {
+    height: 2.6rem;
+    padding: 0.35rem 0.45rem;
+    border-bottom: 1px solid #e1e6eb;
+    font-size: 0.75rem;
+    text-align: center;
+}
+
+.dashboardMatrix thead th {
+    height: 2rem;
+    color: var(--sapContent_LabelColor, #556b82);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.dashboardMatrix thead th:first-child,
+.dashboardMatrix tbody th {
+    width: 4rem;
+    text-align: left;
+}
+
+.dashboardMatrix tbody th {
+    color: var(--sapTextColor, #1d2d3e);
+    font-size: 0.85rem;
+}
+
+.dashboardMatrix td {
+    border-radius: 0.3rem;
+    color: #ffffff;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.dashboardMatrixSwatch {
+    display: inline-block;
+    width: 0.7rem;
+    height: 0.7rem;
+    margin-right: 0.25rem;
+    border-radius: 50%;
+    vertical-align: -0.1rem;
+}
+
+.dashboardMatrixCellEmpty {
+    background: #f1f3f5;
+    color: #aab3bb !important;
+    font-weight: 400 !important;
+}
+
+.dashboardMatrixTotal {
+    color: var(--sapContent_LabelColor, #556b82) !important;
+    background: transparent;
+    font-weight: 600 !important;
+}
+
+.dashboardStackedLegend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.25rem;
+    margin-bottom: 1.25rem;
+    color: var(--sapContent_LabelColor, #556b82);
+    font-size: 0.75rem;
+}
+
+.dashboardStackedLegendItem {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.dashboardStackedLegendItem i {
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 0.15rem;
+}
+
+.dashboardStackedScaleLabel {
+    margin-left: auto;
+    color: var(--sapContent_LabelColor, #556b82);
+    font-size: 0.7rem;
+}
+
+.dashboardStackedRow {
+    display: grid;
+    grid-template-columns: 3rem minmax(0, 1fr) 2.5rem;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 2.8rem;
+}
+
+.dashboardStackedLabel {
+    color: var(--sapTextColor, #1d2d3e);
+}
+
+.dashboardStackedTrack {
+    display: flex;
+    height: 1.55rem;
+    min-width: 0.35rem;
+    overflow: hidden;
+    border-radius: 0.25rem;
+    background: #e5ebf0;
+    background-image: linear-gradient(to right, transparent 24.8%, rgba(255,255,255,0.8) 24.8%, rgba(255,255,255,0.8) 25.2%, transparent 25.2%, transparent 49.8%, rgba(255,255,255,0.8) 49.8%, rgba(255,255,255,0.8) 50.2%, transparent 50.2%, transparent 74.8%, rgba(255,255,255,0.8) 74.8%, rgba(255,255,255,0.8) 75.2%, transparent 75.2%);
+}
+
+.dashboardStackedSegment {
+    display: flex;
+    min-width: 0;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    color: #ffffff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
+    transition: filter 0.2s ease;
+}
+
+.dashboardStackedSegment:hover {
+    filter: brightness(0.8);
+}
+
+.dashboardStackedTotal {
+    color: var(--sapContent_LabelColor, #556b82);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+.dashboardStackedAxis {
+    display: flex;
+    justify-content: space-between;
+    margin: 0 2.5rem 0 3.75rem;
+    color: var(--sapContent_LabelColor, #556b82);
+    font-size: 0.65rem;
+}
+
+.dashboardDonutWrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    gap: 1rem;
+    min-height: 31rem;
+    padding: 1rem 1.5rem;
+}
+
+.dashboardDonut {
+    width: min(21rem, 90%);
+    overflow: visible;
+    transform: rotate(-90deg);
+}
+
+.dashboardDonutSegment {
+    fill: none;
+    stroke-width: 24;
+    stroke-linecap: butt;
+    transition: opacity 0.2s ease;
+}
+
+.dashboardDonutSegment:hover,
+.dashboardDonutSegmentActive {
+    opacity: 0.72;
+}
+
+.dashboardDonutSegmentActive {
+    animation: dashboardDonutPulse 0.65s ease-in-out infinite alternate;
+}
+
+@keyframes dashboardDonutPulse {
+    from { stroke-width: 24; opacity: 0.55; }
+    to { stroke-width: 29; opacity: 1; }
+}
+
+.dashboardDonutHole {
+    fill: var(--sapGroup_ContentBackground, #fff);
+}
+
+.dashboardDonutTotal,
+.dashboardDonutSubtitle {
+    text-anchor: middle;
+    transform: rotate(90deg);
+    transform-origin: 50px 50px;
+    fill: var(--sapTextColor, #1d2d3e);
+}
+
+.dashboardDonutTotal {
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.dashboardDonutSubtitle {
+    font-size: 3.8px;
+}
+
+.dashboardDonutLegend {
+    font-size: 0.95rem;
+}
+
+.dashboardDonutLegendItem {
+    min-height: 2.4rem;
+    font-size: 0.9rem;
+}
+
+.dashboardDonutLegendItem strong {
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.dashboardDonutSliceLabel {
+    fill: #ffffff;
+    font-size: 5px;
+    font-weight: 700;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    pointer-events: none;
+}
+
+.dashboardDonutLegend {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(14rem, 1fr));
+    gap: 1rem 1.5rem;
+    min-width: 28rem;
+}
+
+.dashboardDonutLegendItem {
+    display: grid;
+    grid-template-columns: 0.9rem 1fr;
+    align-items: center;
+    column-gap: 0.5rem;
+    width: 100%;
+    min-height: 3.5rem;
+    padding: 0.5rem 0.65rem;
+    border: 0;
+    border-radius: 0.3rem;
+    background: transparent;
+    color: var(--sapTextColor, #1d2d3e);
+    font: inherit;
+    font-size: 1.15rem;
+    text-align: left;
+    cursor: pointer;
+}
+
+.dashboardDonutLegendItem:hover,
+.dashboardDonutLegendItemActive {
+    background: var(--sapList_Hover_Background, #eef3f8);
+}
+
+.dashboardDonutLegendItem i {
+    width: 0.65rem;
+    height: 0.65rem;
+    border-radius: 50%;
+}
+
+.dashboardDonutLegendItem strong {
+    grid-column: 2;
+    color: var(--sapContent_LabelColor, #556b82);
+    font-size: 1rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.dashboardColumnPlot {
+    display: flex;
+    align-items: stretch;
+    gap: 0.55rem;
+    height: 16rem;
+    padding: 1rem 1rem 1.25rem;
+    box-sizing: border-box;
+}
+
+.dashboardColumnAxis {
+    display: flex;
+    flex: 0 0 2rem;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 0 0 1.4rem;
+    color: var(--sapContent_LabelColor, #556b82);
+    font-size: 0.65rem;
+    text-align: right;
+}
+
+.dashboardColumnItem {
+    display: flex;
+    flex: 1 1 0;
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+}
+
+.dashboardColumnValue {
+    min-height: 2.2rem;
+    color: var(--sapTextColor, #1d2d3e);
+    font-size: 0.72rem;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.dashboardColumnArea {
+    display: flex;
+    align-items: flex-end;
+    width: 100%;
+    flex: 1 1 auto;
+    border-bottom: 2px solid #8796a5;
+    background: repeating-linear-gradient(to top, transparent 0, transparent calc(25% - 1px), #e5ebf0 calc(25% - 1px), #e5ebf0 25%);
+}
+
+.dashboardColumnBar {
+    position: relative;
+    width: min(3.2rem, 80%);
+    min-height: 0;
+    margin: 0 auto;
+    border-radius: 0.3rem 0.3rem 0 0;
+    transition: filter 0.2s ease;
+}
+
+.dashboardColumnBar:hover {
+    filter: brightness(0.82);
+}
+
+.dashboardColumnTooltip {
+    position: absolute;
+    bottom: calc(100% + 0.35rem);
+    left: 50%;
+    z-index: 2;
+    display: none;
+    padding: 0.35rem 0.5rem;
+    border-radius: 0.25rem;
+    background: #1d2d3e;
+    color: #fff;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    transform: translateX(-50%);
+}
+
+.dashboardColumnBar:hover .dashboardColumnTooltip {
+    display: block;
+}
+
+.dashboardColumnLabel {
+    min-height: 1.4rem;
+    margin-top: 0.45rem;
+    color: var(--sapTextColor, #1d2d3e);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.dashboardStatusContent {
+    gap: 1.5rem;
+    padding: 1rem 1.25rem 0.25rem;
+}
+
+.dashboardStatusContent .sapSuiteUiMicroChart {
+    flex: 0 0 12rem;
+}
+
+.dashboardColumnPanel {
+    min-height: 15rem;
+}
+
+
+.dashboardChartCaption {
+    display: block;
+    padding: 0 1.25rem 1rem;
+}
+
+.dashboardChartLegend {
+    flex: 1 1 15rem;
+    min-width: 15rem;
+    background: transparent !important;
+}
+
+.dashboardLegendRow {
+    gap: 0.5rem;
+    min-height: 1.75rem;
+}
+
+.dashboardLegendMarker {
+    width: 1rem;
+    font-size: 0.65rem;
+}
+
+.dashboardLegendLabel {
+    flex: 1 1 auto;
+    color: var(--sapTextColor, #1d2d3e);
+}
+
+.dashboardLegendValue,
+.dashboardBarValue {
+    color: var(--sapContent_LabelColor, #556b82);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.dashboardBarChart {
+    gap: 0.7rem;
+    padding: 1rem 1.25rem 1.25rem;
+}
+
+.dashboardBarRow {
+    gap: 0.75rem;
+    min-height: 2rem;
+}
+
+.dashboardBarLabel {
+    flex: 0 0 5rem;
+    color: var(--sapTextColor, #1d2d3e);
+    font-weight: 600;
+}
+
+.dashboardBarTrack {
+    flex: 1 1 auto;
+    min-width: 5rem;
+    height: 0.75rem !important;
+}
+
+.dashboardBarTrack .sapMPIBar,
+.dashboardBarTrack .sapMPIBarRemaining {
+    border-radius: 0.35rem;
+}
+
+.dashboardBarTrack .sapMPIBarRemaining {
+    background: var(--sapList_Background, #e5ebf0) !important;
+}
+
+/* Fixed category colors: color identifies the category, not its rank. */
+
+@media (min-width: 1100px) {
+    .dashboardChartsGrid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-auto-rows: auto;
+        align-items: start;
+    }
+
+    .dashboardChartsGrid > * {
+        width: 100% !important;
+        max-width: none !important;
+        grid-column: auto !important;
+    }
+
+    .dashboardChartsGrid .dashboardChartPanel {
+        width: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
+        box-sizing: border-box;
+        overflow: visible !important;
+    }
+
+    .dashboardChartsGrid .dashboardCustomChart {
+        height: auto !important;
+        min-height: 0 !important;
+        box-sizing: border-box;
+    }
+
+    .dashboardChartsGrid .dashboardDonutWrap {
+        min-height: 24rem;
+    }
+
+    .dashboardChartsGrid .dashboardMatrixWrap {
+        height: auto;
+        box-sizing: border-box;
+    }
+
+    .dashboardChartsGrid .dashboardMatrix {
+        margin-bottom: 0;
+    }
+
+    .dashboardChartsGrid .dashboardMatrix tbody tr {
+        height: 3.6rem;
+    }
+}
+
+@media (max-width: 700px) {
+    .dashboardMatrixWrap {
+        overflow-x: auto;
+    }
+
+    .dashboardMatrix {
+        min-width: 34rem;
+    }
+}
+
+@media (max-width: 900px) {
+    .dashboardDonutWrap {
+        flex-direction: column;
+        min-height: 0;
+    }
+
+    .dashboardDonutLegend {
+        min-width: 0;
+        width: 100%;
+    }
 }
 
 .dashboardWorkloadTable .sapMListTblCell {

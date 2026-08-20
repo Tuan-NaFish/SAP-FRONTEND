@@ -60,6 +60,7 @@ export default class Dashboard extends BaseController {
         statusChart: [],
         severityChart: [],
         moduleChart: [],
+        moduleSeverityChart: [],
         severity: {
             CRITICAL: 0,
             HIGH: 0,
@@ -175,6 +176,13 @@ export default class Dashboard extends BaseController {
             const oToday = new Date();
             oToday.setHours(0, 0, 0, 0);
 
+            const aChartModules = ["FI", "MM", "SD", "PP"];
+            const aChartSeverities = ["CRITICAL", "HIGH", "MEDIUM", "LOW"];
+            const mModuleSeverity: Record<string, Record<string, number>> = {};
+            aChartModules.forEach((sModule) => {
+                mModuleSeverity[sModule] = { CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0 };
+            });
+
             let iResolvedForSla = 0;
             let iResolvedWithinSla = 0;
             let fMttrTotalDays = 0;
@@ -213,6 +221,9 @@ export default class Dashboard extends BaseController {
                 const sModule: string = oIssue.modulename || "MM";
                 if (oStats.module[sModule] !== undefined) {
                     oStats.module[sModule]++;
+                }
+                if (mModuleSeverity[sModule] && mModuleSeverity[sModule][sSeverity] !== undefined) {
+                    mModuleSeverity[sModule][sSeverity]++;
                 }
 
                 // 4. Overdue calculations — delegate to formatter for consistency
@@ -263,7 +274,7 @@ export default class Dashboard extends BaseController {
 
             oStats.statusChart = that._createChartData(oStats.status, [
                 ["OPEN", "Open", "Neutral"],
-                ["ACCEPTED", "Accepted", "Neutral"],
+                ["ACCEPTED", "Accepted", "Critical"],
                 ["ASSIGNED", "Assigned", "Neutral"],
                 ["IN_PROGRESS", "In Progress", "Critical"],
                 ["RESOLVED", "Resolved", "Good"],
@@ -274,22 +285,35 @@ export default class Dashboard extends BaseController {
                 label: oData.title,
                 value: oData.value,
                 displayedValue: oData.displayValue,
+                displayValue: oData.displayValue,
                 color: oData.color
             }));
             oStats.severityChart = that._createChartData(oStats.severity, [
-                ["CRITICAL", "Critical", "Error"],
-                ["HIGH", "High", "Critical"],
-                ["MEDIUM", "Medium", "Neutral"],
-                ["LOW", "Low", "Good"]
+                ["CRITICAL", "Critical", "#d03b3b"],
+                ["HIGH", "High", "#eb6834"],
+                ["MEDIUM", "Medium", "#3987e5"],
+                ["LOW", "Low", "#008300"]
             ]);
             oStats.moduleChart = that._createChartData(oStats.module, [
-                ["FI", "FI", "Neutral"],
-                ["MM", "MM", "Neutral"],
-                ["SD", "SD", "Good"],
-                ["HCM", "HCM", "Critical"],
-                ["PP", "PP", "Error"],
-                ["QM", "QM", "Neutral"]
-            ]).sort((a: any, b: any) => b.value - a.value);
+                ["FI", "FI", "#2a78d6"],
+                ["MM", "MM", "#eb6834"],
+                ["SD", "SD", "#1baf7a"],
+                ["HCM", "HCM", "#eda100"],
+                ["PP", "PP", "#e87ba4"],
+                ["QM", "QM", "#4a3aa7"]
+            ]);
+            oStats.moduleSeverityChart = aChartModules.map((sModule) => {
+                const mCounts = mModuleSeverity[sModule];
+                const iTotal = aChartSeverities.reduce((iSum, sSeverity) => iSum + mCounts[sSeverity], 0);
+                return {
+                    label: sModule,
+                    total: iTotal,
+                    segments: aChartSeverities.map((sSeverity) => ({
+                        label: sSeverity,
+                        value: mCounts[sSeverity]
+                    }))
+                };
+            }).sort((oLeft, oRight) => oRight.total - oLeft.total);
 
             // Advanced KPI roll-ups
             oStats.slaCompliance = iResolvedForSla > 0
@@ -304,8 +328,15 @@ export default class Dashboard extends BaseController {
             // NOTE: criticalAlert removed — it is derivable from totalCritical/criticalThreshold.
             // The view binding uses an expression binding instead (Fix 9).
 
+            const oTopSeverity = oStats.severityChart.reduce((oBest: any, oItem: any) => oItem.value > oBest.value ? oItem : oBest, oStats.severityChart[0]);
+            const oTopModule = oStats.moduleChart.reduce((oBest: any, oItem: any) => oItem.value > oBest.value ? oItem : oBest, oStats.moduleChart[0]);
+            const oTopStatus = oStats.statusChart.reduce((oBest: any, oItem: any) => oItem.value > oBest.value ? oItem : oBest, oStats.statusChart[0]);
+            oStats.distributionInsight = `Most defects are ${oTopStatus.label} (${oTopStatus.displayedValue}). ${oTopSeverity.title} is the most common severity and ${oTopModule.title} has the highest module workload.`;
+            oStats.chartTotalLabel = `${oStats.totalTickets} defects analyzed`;
+
             // Apply values to dashboard model
             (that.getModel("dashboardData") as JSONModel).setData(oStats);
+            window.setTimeout(() => that._renderDistributionCharts(oStats), 0);
         }).catch((oError: Error) => {
             oView!.setBusy(false);
             MessageBox.error(
@@ -321,13 +352,79 @@ export default class Dashboard extends BaseController {
         const iTotal = Object.values(oValues).reduce((iSum, iValue) => iSum + iValue, 0) || 1;
         return aDefinitions.map(([sKey, sTitle, sColor]) => {
             const iValue = oValues[sKey] || 0;
+            const iPercent = Math.round((iValue / iTotal) * 100);
             return {
                 title: sTitle,
                 value: iValue,
-                displayValue: `${iValue} / ${iTotal} (${Math.round((iValue / iTotal) * 100)}%)`,
+                count: iValue,
+                total: iTotal,
+                percentValue: iPercent,
+                displayValue: `${iValue} / ${iTotal} (${iPercent}%)`,
                 color: sColor
             };
         });
+    }
+
+    private _renderDistributionCharts(oStats: any): void {
+        const oStatusChart = this.byId("statusDonut") as any;
+        const oSeverityChart = this.byId("severityColumns") as any;
+
+        oStatusChart?.setContent(this._createDonutMarkup(oStats.statusChart));
+        oSeverityChart?.setContent(this._createModuleSeverityMatrixMarkup(oStats.moduleSeverityChart));
+        window.setTimeout(() => this._attachDonutLegendHandlers(), 50);
+    }
+
+    private _attachDonutLegendHandlers(): void {
+        const oRoot = this.byId("statusDonut")?.getDomRef();
+        if (!oRoot) { return; }
+        oRoot.querySelectorAll<HTMLButtonElement>(".dashboardDonutLegendItem").forEach((oLegendItem) => {
+            oLegendItem.addEventListener("click", () => {
+                const sIndex = oLegendItem.dataset.index;
+                const oSegment = oRoot.querySelector<SVGCircleElement>(`.dashboardDonutSegment[data-index="${sIndex}"]`);
+                if (!oSegment) { return; }
+                oSegment.classList.toggle("dashboardDonutSegmentActive");
+                oLegendItem.classList.toggle("dashboardDonutLegendItemActive");
+            });
+        });
+    }
+
+    private _createDonutMarkup(aData: any[]): string {
+        const aVisible = aData.filter((oItem) => oItem.value > 0);
+        const aColors = ["#1565c0", "#ef6c00", "#00897b", "#8e24aa", "#c62828", "#008f39", "#6d4c41", "#0277bd"];
+        const fTotal = aVisible.reduce((fSum, oItem) => fSum + oItem.value, 0) || 1;
+        let fOffset = 0;
+        let fAngle = 0;
+        const aSegments = aVisible.map((oItem) => {
+            const iIndex = aData.indexOf(oItem);
+            const fLength = oItem.value / fTotal * 100;
+            const fMidAngle = fAngle + (fLength * 3.6) / 2;
+            const fRadians = fMidAngle * Math.PI / 180;
+            const fLabelRadius = 38;
+            const fLabelX = 50 + fLabelRadius * Math.cos(fRadians);
+            const fLabelY = 50 + fLabelRadius * Math.sin(fRadians);
+            const sCountLabel = fLength >= 4
+                ? `<text class="dashboardDonutSliceLabel" x="${fLabelX.toFixed(2)}" y="${fLabelY.toFixed(2)}" transform="rotate(90 ${fLabelX.toFixed(2)} ${fLabelY.toFixed(2)})">${oItem.value}</text>`
+                : "";
+            const sSegment = `<circle class="dashboardDonutSegment" data-index="${iIndex}" cx="50" cy="50" r="38" pathLength="100" stroke="${aColors[iIndex]}" stroke-dasharray="${fLength} ${100 - fLength}" stroke-dashoffset="${-fOffset}"><title>${oItem.label}: ${oItem.displayValue}</title></circle>${sCountLabel}`;
+            fOffset += fLength;
+            fAngle += fLength * 3.6;
+            return sSegment;
+        }).join("");
+
+        const sLegend = aData.map((oItem, iIndex) => `<button type="button" class="dashboardDonutLegendItem" data-index="${iIndex}" aria-label="Highlight ${oItem.label}"><i style="background:${aColors[iIndex]}"></i><span>${oItem.label}</span><strong>${oItem.displayValue}</strong></button>`).join("");
+        return `<div class="dashboardDonutWrap"><svg class="dashboardDonut" viewBox="0 0 100 100" role="img" aria-label="Status distribution">${aSegments}<circle class="dashboardDonutHole" cx="50" cy="50" r="26"/><text x="50" y="47" class="dashboardDonutTotal">${fTotal}</text><text x="50" y="57" class="dashboardDonutSubtitle">Defects</text></svg><div class="dashboardDonutLegend">${sLegend}</div></div>`;
+    }
+
+    private _createModuleSeverityMatrixMarkup(aData: any[]): string {
+        const aColors: Record<string, string> = {
+            CRITICAL: "#c62828",
+            HIGH: "#ef6c00",
+            MEDIUM: "#1976d2",
+            LOW: "#008f39"
+        };
+        const sHeaders = Object.keys(aColors).map((sSeverity) => `<th><span class="dashboardMatrixSwatch" style="background:${aColors[sSeverity]}"></span>${sSeverity}</th>`).join("");
+        const sRows = aData.map((oModule) => `<tr><th scope="row">${oModule.label}</th>${oModule.segments.map((oSegment: any) => `<td class="${oSegment.value ? "dashboardMatrixCellHasValue" : "dashboardMatrixCellEmpty"}" style="${oSegment.value ? `background:${aColors[oSegment.label]}` : ""}" title="${oModule.label} — ${oSegment.label}: ${oSegment.value}">${oSegment.value || "—"}</td>`).join("")}<td class="dashboardMatrixTotal">${oModule.total}</td></tr>`).join("");
+        return `<div class="dashboardMatrixWrap"><p class="dashboardMatrixIntro">Defect count by module and severity. Darker cells indicate active defect volume.</p><table class="dashboardMatrix"><thead><tr><th scope="col">Module</th>${sHeaders}<th scope="col">Total</th></tr></thead><tbody>${sRows}</tbody></table></div>`;
     }
 
     /**

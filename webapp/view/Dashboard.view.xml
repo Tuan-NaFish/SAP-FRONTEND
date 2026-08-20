@@ -99,62 +99,16 @@
                 <!-- 2. DEFECT DISTRIBUTION                                  -->
                 <!-- ======================================================== -->
                 <Title text="{i18n>dashboardDistributionTitle}" level="H2" class="sapUiSmallMarginBottom"/>
-                <layout:Grid defaultSpan="XL4 L4 M12 S12" class="dashboardChartsGrid">
-                    <Panel headerText="{i18n>dashboardStatusDistribution}" class="dashboardChartPanel sapUiNoContentPadding">
-                        <VBox class="sapUiSmallMargin" alignItems="Center">
-                            <mc:InteractiveDonutChart
-                                displayedSegments="8"
-                                selectionEnabled="false"
-                                segments="{path: 'dashboardData>/statusChart'}"
-                                tooltip="{i18n>dashboardStatusChartTooltip}">
-                                <mc:segments>
-                                    <mc:InteractiveDonutChartSegment
-                                        value="{dashboardData>value}"
-                                        label="{dashboardData>label}"
-                                        displayedValue="{dashboardData>displayedValue}"
-                                        color="{dashboardData>color}"/>
-                                </mc:segments>
-                            </mc:InteractiveDonutChart>
-                            <Text text="{i18n>dashboardStatusChartCaption}" class="sapUiTinyMarginTop sapMTextColorSecondary"/>
-                        </VBox>
+                <layout:Grid defaultSpan="XL6 L6 M12 S12" class="dashboardChartsGrid">
+                    <Panel headerText="{i18n>dashboardStatusDistribution}" class="dashboardChartPanel dashboardStatusPanel sapUiNoContentPadding">
+                        <Text text="{dashboardData>/chartTotalLabel}" class="dashboardChartTotal"/>
+                        <core:HTML id="statusDonut" class="dashboardCustomChart"/>
                     </Panel>
-
-                    <Panel headerText="{i18n>dashboardSeverityDistribution}" class="dashboardChartPanel sapUiNoContentPadding">
-                        <VBox class="sapUiSmallMargin">
-                            <mc:ComparisonMicroChart
-                                size="Responsive"
-                                view="Responsive"
-                                data="{path: 'dashboardData>/severityChart'}"
-                                tooltip="{i18n>dashboardSeverityChartTooltip}">
-                                <mc:data>
-                                    <mc:ComparisonMicroChartData
-                                        title="{dashboardData>title}"
-                                        value="{dashboardData>value}"
-                                        displayValue="{dashboardData>displayValue}"
-                                        color="{dashboardData>color}"/>
-                                </mc:data>
-                            </mc:ComparisonMicroChart>
-                        </VBox>
-                    </Panel>
-
-                    <Panel headerText="{i18n>dashboardModuleDistribution}" class="dashboardChartPanel sapUiNoContentPadding">
-                        <VBox class="sapUiSmallMargin">
-                            <mc:ComparisonMicroChart
-                                size="Responsive"
-                                view="Responsive"
-                                data="{path: 'dashboardData>/moduleChart'}"
-                                tooltip="{i18n>dashboardModuleChartTooltip}">
-                                <mc:data>
-                                    <mc:ComparisonMicroChartData
-                                        title="{dashboardData>title}"
-                                        value="{dashboardData>value}"
-                                        displayValue="{dashboardData>displayValue}"
-                                        color="{dashboardData>color}"/>
-                                </mc:data>
-                            </mc:ComparisonMicroChart>
-                        </VBox>
+                    <Panel headerText="Module × Severity" class="dashboardChartPanel dashboardColumnPanel sapUiNoContentPadding">
+                        <core:HTML id="severityColumns" class="dashboardCustomChart"/>
                     </Panel>
                 </layout:Grid>
+                <MessageStrip text="{dashboardData>/distributionInsight}" type="Information" showIcon="true" class="dashboardInsight sapUiSmallMarginTop"/>
 
                 <core:HTML content="&lt;hr style='border: none; border-top: 1px solid #e5e5e5; margin: 1.5rem 0;' /&gt;"/>
 
