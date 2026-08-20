@@ -246,10 +246,26 @@
                                 <ObjectStatus
                                     text="{= ${is_active} === 'X' ? 'Active' : 'Inactive'}"
                                     state="{= ${is_active} === 'X' ? 'Success' : 'Error'}"/>
-                                <ObjectNumber
-                                    number="{workload_score}"
-                                    unit="/ 10"
-                                    state="{= ${workload_score} &gt; 6 ? 'Error' : (${workload_score} &gt; 3 ? 'Warning' : 'Success')}"/>
+                                <HBox
+                                    alignItems="Center"
+                                    justifyContent="Center"
+                                    class="workloadCell">
+                                    <ObjectNumber
+                                        number="{workload_score}"
+                                        unit="/ 10"
+                                        state="{= ${workload_score} &gt; 6 ? 'Error' : (${workload_score} &gt; 3 ? 'Warning' : 'Success')}"
+                                        class="workloadScore"/>
+                                    <ProgressIndicator
+                                        percentValue="{= Math.max(0, Math.min(100, Number(${workload_score}) * 10)) }"
+                                        showValue="false"
+                                        width="12rem"
+                                        state="{= ${workload_score} &gt; 6 ? 'Error' : (${workload_score} &gt; 3 ? 'Warning' : 'Success')}"
+                                        class="workloadBar"/>
+                                    <ObjectStatus
+                                        text="{= ${workload_score} &gt; 6 ? 'High' : (${workload_score} &gt; 3 ? 'Medium' : 'Low')}"
+                                        state="{= ${workload_score} &gt; 6 ? 'Error' : (${workload_score} &gt; 3 ? 'Warning' : 'Success')}"
+                                        class="workloadLevel"/>
+                                </HBox>
                             </cells>
                         </ColumnListItem>
                     </items>

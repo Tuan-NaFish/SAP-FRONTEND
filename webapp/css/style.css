@@ -186,6 +186,30 @@ html, body, #content, .sapUiBody, .sapMApp, .sapMPage, .sapMPageContent, .sapFDy
     white-space: nowrap;
 }
 
+.workloadCell {
+    gap: 0.75rem;
+    min-width: 22rem;
+}
+
+.workloadScore {
+    min-width: 3.5rem;
+    text-align: right;
+}
+
+.workloadBar {
+    flex: 0 0 12rem;
+}
+
+.workloadBar .sapMPIBar,
+.workloadBar .sapMPIBarRemaining {
+    border-radius: 0.5rem;
+}
+
+.workloadLevel {
+    min-width: 4.5rem;
+    text-align: left;
+}
+
 /* ---- Audit history horizontal branch ---- */
 .historyBranch {
     overflow-x: auto;
