@@ -266,7 +266,7 @@ export default class IssueDetail extends BaseController {
             btnResolve:       sStatus === "IN_PROGRESS" && bIsAssignedDev && sRole === "DEVELOPER",
             btnStartTesting:  sStatus === "RESOLVED" && sRole === "TESTER" && !bIsAssignedFixer,
             btnClose:         sStatus === "TESTING" && sRole === "TESTER" && !bIsAssignedFixer,
-            btnReopen:        (sStatus === "TESTING" || sStatus === "CLOSED") && sRole === "TESTER" && !bIsAssignedFixer,
+            btnReopen:        sStatus === "TESTING" && sRole === "TESTER" && !bIsAssignedFixer,
             btnReassign:      sStatus === "CLOSED" ? false : (
                                 sStatus === "ACCEPTED"
                                 ? (sRole === "TESTER" || sRole === "MANAGER")

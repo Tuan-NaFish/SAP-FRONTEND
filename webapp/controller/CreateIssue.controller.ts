@@ -55,45 +55,59 @@ export default class CreateIssue extends BaseController {
     }
 
     private _onRouteMatched(): void {
-        const sRoleRaw = sessionStorage.getItem("userRole") || "Tester";
-        if (sRoleRaw.toUpperCase() !== "TESTER") {
-            MessageToast.show("Only Tester role is authorized to create defect tickets.");
-            this.getRouter().navTo("IssueList");
-            return;
-        }
         this._resetForm();
     }
 
     private _resetForm(): void {
-        (this.byId("inpTitle") as Input).setValue("").setValueState("None");
-        (this.byId("txtDescription") as TextArea).setValue("").setValueState("None");
+        const oInpTitle = this.byId("inpTitle") as Input;
+        if (oInpTitle) { oInpTitle.setValue("").setValueState("None"); }
+
+        const oTxtDescription = this.byId("txtDescription") as TextArea;
+        if (oTxtDescription) { oTxtDescription.setValue("").setValueState("None"); }
 
         const oSelModule = this.byId("selModule") as Select;
-        oSelModule.setSelectedKey("");
-        oSelModule.setValueState("None");
+        if (oSelModule) {
+            oSelModule.setSelectedKey("");
+            oSelModule.setValueState("None");
+        }
 
-        (this.byId("selSeverity") as Select).setSelectedKey("LOW");
-        (this.byId("selPriority") as Select).setSelectedKey("");
-        (this.byId("inpAffectedVersion") as Input).setValue("1.0");
+        const oSelSeverity = this.byId("selSeverity") as Select;
+        if (oSelSeverity) { oSelSeverity.setSelectedKey("LOW"); }
+
+        const oSelPriority = this.byId("selPriority") as Select;
+        if (oSelPriority) { oSelPriority.setSelectedKey(""); }
+
+        const oInpAffectedVersion = this.byId("inpAffectedVersion") as Input;
+        if (oInpAffectedVersion) { oInpAffectedVersion.setValue("1.0"); }
 
         const oDpDueDate = this.byId("dpDueDate") as DatePicker;
-        oDpDueDate.setValue("");
-        oDpDueDate.setValueState("None");
+        if (oDpDueDate) {
+            oDpDueDate.setValue("");
+            oDpDueDate.setValueState("None");
+        }
 
         const oDeveloperSelect = this.byId("selDeveloper") as Select;
-        oDeveloperSelect.setEnabled(false);
-        oDeveloperSelect.unbindItems();
-        oDeveloperSelect.destroyItems();
-        (oDeveloperSelect as any).addItem(new Item({
-            key: "",
-            text: "Select Module First / Auto-Assign"
-        }));
-        oDeveloperSelect.setSelectedKey("");
+        if (oDeveloperSelect) {
+            oDeveloperSelect.setEnabled(false);
+            oDeveloperSelect.unbindItems();
+            oDeveloperSelect.destroyItems();
+            (oDeveloperSelect as any).addItem(new Item({
+                key: "",
+                text: "Select Module First / Auto-Assign"
+            }));
+            oDeveloperSelect.setSelectedKey("");
+        }
 
-        (this.byId("txtDeveloperWorkloadInfo") as Text).setText("");
+        const oTxtDevInfo = this.byId("txtDeveloperWorkloadInfo") as Text;
+        if (oTxtDevInfo) {
+            oTxtDevInfo.setText("");
+        }
 
         // Clear pending attachments
-        (this.getModel("pendingAttachments") as JSONModel).setData({ files: [] });
+        const oPendingModel = this.getModel("pendingAttachments") as JSONModel;
+        if (oPendingModel) {
+            oPendingModel.setData({ files: [] });
+        }
         const oUploader = this.byId("fileUploader") as FileUploader;
         if (oUploader) {
             oUploader.clear();
@@ -329,6 +343,8 @@ export default class CreateIssue extends BaseController {
         const sAffectedVersion = (this.byId("inpAffectedVersion") as Input).getValue().trim() || "1.0";
         const sDueDateStr = (this.byId("dpDueDate") as DatePicker).getValue();
 
+        const sDevId = (this.byId("selDeveloper") as Select)?.getSelectedKey() || "";
+
         let sFormattedDueDate = sDueDateStr;
         if (sDueDateStr && sDueDateStr.indexOf("T") === -1) {
             sFormattedDueDate = sDueDateStr + "T00:00:00Z";
@@ -354,6 +370,7 @@ export default class CreateIssue extends BaseController {
             oOperation.setParameter("priority", sPriority);
             oOperation.setParameter("affected_version", sAffectedVersion);
             oOperation.setParameter("due_date", sFormattedDueDate);
+            oOperation.setParameter("developer", sDevId || "");
 
             return oOperation.execute().then(async () => {
                 const oResult = oOperation.getBoundContext().getObject() as any;
