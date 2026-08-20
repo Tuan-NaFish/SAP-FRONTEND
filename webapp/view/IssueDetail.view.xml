@@ -176,7 +176,16 @@
                     <Label text="{i18n>assignedToLabel}" design="Bold"/>
                     <HBox alignItems="Center">
                         <core:Icon src="sap-icon://employee" class="sapUiTinyMarginEnd"/>
-                        <Text text="{assigned_to}"/>
+                        <Text text="{path: 'assigned_to', formatter: '.formatter.formatOptionalField'}"/>
+                    </HBox>
+                </VBox>
+
+                <!-- Contributor / Supporting Developer -->
+                <VBox class="headerFacetVBox sapUiMediumMarginEnd" alignItems="Start">
+                    <Label text="CONTRIBUTOR" design="Bold"/>
+                    <HBox alignItems="Center">
+                        <core:Icon src="sap-icon://group" class="sapUiTinyMarginEnd"/>
+                        <Text text="{path: 'detailState>/contributorDev', formatter: '.formatter.formatOptionalField'}"/>
                     </HBox>
                 </VBox>
 

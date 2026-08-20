@@ -11,6 +11,13 @@
                 layout="ResponsiveGridLayout"
                 labelSpanXL="4" labelSpanL="4" labelSpanM="4" labelSpanS="12">
                 <form:content>
+                    <!-- Assignment Role Selection -->
+                    <Label text="Assignment Role" required="true"/>
+                    <Select id="selAssignmentRole" selectedKey="PRIMARY" width="100%">
+                        <core:Item key="PRIMARY" text="PRIMARY (Lead / Main Developer)"/>
+                        <core:Item key="CONTRIBUTOR" text="CONTRIBUTOR (Supporting Developer)"/>
+                    </Select>
+
                     <!-- Developer Select -->
                     <Label text="{i18n>dialogDeveloperLabel}" required="true"/>
                     <Select

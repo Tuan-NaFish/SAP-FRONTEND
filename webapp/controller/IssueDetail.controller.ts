@@ -177,8 +177,12 @@ export default class IssueDetail extends BaseController {
         );
         this._sCurrentIssueId = sIssueId;
 
-        // Reset reopenReason
-        (this.getModel("detailState") as JSONModel).setProperty("/reopenReason", "");
+        // Reset local detailState model overrides
+        const oDetailState = this.getModel("detailState") as JSONModel;
+        if (oDetailState) {
+            oDetailState.setProperty("/reopenReason", "");
+            oDetailState.setProperty("/status", "");
+        }
 
         // Bind the entire view to the Issue entity by key
         // OData V4 string keys require single quotes: /Issue('guid')
@@ -195,6 +199,7 @@ export default class IssueDetail extends BaseController {
         this._loadAttachments(sIssueId);
         this._loadComments(sIssueId);
         this._loadHistory(sIssueId);
+        this._loadDevelopers(sIssueId);
     }
 
     /**
@@ -204,6 +209,10 @@ export default class IssueDetail extends BaseController {
     private _onBindingChange(): void {
         const oContext = this.getView()!.getBindingContext();
         if (oContext) {
+            const sRealStatus = (oContext.getProperty("status") as string) || "";
+            if (sRealStatus) {
+                (this.getModel("detailState") as JSONModel).setProperty("/status", sRealStatus);
+            }
             this._calculateSLA(oContext);
             this._updateVisibility();
         }
@@ -258,7 +267,15 @@ export default class IssueDetail extends BaseController {
             btnStartTesting:  sStatus === "RESOLVED" && sRole === "TESTER" && !bIsAssignedFixer,
             btnClose:         sStatus === "TESTING" && sRole === "TESTER" && !bIsAssignedFixer,
             btnReopen:        (sStatus === "TESTING" || sStatus === "CLOSED") && sRole === "TESTER" && !bIsAssignedFixer,
-            btnReassign:      (sStatus === "ACCEPTED" || sStatus === "ASSIGNED" || sStatus === "REOPEN") && sRole === "MANAGER",
+            btnReassign:      sStatus === "CLOSED" ? false : (
+                                sStatus === "ACCEPTED"
+                                ? (sRole === "TESTER" || sRole === "MANAGER")
+                                : sStatus === "ASSIGNED"
+                                    ? (sRole === "MANAGER" || bIsAssignedDev)
+                                    : sStatus === "REOPEN"
+                                        ? (sRole === "MANAGER" || sRole === "TESTER")
+                                        : false
+                              ),
             // Attachments & comments authoring — hidden when the issue is closed.
             fileUploader:     !bClosed,
             commentInput:     !bClosed,
@@ -269,6 +286,19 @@ export default class IssueDetail extends BaseController {
             const oControl = this.byId(sId) as Control;
             if (oControl) {
                 oControl.setVisible(mVisibility[sId]);
+            }
+        }
+
+        // Dynamic text for Reassign / Assign Developer button
+        const oBtnReassign = this.byId("btnReassign") as Button;
+        if (oBtnReassign) {
+            const sAssignedDev = (oContext.getProperty("assigned_to") as string) || "";
+            if (!sAssignedDev || sStatus === "OPEN" || sStatus === "ACCEPTED") {
+                oBtnReassign.setText("Assign Developer");
+            } else if (sRole === "DEVELOPER") {
+                oBtnReassign.setText("Reassign Developer");
+            } else {
+                oBtnReassign.setText("Reassign / Add Contributor");
             }
         }
 
@@ -560,32 +590,112 @@ export default class IssueDetail extends BaseController {
 
         oView.setBusy(true);
 
-        try {
-            await this.ensureCsrfToken();
-            const oOperation = oModel.bindContext(
-                `com.sap.gateway.srvd.zui_issue_srvdef.v0001.${sAction}(...)`,
-                oCtx,
-                { $$inheritExpandSelect: true }
-            ) as ODataContextBinding;
+<<<<<<< HEAD
+=======
+        // Map target status for lifecycle actions
+        let sTargetStatus = "";
+        if (sAction === "acceptIssue") { sTargetStatus = "ACCEPTED"; }
+        else if (sAction === "closeAsNotDefect") { sTargetStatus = "CLOSED"; }
+        if (sAction === "assignIssue" && mParams) {
+            sTargetStatus = "ASSIGNED";
+            const sDevId = (mParams.developer as string) || "";
+            if (!mParams.assignment_role) {
+                mParams.assignment_role = "PRIMARY";
+            }
+            const oDetailModel = this.getModel("detailState") as JSONModel;
+            if (oDetailModel && sDevId) {
+                oDetailModel.setProperty("/assignedTo", sDevId);
+            }
+        }
+        else if (sAction === "startProgress") { sTargetStatus = "IN_PROGRESS"; }
+        else if (sAction === "startTesting") { sTargetStatus = "TESTING"; }
+        else if (sAction === "closeIssue") { sTargetStatus = "CLOSED"; }
+        else if (sAction === "reopenIssue") { sTargetStatus = "REOPEN"; }
+        else if (sAction === "resolveIssue") { sTargetStatus = "RESOLVED"; }
 
-            if (mParams) {
-                Object.keys(mParams).forEach((sKey) => {
-                    const vVal = mParams[sKey];
-                    if (vVal !== undefined && vVal !== null && vVal !== "") {
-                        oOperation.setParameter(sKey, vVal);
-                    }
-                });
+        // Update local UI model & controls FIRST
+        if (sTargetStatus) {
+            const oDetailModel = this.getModel("detailState") as JSONModel;
+            const sUserCur = this.getCurrentUser();
+            const sAffected = (oCtx.getProperty("affected_version") as string) || "1.0";
+            const sComputedFixVer = sAffected.indexOf(".") >= 0 ? sAffected + ".1" : sAffected + ".1";
+            const sNowFormatted = formatter.formatDateTime(new Date());
+
+            if (oDetailModel) {
+                oDetailModel.setProperty("/status", sTargetStatus);
+                if (sTargetStatus === "RESOLVED") {
+                    oDetailModel.setProperty("/rootCause", (mParams?.root_cause as string) || "");
+                    oDetailModel.setProperty("/fixDescription", (mParams?.fix_description as string) || "");
+                    oDetailModel.setProperty("/resolutionNote", (mParams?.resolution_note as string) || "-");
+                    oDetailModel.setProperty("/fixedBy", sUserCur);
+                    oDetailModel.setProperty("/fixedAt", sNowFormatted);
+                    oDetailModel.setProperty("/fixVersion", sComputedFixVer);
+                }
             }
 
-            await oOperation.execute();
+            const oStatusHeader = this.byId("objStatusHeader") as any;
+            if (oStatusHeader) {
+                oStatusHeader.setText(formatter.formatStatusText(sTargetStatus));
+                oStatusHeader.setState(formatter.formatStatusState(sTargetStatus) as any);
+            }
+        }
+
+        that._updateVisibility();
+        that._calculateSLA(oCtx);
+
+>>>>>>> fc30c07 (feat: update IssueDetail assignment role matrix, contributor header facet, and deployment guides)
+        try {
+            await this.ensureCsrfToken();
+
+            const fnExecute = async (pParams?: Record<string, unknown>) => {
+                const oOperation = oModel.bindContext(
+                    `com.sap.gateway.srvd.zui_issue_srvdef.v0001.${sAction}(...)`,
+                    oCtx,
+                    { $$inheritExpandSelect: true }
+                ) as ODataContextBinding;
+
+                if (pParams) {
+                    Object.keys(pParams).forEach((sKey) => {
+                        const vVal = pParams[sKey];
+                        if (vVal !== undefined && vVal !== null && vVal !== "") {
+                            oOperation.setParameter(sKey, vVal);
+                        }
+                    });
+                }
+                await oOperation.execute();
+            };
+
+            await fnExecute(mParams);
 
             // Refresh OData context from SAP Backend DB if supported
             if (typeof oCtx.requestRefresh === "function") {
-                await oCtx.requestRefresh();
+                await oCtx.requestRefresh().catch(() => {});
+            }
+            if (sOkMsg) {
+                MessageToast.show(sOkMsg);
             }
         } catch (oActionErr: any) {
+<<<<<<< HEAD
             this._showODataError(oActionErr);
             return;
+=======
+            console.warn("RAP Bound action note (" + sAction + "):", oActionErr);
+            MessageBox.error("Action " + sAction + " failed: " + (oActionErr.message || "400 Bad Request"));
+
+            // Revert local UI model state back to original backend status
+            const sRealStatus = (oCtx.getProperty("status") as string) || "";
+            if (sRealStatus) {
+                const oDetailModel = this.getModel("detailState") as JSONModel;
+                if (oDetailModel) {
+                    oDetailModel.setProperty("/status", sRealStatus);
+                }
+                const oStatusHeader = this.byId("objStatusHeader") as any;
+                if (oStatusHeader) {
+                    oStatusHeader.setText(formatter.formatStatusText(sRealStatus));
+                    oStatusHeader.setState(formatter.formatStatusState(sRealStatus) as any);
+                }
+            }
+>>>>>>> fc30c07 (feat: update IssueDetail assignment role matrix, contributor header facet, and deployment guides)
         } finally {
             oView.setBusy(false);
         }
@@ -594,6 +704,7 @@ export default class IssueDetail extends BaseController {
         that._calculateSLA(oCtx);
         that._loadComments(sIssueId);
         that._loadHistory(sIssueId);
+        that._loadDevelopers(sIssueId);
 
         if (sOkMsg) {
             MessageToast.show(sOkMsg);
@@ -847,12 +958,15 @@ export default class IssueDetail extends BaseController {
     /**
      * Open Reassign dialog.
      */
+    /**
+     * Open Reassign dialog.
+     */
     public onReassign(): void {
         const oView = this.getView()!;
         const oContext = oView.getBindingContext();
         if (!oContext) { return; }
 
-        const sModule = oContext.getProperty("modulename") as string;
+        const sModule = (oContext.getProperty("modulename") as string) || "";
         const that = this;
 
         if (!this._oReassignDialog) {
@@ -862,11 +976,63 @@ export default class IssueDetail extends BaseController {
                 that._oReassignDialog = oDialog;
                 oView.addDependent(that._oReassignDialog);
                 that._filterReassignDeveloperList(sModule);
+                that._prepareReassignRoleSelect();
                 that._oReassignDialog.open();
+            }).catch((err: any) => {
+                console.error("Failed to load ReassignDialog fragment:", err);
+                MessageBox.error("Failed to open assignment dialog: " + (err.message || err));
             });
         } else {
             this._filterReassignDeveloperList(sModule);
+            this._prepareReassignRoleSelect();
             this._oReassignDialog.open();
+        }
+    }
+
+    /**
+     * Helper to retrieve current user role in UPPERCASE.
+     */
+    private getCurrentUserRole(): string {
+        const oUserRoleModel = this.getOwnerComponent()?.getModel("userRole") as JSONModel;
+        let sRole = oUserRoleModel ? (oUserRoleModel.getProperty("/role") as string) : "";
+        if (!sRole) {
+            sRole = sessionStorage.getItem("userRole") || "";
+        }
+        return (sRole || "").toUpperCase();
+    }
+
+    /**
+     * Prepares Assignment Role dropdown state:
+     * - Tester / ACCEPTED status: fixed to PRIMARY (disabled).
+     * - Manager / ASSIGNED status: editable (PRIMARY / CONTRIBUTOR).
+     */
+    private _prepareReassignRoleSelect(): void {
+        const oView = this.getView()!;
+        const oContext = oView.getBindingContext();
+        if (!oContext) { return; }
+
+        const sStatus = (oContext.getProperty("status") as string) || "";
+        const sRole = this.getCurrentUserRole();
+        const oSelectRole = (this.byId("selAssignmentRole") || Fragment.byId(oView.getId(), "selAssignmentRole")) as Select;
+
+        if (this._oReassignDialog) {
+            if (sStatus === "ACCEPTED" || sStatus === "OPEN") {
+                this._oReassignDialog.setTitle("Assign Developer");
+            } else if (sRole === "DEVELOPER") {
+                this._oReassignDialog.setTitle("Reassign Developer");
+            } else {
+                this._oReassignDialog.setTitle("Reassign / Add Contributor");
+            }
+        }
+
+        if (oSelectRole) {
+            // At ACCEPTED/OPEN state, or if user is DEVELOPER (doing Transfer), lock assignment_role to PRIMARY
+            if (sStatus === "ACCEPTED" || sStatus === "OPEN" || sRole === "DEVELOPER") {
+                oSelectRole.setSelectedKey("PRIMARY");
+                oSelectRole.setEnabled(false);
+            } else {
+                oSelectRole.setEnabled(true);
+            }
         }
     }
 
@@ -883,37 +1049,56 @@ export default class IssueDetail extends BaseController {
      * Submit Reassign dialog.
      */
     public onReassignSubmit(): void {
-        const oSelect = this.byId("selDeveloper") as Select;
-        const sDeveloperId = oSelect.getSelectedKey();
+        const oView = this.getView()!;
+        const oSelectDev = (this.byId("selDeveloper") || Fragment.byId(oView.getId(), "selDeveloper")) as Select;
+        const oSelectRole = (this.byId("selAssignmentRole") || Fragment.byId(oView.getId(), "selAssignmentRole")) as Select;
+        const sDeveloperId = oSelectDev ? oSelectDev.getSelectedKey() : "";
+        const sRole = oSelectRole ? oSelectRole.getSelectedKey() || "PRIMARY" : "PRIMARY";
 
         if (!sDeveloperId) {
             MessageToast.show(this.getResourceBundle().getText("dialogSelectDevRequired"));
             return;
         }
 
-        this._oReassignDialog!.close();
+        if (this._oReassignDialog) {
+            this._oReassignDialog.close();
+        }
+
+        const sRoleText = sRole === "PRIMARY" ? "PRIMARY (Lead Dev)" : "CONTRIBUTOR (Supporting Dev)";
 
         // Bound action: assignIssue with parameter entity Z_A_ASSIGN_ISSUE.
         // Backend validates the developer (module + active), resets status to
         // ASSIGNED, stamps assigned_at and writes the audit log.
         this._invokeAction("assignIssue", {
-            developer: sDeveloperId
-        }, "Issue reassigned to " + sDeveloperId);
+            developer: sDeveloperId,
+            assignment_role: sRole
+        }, "Issue assigned to " + sDeveloperId + " as " + sRoleText);
     }
 
     /**
      * Filters the developer select in the reassign dialog
-     * to only show active developers for the issue's module.
+     * to only show active developers for the issue's module,
+     * EXCLUDING developers already assigned to this issue.
      */
     private _filterReassignDeveloperList(sModule: string): void {
-        const oSelect = this.byId("selDeveloper") as Select;
+        const oView = this.getView()!;
+        const oSelect = (this.byId("selDeveloper") || Fragment.byId(oView.getId(), "selDeveloper")) as Select;
         if (oSelect) {
             const oBinding = oSelect.getBinding("items");
             if (oBinding) {
+                const oContext = oView.getBindingContext();
+                const sAssignedDev = oContext ? ((oContext.getProperty("assigned_to") as string) || "") : "";
+
                 const aFilters = [
                     new Filter("modulename", FilterOperator.EQ, sModule),
                     new Filter("is_active", FilterOperator.EQ, "X")
                 ];
+
+                // Exclude current assigned developer from selection dropdown
+                if (sAssignedDev) {
+                    aFilters.push(new Filter("developer_id", FilterOperator.NE, sAssignedDev));
+                }
+
                 (oBinding as any).filter(aFilters);
             }
         }
@@ -1036,6 +1221,43 @@ export default class IssueDetail extends BaseController {
         } finally {
             this.getView()!.setBusy(false);
             (this.byId("fileUploader") as any)?.clear();
+        }
+    }
+
+    /**
+     * Loads assigned developers / contributors from /IssueDeveloper
+     * and sets detailState>/contributorDev string (e.g. "DEV-021").
+     */
+    private _loadDevelopers(sIssueId: string): void {
+        const oModel = this.getModel() as ODataModel;
+        const oDetailModel = this.getModel("detailState") as JSONModel;
+        if (!oModel || !sIssueId) { return; }
+
+        try {
+            const oListBinding = oModel.bindList("/IssueDeveloper", undefined, undefined, [
+                new Filter("issue_id", FilterOperator.EQ, sIssueId),
+                new Filter("assignment_role", FilterOperator.EQ, "CONTRIBUTOR")
+            ]);
+
+            oListBinding.requestContexts().then((aContexts) => {
+                const aActiveContributors = aContexts
+                    .map((oCtx) => oCtx.getObject() as any)
+                    .filter((oObj) => oObj && (oObj.is_active === true || oObj.is_active === "X" || oObj.is_active === "true"))
+                    .map((oObj) => oObj.developer_id);
+
+                const sContributorText = aActiveContributors.length > 0 ? aActiveContributors.join(", ") : "-";
+                if (oDetailModel) {
+                    oDetailModel.setProperty("/contributorDev", sContributorText);
+                }
+            }).catch(() => {
+                if (oDetailModel) {
+                    oDetailModel.setProperty("/contributorDev", "-");
+                }
+            });
+        } catch {
+            if (oDetailModel) {
+                oDetailModel.setProperty("/contributorDev", "-");
+            }
         }
     }
 
