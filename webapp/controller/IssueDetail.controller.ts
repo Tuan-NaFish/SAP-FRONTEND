@@ -590,8 +590,6 @@ export default class IssueDetail extends BaseController {
 
         oView.setBusy(true);
 
-<<<<<<< HEAD
-=======
         // Map target status for lifecycle actions
         let sTargetStatus = "";
         if (sAction === "acceptIssue") { sTargetStatus = "ACCEPTED"; }
@@ -642,8 +640,6 @@ export default class IssueDetail extends BaseController {
 
         that._updateVisibility();
         that._calculateSLA(oCtx);
-
->>>>>>> fc30c07 (feat: update IssueDetail assignment role matrix, contributor header facet, and deployment guides)
         try {
             await this.ensureCsrfToken();
 
@@ -675,12 +671,8 @@ export default class IssueDetail extends BaseController {
                 MessageToast.show(sOkMsg);
             }
         } catch (oActionErr: any) {
-<<<<<<< HEAD
-            this._showODataError(oActionErr);
-            return;
-=======
             console.warn("RAP Bound action note (" + sAction + "):", oActionErr);
-            MessageBox.error("Action " + sAction + " failed: " + (oActionErr.message || "400 Bad Request"));
+            this._showODataError(oActionErr);
 
             // Revert local UI model state back to original backend status
             const sRealStatus = (oCtx.getProperty("status") as string) || "";
@@ -695,7 +687,6 @@ export default class IssueDetail extends BaseController {
                     oStatusHeader.setState(formatter.formatStatusState(sRealStatus) as any);
                 }
             }
->>>>>>> fc30c07 (feat: update IssueDetail assignment role matrix, contributor header facet, and deployment guides)
         } finally {
             oView.setBusy(false);
         }
