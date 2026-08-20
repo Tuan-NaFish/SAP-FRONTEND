@@ -570,68 +570,50 @@
 
                     <uxap:ObjectPageSubSection title="{i18n>sectionAuditTrail}">
                         <uxap:blocks>
-                            <List
-                                id="historyList"
-                                items="{history>/}"
-                                noDataText="{i18n>noHistory}"
-                                class="sapUiSmallMargin">
-
-                                <headerToolbar>
-                                    <Toolbar>
-                                        <Title text="{i18n>auditTrailTitle}" level="H4"/>
-                                    </Toolbar>
-                                </headerToolbar>
-
-                                <!-- Custom timeline-style list items -->
-                                <items>
-                                    <CustomListItem>
-                                        <HBox alignItems="Start" class="sapUiSmallMargin">
-
-                                            <!-- Timeline Icon (color-coded by action type) -->
-                                            <core:Icon
-                                                src="{path: 'history>action_type', formatter: '.formatter.formatHistoryIcon'}"
-                                                color="{path: 'history>action_type', formatter: '.formatter.formatHistoryIconColor'}"
-                                                size="1.25rem"
-                                                class="sapUiSmallMarginEnd sapUiSmallMarginTop"/>
-
-                                            <!-- Timeline Content -->
-                                            <VBox class="sapUiTinyMarginTop">
-
-                                                <!-- Change summary: FIELD changed from OLD → NEW -->
+                            <VBox id="historyList" class="historyBranch sapUiSmallMargin" width="100%">
+                                <Toolbar>
+                                    <Title text="{i18n>auditTrailTitle}" level="H4"/>
+                                </Toolbar>
+                                <FlexBox
+                                    items="{history>/}"
+                                    wrap="Wrap"
+                                    alignItems="Stretch"
+                                    class="historyTrack">
+                                    <items>
+                                        <VBox class="historyNode" width="15rem">
+                                            <HBox alignItems="Center" class="historyNodeHeader">
+                                                <core:Icon
+                                                    src="{path: 'history>action_type', formatter: '.formatter.formatHistoryIcon'}"
+                                                    color="{path: 'history>action_type', formatter: '.formatter.formatHistoryIconColor'}"
+                                                    size="1.25rem"
+                                                    class="sapUiTinyMarginEnd"/>
+                                                <Text text="{history>field_name}" class="sapMTextBold" wrapping="true"/>
+                                            </HBox>
+                                            <VBox class="historyCard">
                                                 <HBox alignItems="Center" wrap="Wrap">
-                                                    <Text
-                                                        text="{history>field_name}"
-                                                        class="sapUiTinyMarginEnd sapMTextBold"/>
-                                                    <Text text="{i18n>changedFromText}" class="sapUiTinyMarginEnd"/>
                                                     <ObjectStatus
                                                         text="{path: 'history>old_value', formatter: '.formatter.formatOptionalField'}"
-                                                        state="None"
-                                                        class="sapUiTinyMarginEnd"/>
-                                                    <core:Icon src="sap-icon://arrow-right" size="0.75rem" class="sapUiTinyMarginEnd"/>
-                                                    <ObjectStatus
-                                                        text="{history>new_value}"
-                                                        state="Information"/>
+                                                        state="None"/>
+                                                    <core:Icon src="sap-icon://arrow-right" size="0.75rem" class="sapUiTinyMarginBegin sapUiTinyMarginEnd"/>
+                                                    <ObjectStatus text="{history>new_value}" state="Information"/>
                                                 </HBox>
-
-                                                <!-- Notes (shown only if present) -->
                                                 <Text
                                                     text="{history>notes}"
                                                     visible="{= !!${history>notes} }"
-                                                    class="sapUiTinyMarginTop"/>
-
-                                                <!-- Who + When -->
+                                                    class="sapUiTinyMarginTop"
+                                                    wrapping="true"/>
                                                 <HBox alignItems="Center" class="sapUiTinyMarginTop">
                                                     <core:Icon src="sap-icon://employee" size="0.75rem" class="sapUiTinyMarginEnd"/>
-                                                    <Label text="{history>changed_by}" class="sapUiTinyMarginEnd"/>
-                                                    <core:Icon src="sap-icon://date-time" size="0.75rem" class="sapUiTinyMarginEnd"/>
-                                                    <Label text="{path: 'history>changed_at', formatter: '.formatter.formatDateTime'}"/>
+                                                    <Text text="{history>changed_by}" wrapping="true"/>
                                                 </HBox>
-
+                                                <Text
+                                                    text="{path: 'history>changed_at', formatter: '.formatter.formatDateTime'}"
+                                                    class="sapUiTinyMarginTop sapMTextColorSecondary"/>
                                             </VBox>
-                                        </HBox>
-                                    </CustomListItem>
-                                </items>
-                            </List>
+                                        </VBox>
+                                    </items>
+                                </FlexBox>
+                            </VBox>
                         </uxap:blocks>
                     </uxap:ObjectPageSubSection>
 

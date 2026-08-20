@@ -373,7 +373,7 @@ export default class IssueDetail extends BaseController {
 
     /**
      * Load audit history for the current issue.
-     * Sorted by changed_at descending (most recent changes first).
+     * Sorted by changed_at ascending so the branch reads left to right.
      */
     private _loadHistory(sIssueId: string): void {
         if (!sIssueId) {
@@ -385,7 +385,7 @@ export default class IssueDetail extends BaseController {
         const that = this;
 
         const oListBinding = oModel.bindList("/History", undefined, [
-            new Sorter("changed_at", true) // descending
+            new Sorter("changed_at", false) // ascending
         ], [
             new Filter("issue_id", FilterOperator.EQ, sIssueId)
         ]) as ODataListBinding;

@@ -162,17 +162,106 @@ html, body, #content, .sapUiBody, .sapMApp, .sapMPage, .sapMPageContent, .sapFDy
     border-radius: 0.25rem;
 }
 
-/* ---- Audit History Timeline styling ---- */
-/* Vertical connector line between timeline items */
-#historyList .sapMLIBContent > .sapUiHBox {
-    border-left: 2px solid #d9d9d9;
-    padding-left: 1rem;
-    margin-left: 0.625rem;
+/* ---- Manager dashboard charts and workload ---- */
+.dashboardChartsGrid {
+    gap: 1rem;
+    align-items: stretch;
 }
 
-/* Remove border for the last timeline item */
-#historyList .sapMListItems > .sapMLIB:last-child .sapMLIBContent > .sapUiHBox {
-    border-left-color: transparent;
+.dashboardChartPanel {
+    min-height: 12rem;
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+
+.dashboardChartPanel .sapSuiteUiMicroChart {
+    width: 100%;
+}
+
+.dashboardWorkloadTable .sapMListTblCell {
+    vertical-align: middle;
+}
+
+.dashboardWorkloadTable .sapMObjectNumber {
+    white-space: nowrap;
+}
+
+/* ---- Audit history horizontal branch ---- */
+.historyBranch {
+    overflow-x: auto;
+    background: var(--sapGroup_ContentBackground, #ffffff);
+    border-radius: 0.75rem;
+    padding: 0.5rem 0.75rem 1rem;
+}
+
+.historyTrack {
+    position: relative;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 2rem 0.5rem 0.75rem;
+    min-width: max-content;
+}
+
+.historyTrack::before {
+    content: "";
+    position: absolute;
+    top: 1.15rem;
+    left: 1.5rem;
+    right: 1.5rem;
+    height: 2px;
+    background: var(--sapContent_ForegroundBorderColor, #d9d9d9);
+}
+
+.historyNode {
+    position: relative;
+    z-index: 1;
+    flex: 0 0 15rem;
+}
+
+.historyNode::before {
+    content: "";
+    display: block;
+    width: 0.8rem;
+    height: 0.8rem;
+    margin: 0 auto 0.5rem;
+    border: 2px solid var(--sapGroup_ContentBackground, #ffffff);
+    border-radius: 50%;
+    background: var(--sapButton_Emphasized_Background, #0070f2);
+    box-shadow: 0 0 0 2px var(--sapButton_Emphasized_Background, #0070f2);
+}
+
+.historyNodeHeader {
+    min-height: 2rem;
+    justify-content: center;
+    text-align: center;
+}
+
+.historyCard {
+    min-height: 7rem;
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    border: 1px solid var(--sapGroup_ContentBorderColor, #d9d9d9);
+    border-radius: 0.5rem;
+    background: var(--sapGroup_ContentBackground, #ffffff);
+    box-shadow: 0 0.125rem 0.35rem rgba(0, 0, 0, 0.08);
+}
+
+.historyNode:hover .historyCard,
+.historyNode:focus-within .historyCard {
+    border-color: var(--sapButton_Emphasized_Background, #0070f2);
+    box-shadow: 0 0.25rem 0.75rem rgba(0, 112, 242, 0.16);
+}
+
+@media (max-width: 600px) {
+    .historyTrack {
+        gap: 0.75rem;
+        padding-left: 0.25rem;
+        padding-right: 0.25rem;
+    }
+
+    .historyNode {
+        flex-basis: 13rem;
+    }
 }
 
 /* ---- Comment feed styling ---- */

@@ -38,6 +38,8 @@ export default class Dashboard extends BaseController {
         totalTesting: 0,
         totalClosed: 0,
         status: {
+            OPEN: 0,
+            ACCEPTED: 0,
             ASSIGNED: 0,
             IN_PROGRESS: 0,
             RESOLVED: 0,
@@ -46,6 +48,8 @@ export default class Dashboard extends BaseController {
             CLOSED: 0
         },
         statusPercent: {
+            OPEN: 0,
+            ACCEPTED: 0,
             ASSIGNED: 0,
             IN_PROGRESS: 0,
             RESOLVED: 0,
@@ -53,6 +57,9 @@ export default class Dashboard extends BaseController {
             REOPEN: 0,
             CLOSED: 0
         },
+        statusChart: [],
+        severityChart: [],
+        moduleChart: [],
         severity: {
             CRITICAL: 0,
             HIGH: 0,
@@ -254,6 +261,36 @@ export default class Dashboard extends BaseController {
                 oStats.modulePercent[key] = Math.round((oStats.module[key] / iTotal) * 100);
             });
 
+            oStats.statusChart = that._createChartData(oStats.status, [
+                ["OPEN", "Open", "Neutral"],
+                ["ACCEPTED", "Accepted", "Neutral"],
+                ["ASSIGNED", "Assigned", "Neutral"],
+                ["IN_PROGRESS", "In Progress", "Critical"],
+                ["RESOLVED", "Resolved", "Good"],
+                ["TESTING", "Testing", "Neutral"],
+                ["REOPEN", "Reopened", "Error"],
+                ["CLOSED", "Closed", "Good"]
+            ]).map((oData: any) => ({
+                label: oData.title,
+                value: oData.value,
+                displayedValue: oData.displayValue,
+                color: oData.color
+            }));
+            oStats.severityChart = that._createChartData(oStats.severity, [
+                ["CRITICAL", "Critical", "Error"],
+                ["HIGH", "High", "Critical"],
+                ["MEDIUM", "Medium", "Neutral"],
+                ["LOW", "Low", "Good"]
+            ]);
+            oStats.moduleChart = that._createChartData(oStats.module, [
+                ["FI", "FI", "Neutral"],
+                ["MM", "MM", "Neutral"],
+                ["SD", "SD", "Good"],
+                ["HCM", "HCM", "Critical"],
+                ["PP", "PP", "Error"],
+                ["QM", "QM", "Neutral"]
+            ]).sort((a: any, b: any) => b.value - a.value);
+
             // Advanced KPI roll-ups
             oStats.slaCompliance = iResolvedForSla > 0
                 ? Math.round((iResolvedWithinSla / iResolvedForSla) * 100)
@@ -274,6 +311,22 @@ export default class Dashboard extends BaseController {
             MessageBox.error(
                 this.getResourceBundle().getText("errorLoadingIssue") + " " + oError.message
             );
+        });
+    }
+
+    private _createChartData(
+        oValues: Record<string, number>,
+        aDefinitions: string[][]
+    ): Record<string, string | number>[] {
+        const iTotal = Object.values(oValues).reduce((iSum, iValue) => iSum + iValue, 0) || 1;
+        return aDefinitions.map(([sKey, sTitle, sColor]) => {
+            const iValue = oValues[sKey] || 0;
+            return {
+                title: sTitle,
+                value: iValue,
+                displayValue: `${iValue} / ${iTotal} (${Math.round((iValue / iTotal) * 100)}%)`,
+                color: sColor
+            };
         });
     }
 
@@ -328,8 +381,11 @@ export default class Dashboard extends BaseController {
         let oQuery: Record<string, string> = {};
 
         switch (sKpiType) {
+            case "totalTickets":
+                oQuery = {};
+                break;
             case "totalOpen":
-                oQuery = { status: "ASSIGNED,IN_PROGRESS,REOPEN" };
+                oQuery = { status: "OPEN,ACCEPTED,ASSIGNED,IN_PROGRESS,REOPEN,RESOLVED,TESTING" };
                 break;
             case "overdue":
                 oQuery = { sla: "overdue" };
