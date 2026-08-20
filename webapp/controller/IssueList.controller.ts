@@ -13,7 +13,7 @@ import formatter from "../model/formatter";
 import { loadIssueProjection } from "../model/IssueProjection";
 
 type SortState = "none" | "asc" | "desc";
-type ColumnKey = "issue_num" | "title" | "modulename" | "severity" | "status" | "assigned_to" | "due_date" | "sla";
+type ColumnKey = "issue_num" | "title" | "modulename" | "severity" | "priority" | "status" | "assigned_to" | "due_date" | "sla";
 type FilterState = {
     sort: { columnKey: string; sortField: string; state: SortState };
     columns: Record<ColumnKey, { sortState: SortState; filter: any }>;
@@ -162,6 +162,7 @@ export default class IssueList extends BaseController {
         this._addTextFilter(aFilters, "title", m.title.filter.query);
         this._addCategoryFilter(aFilters, "modulename", m.modulename.filter.selected);
         this._addCategoryFilter(aFilters, "severity", m.severity.filter.selected);
+        this._addCategoryFilter(aFilters, "priority", m.priority.filter.selected);
         this._addCategoryFilter(aFilters, "status", m.status.filter.selected);
         this._addTextFilter(aFilters, "assigned_to", m.assigned_to.filter.query);
         this._addDateRangeFilter(aFilters, m.due_date.filter);
@@ -206,7 +207,7 @@ export default class IssueList extends BaseController {
         return { sort: { columnKey: "", sortField: "", state: "none" }, columns: {
             issue_num: { sortState: "none", filter: { query: "" } }, title: { sortState: "none", filter: { query: "" } },
             modulename: { sortState: "none", filter: { selected: [] } }, severity: { sortState: "none", filter: { selected: [] } },
-            status: { sortState: "none", filter: { selected: [] } }, assigned_to: { sortState: "none", filter: { query: "" } },
+            priority: { sortState: "none", filter: { selected: [] } }, status: { sortState: "none", filter: { selected: [] } }, assigned_to: { sortState: "none", filter: { query: "" } },
             due_date: { sortState: "none", filter: { from: null, to: null } }, sla: { sortState: "none", filter: { selection: "all" } }
         }};
     }

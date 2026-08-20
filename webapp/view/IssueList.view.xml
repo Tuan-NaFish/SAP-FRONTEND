@@ -114,6 +114,22 @@
                                 filterClear=".onHeaderFilterClear"/>
                         </header>
                     </Column>
+                    <Column width="9rem" hAlign="Center" demandPopin="true" minScreenWidth="Tablet">
+                        <header>
+                            <ctrl:TableHeaderCell
+                                text="{i18n>columnPriority}"
+                                columnKey="priority"
+                                sortField="priority"
+                                filterType="category"
+                                categoryOptions='[&quot;Highest&quot;,&quot;High&quot;,&quot;Medium&quot;,&quot;Low&quot;,&quot;Lowest&quot;]'
+                                sortState="{filterState>/columns/priority/sortState}"
+                                filterActive="{= ${filterState>/columns/priority/filter/selected}.length > 0 }"
+                                filterValue="{filterState>/columns/priority/filter}"
+                                sortChange=".onHeaderSort"
+                                filterChange=".onHeaderFilter"
+                                filterClear=".onHeaderFilterClear"/>
+                        </header>
+                    </Column>
                     <Column width="9rem" hAlign="Center">
                         <header>
                             <ctrl:TableHeaderCell
@@ -190,6 +206,10 @@
                                 text="{severity}"
                                 state="{ path: 'severity', formatter: '.formatter.formatSeverityState' }"
                                 icon="{ path: 'severity', formatter: '.formatter.formatSeverityIcon' }"/>
+                            <ObjectStatus
+                                text="{priority}"
+                                state="{= ${priority} === 'Highest' ? 'Error' : ${priority} === 'High' ? 'Warning' : ${priority} === 'Medium' ? 'Information' : ${priority} === 'Low' ? 'Success' : 'None' }"
+                                icon="sap-icon://flag"/>
                             <ObjectStatus
                                 class="uniformPill"
                                 text="{ path: 'status', formatter: '.formatter.formatStatusText' }"
