@@ -220,7 +220,7 @@ export default class Dashboard extends BaseController {
 
                 // 3. Priority aggregates
                 const sPriority: string = oIssue.priority || "Lowest";
-                if (sPriority === "High" && sStatus !== "CLOSED") {
+                if (sPriority === "High") {
                     oStats.totalHighPriority++;
                 }
 

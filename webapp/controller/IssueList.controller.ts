@@ -43,8 +43,12 @@ export default class IssueList extends BaseController {
     private async _onRouteMatched(oEvent: Event): Promise<void> {
         let oQuery = (oEvent as any).getParameter("arguments")["?query"];
         const oKpiModel = this.getOwnerComponent()?.getModel("kpiFilterQuery") as JSONModel;
-        if (!oQuery && oKpiModel) {
-            oQuery = oKpiModel.getData();
+        if (oKpiModel) {
+            // Use the temporary model only when the route has no query, then
+            // clear it so browser Back can restore the original unfiltered list.
+            if (!oQuery) {
+                oQuery = oKpiModel.getData();
+            }
             this.getOwnerComponent()?.setModel(null as any, "kpiFilterQuery");
         }
         const oModel = this.getView()!.getModel("filterState") as JSONModel;
