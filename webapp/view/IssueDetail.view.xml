@@ -144,44 +144,50 @@
         <!-- Visible below the title when the header is expanded       -->
         <!-- ======================================================== -->
         <uxap:headerContent>
-            <HBox wrap="Wrap" alignItems="Start">
+            <HBox class="issueHeaderFacets" wrap="Wrap" alignItems="Start">
 
                 <!-- Status Badge -->
-                <VBox class="headerFacetVBox sapUiMediumMarginEnd" alignItems="Start">
+                <VBox class="headerFacetVBox" alignItems="Start">
                     <Label text="{i18n>statusLabel}" design="Bold"/>
                     <ObjectStatus
                         id="objStatusHeader"
                         text="{path: 'status', formatter: '.formatter.formatStatusText'}"
                         state="{path: 'status', formatter: '.formatter.formatStatusState'}"
-                        inverted="true"/>
+                        inverted="true"
+                        class="headerFacetBadge statusHeaderBadge"/>
                 </VBox>
 
                 <!-- Severity Badge -->
-                <VBox class="headerFacetVBox sapUiMediumMarginEnd" alignItems="Start">
+                <VBox class="headerFacetVBox" alignItems="Start">
                     <Label text="{i18n>severityLabel}" design="Bold"/>
                     <ObjectStatus
                         text="{severity}"
                         state="{path: 'severity', formatter: '.formatter.formatSeverityState'}"
-                        icon="{path: 'severity', formatter: '.formatter.formatSeverityIcon'}"/>
+                        icon="{path: 'severity', formatter: '.formatter.formatSeverityIcon'}"
+                        class="headerFacetBadge severityHeaderBadge"/>
                 </VBox>
 
                 <!-- Module -->
-                <VBox class="headerFacetVBox sapUiMediumMarginEnd" alignItems="Start">
+                <VBox class="headerFacetVBox" alignItems="Start">
                     <Label text="{i18n>moduleLabel}" design="Bold"/>
-                    <ObjectStatus text="{modulename}" inverted="true" state="Information"/>
+                    <ObjectStatus
+                        text="{modulename}"
+                        inverted="true"
+                        state="Information"
+                        class="headerFacetBadge moduleHeaderBadge"/>
                 </VBox>
 
                 <!-- Assigned Developer -->
-                <VBox class="headerFacetVBox sapUiMediumMarginEnd" alignItems="Start">
+                <VBox class="headerFacetVBox" alignItems="Start">
                     <Label text="{i18n>assignedToLabel}" design="Bold"/>
-                    <HBox alignItems="Center">
+                    <HBox alignItems="Center" class="assignedToHeaderValue">
                         <core:Icon src="sap-icon://employee" class="sapUiTinyMarginEnd"/>
                         <Text text="{path: 'assigned_to', formatter: '.formatter.formatOptionalField'}"/>
                     </HBox>
                 </VBox>
 
                 <!-- Contributor / Supporting Developer -->
-                <VBox class="headerFacetVBox sapUiMediumMarginEnd" alignItems="Start">
+                <VBox class="headerFacetVBox" alignItems="Start">
                     <Label text="CONTRIBUTOR" design="Bold"/>
                     <HBox alignItems="Center">
                         <core:Icon src="sap-icon://group" class="sapUiTinyMarginEnd"/>
@@ -190,7 +196,7 @@
                 </VBox>
 
                 <!-- Due Date -->
-                <VBox class="headerFacetVBox sapUiMediumMarginEnd" alignItems="Start">
+                <VBox class="headerFacetVBox" alignItems="Start">
                     <Label text="{i18n>dueDateLabel}" design="Bold"/>
                     <HBox alignItems="Center">
                         <core:Icon src="sap-icon://date-time" class="sapUiTinyMarginEnd"/>
@@ -199,7 +205,7 @@
                 </VBox>
 
                 <!-- Created By -->
-                <VBox class="headerFacetVBox sapUiMediumMarginEnd" alignItems="Start">
+                <VBox class="headerFacetVBox" alignItems="Start">
                     <Label text="{i18n>createdByLabel}" design="Bold"/>
                     <Text text="{created_by}"/>
                 </VBox>

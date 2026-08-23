@@ -4,7 +4,16 @@
 /* ================================================== */
 
 /* ---- Global: Ensure full viewport height & absolute 100% full width stretch ---- */
-html, body, #content, .sapUiBody, .sapMApp, .sapMPage, .sapMPageContent, .sapFDynamicPage, .sapFDynamicPageHeader, .sapFDynamicPageContent {
+html,
+body,
+#content,
+.sapUiBody,
+.sapMApp,
+.sapMPage,
+.sapMPageContent,
+.sapFDynamicPage,
+.sapFDynamicPageHeader,
+.sapFDynamicPageContent {
     height: 100%;
     width: 100% !important;
     max-width: 100% !important;
@@ -53,17 +62,29 @@ html, body, #content, .sapUiBody, .sapMApp, .sapMPage, .sapMPageContent, .sapFDy
     margin: 0.1rem auto !important;
 }
 
-/* Header facet ObjectStatus alignment fix: uniform, elegant badges & clean alignment */
-.headerFacetVBox {
+/* Header facets use equal grid columns so labels and values share stable anchors. */
+.issueHeaderFacets {
+    display: grid !important;
+    grid-template-columns: repeat(8, minmax(0, 1fr)) !important;
+    align-items: start !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+}
+
+.issueHeaderFacets .headerFacetVBox {
     display: flex !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 3rem !important;
     flex-direction: column !important;
     align-items: flex-start !important;
     justify-content: flex-start !important;
-    min-width: 6.2rem !important;
-    margin-right: 1.5rem !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
 }
 
-.headerFacetVBox .sapMLabel {
+.issueHeaderFacets .headerFacetVBox>.sapMLabel {
+    width: 100% !important;
     font-weight: 700 !important;
     font-size: 0.75rem !important;
     color: #6a6d70 !important;
@@ -72,6 +93,55 @@ html, body, #content, .sapUiBody, .sapMApp, .sapMPage, .sapMPageContent, .sapFDy
     text-align: left !important;
     align-self: flex-start !important;
     margin-bottom: 0.35rem !important;
+    white-space: nowrap !important;
+}
+
+.issueHeaderFacets .headerFacetVBox>.sapMText,
+.issueHeaderFacets .headerFacetVBox>.sapMFlexBox {
+    min-width: 0 !important;
+    max-width: 100% !important;
+}
+
+.issueHeaderFacets .headerFacetVBox>.sapMFlexBox .sapMText {
+    min-width: 0 !important;
+    overflow-wrap: anywhere !important;
+}
+
+/* Keep header badges anchored to the same left edge as their labels. */
+.issueHeaderFacets .headerFacetBadge {
+    justify-content: flex-start !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    text-align: left !important;
+}
+
+.issueHeaderFacets .headerFacetBadge .sapMObjStatusText,
+.issueHeaderFacets .headerFacetBadge .sapMObjStatusIcon,
+.issueHeaderFacets .headerFacetBadge .sapUiIcon {
+    margin: 0 !important;
+    padding: 0 !important;
+    text-align: left !important;
+}
+
+.issueHeaderFacets .headerFacetVBox:first-child {
+    transform: translateX(3.75rem);
+}
+
+.issueHeaderFacets .statusHeaderBadge {
+    transform: translateX(-1.10rem);
+}
+
+.issueHeaderFacets .severityHeaderBadge {
+    transform: translateX(-1.10rem);
+}
+
+.issueHeaderFacets .moduleHeaderBadge {
+    transform: translateX(-2rem);
+}
+
+.issueHeaderFacets .assignedToHeaderValue {
+    transform: translateX(-0.10rem);
 }
 
 .sapUxAPObjectPageHeaderContent .sapMObjStatusInverted,
@@ -310,7 +380,7 @@ html, body, #content, .sapUiBody, .sapMApp, .sapMPage, .sapMPageContent, .sapFDy
     overflow: hidden;
     border-radius: 0.25rem;
     background: #e5ebf0;
-    background-image: linear-gradient(to right, transparent 24.8%, rgba(255,255,255,0.8) 24.8%, rgba(255,255,255,0.8) 25.2%, transparent 25.2%, transparent 49.8%, rgba(255,255,255,0.8) 49.8%, rgba(255,255,255,0.8) 50.2%, transparent 50.2%, transparent 74.8%, rgba(255,255,255,0.8) 74.8%, rgba(255,255,255,0.8) 75.2%, transparent 75.2%);
+    background-image: linear-gradient(to right, transparent 24.8%, rgba(255, 255, 255, 0.8) 24.8%, rgba(255, 255, 255, 0.8) 25.2%, transparent 25.2%, transparent 49.8%, rgba(255, 255, 255, 0.8) 49.8%, rgba(255, 255, 255, 0.8) 50.2%, transparent 50.2%, transparent 74.8%, rgba(255, 255, 255, 0.8) 74.8%, rgba(255, 255, 255, 0.8) 75.2%, transparent 75.2%);
 }
 
 .dashboardStackedSegment {
@@ -377,8 +447,15 @@ html, body, #content, .sapUiBody, .sapMApp, .sapMPage, .sapMPageContent, .sapFDy
 }
 
 @keyframes dashboardDonutPulse {
-    from { stroke-width: 24; opacity: 0.55; }
-    to { stroke-width: 29; opacity: 1; }
+    from {
+        stroke-width: 24;
+        opacity: 0.55;
+    }
+
+    to {
+        stroke-width: 29;
+        opacity: 1;
+    }
 }
 
 .dashboardDonutHole {
@@ -643,7 +720,7 @@ html, body, #content, .sapUiBody, .sapMApp, .sapMPage, .sapMPageContent, .sapFDy
         align-items: start;
     }
 
-    .dashboardChartsGrid > * {
+    .dashboardChartsGrid>* {
         width: 100% !important;
         max-width: none !important;
         grid-column: auto !important;
@@ -826,8 +903,9 @@ html, body, #content, .sapUiBody, .sapMApp, .sapMPage, .sapMPageContent, .sapFDy
 }
 
 /* ---- ObjectPage header: proper wrapping ---- */
-.sapUxAPObjectPageHeaderContent .sapUiHBox {
-    gap: 0.5rem;
+/* Keep spacing scoped to the facet container; nested value HBoxes keep their layout. */
+.sapUxAPObjectPageHeaderContent .issueHeaderFacets {
+    gap: 0.5rem !important;
 }
 
 /* ---- Attachment list item icons ---- */
@@ -836,10 +914,22 @@ html, body, #content, .sapUiBody, .sapMApp, .sapMPage, .sapMPageContent, .sapFDy
 }
 
 /* ---- Responsive adjustments for narrow screens ---- */
+@media (max-width: 1100px) {
+    .issueHeaderFacets {
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    }
+}
+
+@media (max-width: 700px) {
+    .issueHeaderFacets {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+}
+
 @media (max-width: 600px) {
-    /* Stack header content vertically on mobile */
-    .sapUxAPObjectPageHeaderContent .sapUiHBox {
-        flex-direction: column;
+    .issueHeaderFacets {
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 0.75rem !important;
     }
 
     /* Reduce padding on mobile */
@@ -849,7 +939,7 @@ html, body, #content, .sapUiBody, .sapMApp, .sapMPage, .sapMPageContent, .sapFDy
 }
 
 /* ---- Issue List: alternating row background ---- */
-#issueTable .sapMListItems > .sapMLIB:nth-child(even) {
+#issueTable .sapMListItems>.sapMLIB:nth-child(even) {
     background-color: #fafafa;
 }
 
