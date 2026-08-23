@@ -37,6 +37,7 @@ export default class Dashboard extends BaseController {
         totalCritical: 0,
         totalTesting: 0,
         totalClosed: 0,
+        totalHighPriority: 0,
         status: {
             OPEN: 0,
             ACCEPTED: 0,
@@ -217,7 +218,13 @@ export default class Dashboard extends BaseController {
                     oStats.totalCritical++;
                 }
 
-                // 3. Module aggregates
+                // 3. Priority aggregates
+                const sPriority: string = oIssue.priority || "Lowest";
+                if (sPriority === "High" && sStatus !== "CLOSED") {
+                    oStats.totalHighPriority++;
+                }
+
+                // 4. Module aggregates
                 const sModule: string = oIssue.modulename || "MM";
                 if (oStats.module[sModule] !== undefined) {
                     oStats.module[sModule]++;
@@ -402,7 +409,7 @@ export default class Dashboard extends BaseController {
             const fLabelRadius = 38;
             const fLabelX = 50 + fLabelRadius * Math.cos(fRadians);
             const fLabelY = 50 + fLabelRadius * Math.sin(fRadians);
-            const sCountLabel = fLength >= 4
+            const sCountLabel = oItem.value > 0
                 ? `<text class="dashboardDonutSliceLabel" x="${fLabelX.toFixed(2)}" y="${fLabelY.toFixed(2)}" transform="rotate(90 ${fLabelX.toFixed(2)} ${fLabelY.toFixed(2)})">${oItem.value}</text>`
                 : "";
             const sSegment = `<circle class="dashboardDonutSegment" data-index="${iIndex}" cx="50" cy="50" r="38" pathLength="100" stroke="${aColors[iIndex]}" stroke-dasharray="${fLength} ${100 - fLength}" stroke-dashoffset="${-fOffset}"><title>${oItem.label}: ${oItem.displayValue}</title></circle>${sCountLabel}`;
@@ -489,6 +496,9 @@ export default class Dashboard extends BaseController {
                 break;
             case "critical":
                 oQuery = { severity: "CRITICAL" };
+                break;
+            case "highPriority":
+                oQuery = { priority: "High" };
                 break;
             case "waitingTesting":
                 oQuery = { status: "RESOLVED,TESTING" };

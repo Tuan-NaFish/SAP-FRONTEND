@@ -33,7 +33,7 @@
 
                 <HBox wrap="Wrap" class="sapUiTinyMarginBottom">
                     <!-- Total Defects KPI: includes every lifecycle status -->
-                    <GenericTile header="{i18n>kpiTotalTickets}" frameType="OneByOne" class="sapUiTinyMarginEnd sapUiTinyMarginBottom" press=".onKpiTilePress" valueColor="Neutral">
+                    <GenericTile header="{i18n>kpiTotalTickets}" frameType="OneByOne" class="sapUiTinyMarginEnd sapUiTinyMarginBottom dashboardKpiNoAccent" press=".onKpiTilePress" valueColor="Neutral">
                         <customData>
                             <core:CustomData key="kpiType" value="totalTickets" />
                         </customData>
@@ -43,7 +43,7 @@
                     </GenericTile>
 
                     <!-- Total Open KPI -->
-                    <GenericTile header="{i18n>kpiTotalOpen}" frameType="OneByOne" class="sapUiTinyMarginEnd sapUiTinyMarginBottom" press=".onKpiTilePress" valueColor="Critical">
+                    <GenericTile header="{i18n>kpiTotalOpen}" frameType="OneByOne" class="sapUiTinyMarginEnd sapUiTinyMarginBottom dashboardKpiNoAccent" press=".onKpiTilePress" valueColor="Critical">
                         <customData>
                             <core:CustomData key="kpiType" value="totalOpen" />
                         </customData>
@@ -79,6 +79,16 @@
                         </customData>
                         <TileContent>
                             <NumericContent value="{dashboardData>/totalTesting}" valueColor="Neutral" icon="sap-icon://user-settings"/>
+                        </TileContent>
+                    </GenericTile>
+
+                    <!-- High Priority KPI -->
+                    <GenericTile header="{i18n>kpiHighPriority}" frameType="OneByOne" class="sapUiTinyMarginEnd sapUiTinyMarginBottom dashboardKpiNoAccent" press=".onKpiTilePress" valueColor="Critical">
+                        <customData>
+                            <core:CustomData key="kpiType" value="highPriority" />
+                        </customData>
+                        <TileContent>
+                            <NumericContent value="{dashboardData>/totalHighPriority}" valueColor="Critical" icon="sap-icon://flag"/>
                         </TileContent>
                     </GenericTile>
 

@@ -52,6 +52,7 @@ export default class IssueList extends BaseController {
         if (oQuery) {
             if (oQuery.status) { oState.columns.status.filter.selected = oQuery.status.split(","); }
             if (oQuery.severity) { oState.columns.severity.filter.selected = oQuery.severity.split(","); }
+            if (oQuery.priority) { oState.columns.priority.filter.selected = oQuery.priority.split(","); }
             if (oQuery.sla) { oState.columns.sla.filter.selection = oQuery.sla; }
         }
         const oUserModel = this.getOwnerComponent()?.getModel("userModel") as JSONModel;

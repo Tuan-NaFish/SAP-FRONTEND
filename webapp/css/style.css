@@ -137,7 +137,7 @@ body,
 }
 
 .issueHeaderFacets .moduleHeaderBadge {
-    transform: translateX(-2rem);
+    transform: translateX(-1.05rem);
 }
 
 .issueHeaderFacets .assignedToHeaderValue {
@@ -209,6 +209,16 @@ body,
 /* Override progress bar height for better visibility */
 #slaContainer .sapMPI {
     height: 1.5rem;
+}
+
+/* Keep selected dashboard KPI tiles consistent with the other tiles. */
+.dashboardKpiNoAccent,
+.dashboardKpiNoAccent .sapMGT,
+.dashboardKpiNoAccent .sapMGT:hover,
+.dashboardKpiNoAccent .sapMGT:focus,
+.dashboardKpiNoAccent .sapMGT:active {
+    border-left: 0 !important;
+    box-shadow: none !important;
 }
 
 /* Disable hover pointer cursor, outline, and click active state for display-only GenericTiles */
