@@ -27,17 +27,17 @@ export default class TesterWorklist extends BaseController {
 
     public onInit(): void {
         this.getView()!.setModel(new JSONModel(this._createDefaultFilterState()), "filterState");
-        const oMyData = new JSONModel({ issues: [] });
         const oVerificationData = new JSONModel({ issues: [] });
-        this.getView()!.setModel(oMyData, "testerMyTicketsData");
         this.getView()!.setModel(oVerificationData, "testerVerificationData");
-        (this.byId("testerMyTicketsTable") as Table).setModel(oMyData);
-        (this.byId("testerVerificationTable") as Table).setModel(oVerificationData);
+        const oVerificationTable = this.byId("testerVerificationTable") as Table;
+        if (oVerificationTable) {
+            oVerificationTable.setModel(oVerificationData);
+        }
         this.getRouter().getRoute("TesterWorklist").attachPatternMatched(this._onRouteMatched, this);
     }
 
-    private async _onRouteMatched(): Promise<void> { await Promise.all([this._reloadTab("myTickets"), this._reloadTab("verification")]); }
-    public onRefresh(): void { void Promise.all([this._reloadTab("myTickets"), this._reloadTab("verification")]); }
+    private async _onRouteMatched(): Promise<void> { await this._reloadTab("verification"); }
+    public onRefresh(): void { void this._reloadTab("verification"); }
 
     public onIssuePress(oEvent: Event): void {
         const oContext = (oEvent.getSource() as ColumnListItem).getBindingContext();

@@ -133,12 +133,22 @@
                                 items="{pendingAttachments>/files}"
                                 noDataText="{i18n>createIssueNoAttachment}"
                                 class="sapUiTinyMarginTop">
-                                <StandardListItem
-                                    title="{pendingAttachments>name}"
-                                    description="{pendingAttachments>sizeText}"
-                                    icon="{pendingAttachments>icon}"
-                                    type="Active"
-                                    press=".onRemovePendingFile"/>
+                                <CustomListItem>
+                                    <HBox alignItems="Center" justifyContent="SpaceBetween" class="sapUiTinyMargin">
+                                        <HBox alignItems="Center">
+                                            <core:Icon src="{pendingAttachments>icon}" class="sapUiSmallMarginEnd"/>
+                                            <VBox>
+                                                <Text text="{pendingAttachments>name}" class="sapUiTinyMarginBottom"/>
+                                                <Text text="{pendingAttachments>sizeText}" class="sapUiSubTemplates"/>
+                                            </VBox>
+                                        </HBox>
+                                        <Button
+                                            icon="sap-icon://delete"
+                                            type="Reject"
+                                            tooltip="Delete File"
+                                            press=".onRemovePendingFile"/>
+                                    </HBox>
+                                </CustomListItem>
                             </List>
                         </VBox>
                     </form:content>

@@ -13,7 +13,7 @@
                 <form:content>
                     <!-- Assignment Role Selection -->
                     <Label text="Assignment Role" required="true"/>
-                    <Select id="selAssignmentRole" selectedKey="PRIMARY" width="100%">
+                    <Select id="selAssignmentRole" selectedKey="PRIMARY" width="100%" change=".onAssignmentRoleChange">
                         <core:Item key="PRIMARY" text="PRIMARY (Lead / Main Developer)"/>
                         <core:Item key="CONTRIBUTOR" text="CONTRIBUTOR (Supporting Developer)"/>
                     </Select>
@@ -22,10 +22,9 @@
                     <Label text="{i18n>dialogDeveloperLabel}" required="true"/>
                     <Select
                         id="selDeveloper"
-                        width="100%"
-                        items="{path: '/Developer', sorters: [{path: 'workload_score', descending: false}]}">
-                        <core:Item key="{developer_id}" text="{developer_id} (Workload: {workload_score})"/>
+                        width="100%">
                     </Select>
+
                 </form:content>
             </form:SimpleForm>
         </content>

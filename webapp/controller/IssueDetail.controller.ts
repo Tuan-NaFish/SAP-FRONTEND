@@ -15,7 +15,7 @@ import formatter from "../model/formatter";
 import ODataListBinding from "sap/ui/model/odata/v4/ODataListBinding";
 import ODataModel from "sap/ui/model/odata/v4/ODataModel";
 import ODataContextBinding from "sap/ui/model/odata/v4/ODataContextBinding";
-import ODataV4Context from "sap/ui/model/odata/v4/Context";
+import Item from "sap/ui/core/Item";
 import Control from "sap/ui/core/Control";
 
 // ================================================================
@@ -273,7 +273,7 @@ export default class IssueDetail extends BaseController {
                                 : sStatus === "ASSIGNED"
                                     ? (sRole === "MANAGER" || bIsAssignedDev)
                                     : sStatus === "REOPEN"
-                                        ? (sRole === "MANAGER" || sRole === "TESTER")
+                                        ? (sRole === "MANAGER" || bIsAssignedDev)
                                         : false
                               ),
             // Attachments & comments authoring — hidden when the issue is closed.
@@ -309,16 +309,20 @@ export default class IssueDetail extends BaseController {
             oSection.setVisible(bResolved);
         }
 
-        // Reopen reason warning strip visibility — visible whenever there is a Reopen Reason
+        // Reopen reason warning strip visibility — visible ONLY when status is REOPEN
         const oStrip = this.byId("reopenReasonStrip") as any;
         if (oStrip) {
-            let sReopenReason = (this.getModel("detailState") as JSONModel).getProperty("/reopenReason") as string;
-            const iReopenCount = Number(oContext.getProperty("reopen_count") || 0);
-            if (!sReopenReason && (sStatus === "REOPEN" || iReopenCount > 0)) {
-                sReopenReason = (oContext.getProperty("resolution_note") as string) || "Reopened for further investigation and fix.";
-                (this.getModel("detailState") as JSONModel).setProperty("/reopenReason", sReopenReason);
+            if (sStatus === "REOPEN") {
+                let sReopenReason = (this.getModel("detailState") as JSONModel).getProperty("/reopenReason") as string;
+                if (!sReopenReason) {
+                    sReopenReason = (oContext.getProperty("resolution_note") as string) || "Reopened for further investigation and fix.";
+                    (this.getModel("detailState") as JSONModel).setProperty("/reopenReason", sReopenReason);
+                }
+                oStrip.setVisible(!!sReopenReason && sReopenReason.trim() !== "");
+            } else {
+                (this.getModel("detailState") as JSONModel).setProperty("/reopenReason", "");
+                oStrip.setVisible(false);
             }
-            oStrip.setVisible(!!sReopenReason && sReopenReason.trim() !== "");
         }
     }
 
@@ -459,7 +463,7 @@ export default class IssueDetail extends BaseController {
                 slaPercent:       100,
                 slaDisplayValue:  "Completed",
                 slaState:         "Success",
-                slaRemainingText: "Ticket Closed — SLA Complete",
+                slaRemainingText: "Ticket Closed - SLA Complete",
                 slaTotalTime:     (SLA_HOURS[sSeverity] || 72) + " hours",
                 slaOverdueText:   "No",
                 slaOverdueState:  "Success",
@@ -1066,6 +1070,13 @@ export default class IssueDetail extends BaseController {
         }, "Issue assigned to " + sDeveloperId + " as " + sRoleText);
     }
 
+    public onAssignmentRoleChange(): void {
+        const oView = this.getView()!;
+        const oContext = oView.getBindingContext();
+        const sModule = oContext ? ((oContext.getProperty("modulename") as string) || "") : "";
+        this._filterReassignDeveloperList(sModule);
+    }
+
     /**
      * Filters the developer select in the reassign dialog
      * to only show active developers for the issue's module,
@@ -1075,23 +1086,78 @@ export default class IssueDetail extends BaseController {
         const oView = this.getView()!;
         const oSelect = (this.byId("selDeveloper") || Fragment.byId(oView.getId(), "selDeveloper")) as Select;
         if (oSelect) {
-            const oBinding = oSelect.getBinding("items");
-            if (oBinding) {
-                const oContext = oView.getBindingContext();
-                const sAssignedDev = oContext ? ((oContext.getProperty("assigned_to") as string) || "") : "";
+            oSelect.destroyItems();
+            oSelect.unbindItems();
 
-                const aFilters = [
-                    new Filter("modulename", FilterOperator.EQ, sModule),
-                    new Filter("is_active", FilterOperator.EQ, "X")
-                ];
+            const oContext = oView.getBindingContext();
+            const sAssignedDev = oContext ? ((oContext.getProperty("assigned_to") as string) || "").trim().toUpperCase() : "";
+            const oDetailModel = this.getModel("detailState") as JSONModel;
+            const aExistingContributors: string[] = oDetailModel ? (oDetailModel.getProperty("/activeContributorsList") || []) : [];
 
-                // Exclude current assigned developer from selection dropdown
-                if (sAssignedDev) {
-                    aFilters.push(new Filter("developer_id", FilterOperator.NE, sAssignedDev));
-                }
+            const oSelectRole = (this.byId("selAssignmentRole") || Fragment.byId(oView.getId(), "selAssignmentRole")) as Select;
+            const sSelectedRole = oSelectRole ? oSelectRole.getSelectedKey() || "PRIMARY" : "PRIMARY";
 
-                (oBinding as any).filter(aFilters);
+            const excludeKeys = new Set<string>();
+            excludeKeys.add("DEV-012");
+            excludeKeys.add("DEV-197");
+
+            // Exclude lead developer currently assigned to this issue
+            if (sAssignedDev) {
+                excludeKeys.add(sAssignedDev);
             }
+
+            // Exclude active contributors ONLY when adding a new CONTRIBUTOR (prevents duplicate contributors).
+            // When selecting PRIMARY, allow existing contributors to be selected so they can be promoted to Lead Dev!
+            if (sSelectedRole === "CONTRIBUTOR") {
+                aExistingContributors.forEach((c) => {
+                    if (c) {
+                        excludeKeys.add(c.trim().toUpperCase());
+                    }
+                });
+            }
+
+            const aFilters: Filter[] = [
+                new Filter("is_active", FilterOperator.EQ, "X")
+            ];
+
+            if (sModule) {
+                aFilters.push(new Filter("modulename", FilterOperator.EQ, sModule));
+            }
+
+            // Apply exclude filters to OData request
+            excludeKeys.forEach((key) => {
+                aFilters.push(new Filter("developer_id", FilterOperator.NE, key));
+            });
+
+            const deduplicateItems = () => {
+                const aItems = oSelect.getItems();
+                if (!aItems || aItems.length === 0) { return; }
+                const seenKeys = new Set<string>();
+
+                aItems.forEach((oItem) => {
+                    const sKey = (oItem.getKey() || "").trim().toUpperCase();
+                    if (!sKey || excludeKeys.has(sKey) || seenKeys.has(sKey)) {
+                        oSelect.removeItem(oItem);
+                    } else {
+                        seenKeys.add(sKey);
+                    }
+                });
+            };
+
+            oSelect.bindItems({
+                path: "/Developer",
+                filters: aFilters,
+                sorter: new Sorter("workload_score", false),
+                template: new Item({
+                    key: "{developer_id}",
+                    text: "{developer_id} (Workload: {workload_score})"
+                }),
+                events: {
+                    dataReceived: () => {
+                        setTimeout(deduplicateItems, 0);
+                    }
+                }
+            });
         }
     }
 
@@ -1231,23 +1297,35 @@ export default class IssueDetail extends BaseController {
             ]);
 
             oListBinding.requestContexts().then((aContexts) => {
-                const aActiveContributors = aContexts
-                    .map((oCtx) => oCtx.getObject() as any)
-                    .filter((oObj) => oObj && (oObj.is_active === true || oObj.is_active === "X" || oObj.is_active === "true"))
-                    .map((oObj) => oObj.developer_id);
+                const aActiveObjs = aContexts
+                    .map((oCtx) => ({ obj: oCtx.getObject() as any, ctx: oCtx }))
+                    .filter((item) => item.obj && (item.obj.is_active === true || item.obj.is_active === "X" || item.obj.is_active === "true"));
+
+                const aActiveContributors = aActiveObjs.map((item) => item.obj.developer_id);
+                const aContributorItems = aActiveObjs.map((item) => ({
+                    developer_id: item.obj.developer_id,
+                    assignment_id: item.obj.assignment_id,
+                    issue_id: item.obj.issue_id
+                }));
 
                 const sContributorText = aActiveContributors.length > 0 ? aActiveContributors.join(", ") : "-";
                 if (oDetailModel) {
                     oDetailModel.setProperty("/contributorDev", sContributorText);
+                    oDetailModel.setProperty("/activeContributors", aContributorItems);
+                    oDetailModel.setProperty("/activeContributorsList", aActiveContributors);
                 }
             }).catch(() => {
                 if (oDetailModel) {
                     oDetailModel.setProperty("/contributorDev", "-");
+                    oDetailModel.setProperty("/activeContributors", []);
+                    oDetailModel.setProperty("/activeContributorsList", []);
                 }
             });
         } catch {
             if (oDetailModel) {
                 oDetailModel.setProperty("/contributorDev", "-");
+                oDetailModel.setProperty("/activeContributors", []);
+                oDetailModel.setProperty("/activeContributorsList", []);
             }
         }
     }
