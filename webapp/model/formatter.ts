@@ -119,6 +119,29 @@ function toDate(oValue: unknown): Date | null {
         return null;
     }
 
+    const sValue = String(vRawValue);
+    // ABAP timestamps can arrive as YYYYMMDDHHMMSS.fffffff, which JavaScript
+    // cannot parse natively (for example: 20260826000000.0000000).
+    const aTimestampParts = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(?:\.\d+)?$/.exec(sValue);
+    if (aTimestampParts) {
+        const iYear = Number(aTimestampParts[1]);
+        const iMonth = Number(aTimestampParts[2]) - 1;
+        const iDay = Number(aTimestampParts[3]);
+        const iHours = Number(aTimestampParts[4]);
+        const iMinutes = Number(aTimestampParts[5]);
+        const iSeconds = Number(aTimestampParts[6]);
+        const oTimestampDate = new Date(iYear, iMonth, iDay, iHours, iMinutes, iSeconds);
+
+        return oTimestampDate.getFullYear() === iYear &&
+            oTimestampDate.getMonth() === iMonth &&
+            oTimestampDate.getDate() === iDay &&
+            oTimestampDate.getHours() === iHours &&
+            oTimestampDate.getMinutes() === iMinutes &&
+            oTimestampDate.getSeconds() === iSeconds
+            ? oTimestampDate
+            : null;
+    }
+
     const oDate = new Date(vRawValue);
     return isNaN(oDate.getTime()) ? null : oDate;
 }
@@ -159,6 +182,19 @@ function formatDateTime(oDate: unknown): string {
     const sHour  = String(d.getHours()).padStart(2, "0");
     const sMin   = String(d.getMinutes()).padStart(2, "0");
     return sDay + "." + sMonth + "." + sYear + " " + sHour + ":" + sMin;
+}
+
+/** Format timestamps in the audit trail as DD/MM/YYYY HH:mm. */
+function formatHistoryDateTime(oDate: unknown): string {
+    const d = toDate(oDate);
+    if (!d) { return formatHistoryValue(oDate); }
+
+    const sDay = String(d.getDate()).padStart(2, "0");
+    const sMonth = String(d.getMonth() + 1).padStart(2, "0");
+    const sYear = d.getFullYear();
+    const sHour = String(d.getHours()).padStart(2, "0");
+    const sMin = String(d.getMinutes()).padStart(2, "0");
+    return sDay + "/" + sMonth + "/" + sYear + " " + sHour + ":" + sMin;
 }
 
 /**
@@ -411,6 +447,42 @@ function formatOptionalField(sValue: string | null | undefined): string {
            ? sValue : "-";
 }
 
+/** Display a history value without hiding an intentional empty transition. */
+function formatHistoryValue(sValue: unknown): string {
+    if (sValue === null || sValue === undefined || String(sValue).trim() === "") {
+        return "(Empty)";
+    }
+    return String(sValue);
+}
+
+/** Convert audit field codes into readable labels. */
+function formatHistoryField(sField: string | null | undefined): string {
+    if (!sField) { return "Change"; }
+    return sField
+        .toLowerCase()
+        .split("_")
+        .map((sPart) => sPart.charAt(0).toUpperCase() + sPart.slice(1))
+        .join(" ");
+}
+
+/** Format audit values, including dates and lifecycle statuses. */
+function formatHistoryFieldValue(sField: string | null | undefined, sValue: unknown): string {
+    if (sValue === null || sValue === undefined || String(sValue).trim() === "") {
+        return "(Empty)";
+    }
+
+    if (sField === "DUE_DATE" || sField === "ASSIGNED_AT" || sField === "CHANGED_AT") {
+        const dDate = toDate(sValue);
+        if (dDate) {
+            return formatHistoryDateTime(dDate);
+        }
+    }
+
+    return sField === "STATUS"
+        ? formatStatusText(String(sValue))
+        : formatHistoryValue(sValue);
+}
+
 /**
  * Reopen count state — flags high reopen counts
  * 0 = Success (green), 1-2 = Warning, 3+ = Error
@@ -433,6 +505,7 @@ const formatter = {
     toDate,
     formatDate,
     formatDateTime,
+    formatHistoryDateTime,
     formatFileSize,
     formatFileIcon,
     formatAttachmentCount,
@@ -449,6 +522,9 @@ const formatter = {
     isReassignVisible,
     isResolutionVisible,
     formatOptionalField,
+    formatHistoryValue,
+    formatHistoryField,
+    formatHistoryFieldValue,
     formatReopenState,
     isIssueOverdue,
     getSlaCategory,

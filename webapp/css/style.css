@@ -828,7 +828,7 @@ body,
     text-align: left;
 }
 
-/* ---- Audit history horizontal branch ---- */
+/* ---- Audit history branching timeline ---- */
 .historyBranch {
     overflow-x: auto;
     background: var(--sapGroup_ContentBackground, #ffffff);
@@ -838,71 +838,161 @@ body,
 
 .historyTrack {
     position: relative;
+    display: flex !important;
     align-items: flex-start;
-    gap: 1rem;
-    padding: 2rem 0.5rem 0.75rem;
+    gap: 1.5rem;
     min-width: max-content;
+    padding: 1rem 0.5rem 0.75rem;
 }
 
 .historyTrack::before {
     content: "";
     position: absolute;
-    top: 1.15rem;
-    left: 1.5rem;
-    right: 1.5rem;
+    top: 5.9rem;
+    left: 8rem;
+    right: 8rem;
+    z-index: 0;
     height: 2px;
     background: var(--sapContent_ForegroundBorderColor, #d9d9d9);
 }
 
-.historyNode {
+.historyBranchGroup {
     position: relative;
     z-index: 1;
-    flex: 0 0 15rem;
+    flex: 0 0 17rem;
+    align-items: stretch !important;
 }
 
-.historyNode::before {
+.historyGroupMeta,
+.historyGroupUser {
+    justify-content: center;
+    min-height: 1.25rem;
+    text-align: center;
+}
+
+.historyGroupUser {
+    margin-bottom: 1.25rem;
+    font-weight: 600;
+}
+
+.historyMainNode {
+    position: relative;
+    min-height: 7.5rem;
+    padding: 0.875rem;
+    border: 2px solid var(--sapButton_Emphasized_Background, #0070f2);
+    border-radius: 0.625rem;
+    background: var(--sapGroup_ContentBackground, #ffffff);
+    box-shadow: 0 0.25rem 0.7rem rgba(0, 112, 242, 0.18);
+}
+
+.historyMainConnector {
+    align-self: center;
+    flex: 0 0 3px !important;
+    width: 3px !important;
+    min-height: 1.25rem;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-left: 3px solid var(--sapButton_Emphasized_Background, #0070f2);
+    box-sizing: border-box;
+}
+
+.historyMainNode::before {
     content: "";
-    display: block;
-    width: 0.8rem;
-    height: 0.8rem;
-    margin: 0 auto 0.5rem;
+    position: absolute;
+    top: -0.48rem;
+    left: calc(50% - 0.48rem);
+    width: 0.72rem;
+    height: 0.72rem;
     border: 2px solid var(--sapGroup_ContentBackground, #ffffff);
     border-radius: 50%;
     background: var(--sapButton_Emphasized_Background, #0070f2);
     box-shadow: 0 0 0 2px var(--sapButton_Emphasized_Background, #0070f2);
 }
 
-.historyNodeHeader {
-    min-height: 2rem;
+.historyMainNodeHeader {
     justify-content: center;
+    min-height: 1.75rem;
     text-align: center;
 }
 
-.historyCard {
-    min-height: 7rem;
-    margin-top: 0.5rem;
-    padding: 0.75rem;
-    border: 1px solid var(--sapGroup_ContentBorderColor, #d9d9d9);
-    border-radius: 0.5rem;
-    background: var(--sapGroup_ContentBackground, #ffffff);
-    box-shadow: 0 0.125rem 0.35rem rgba(0, 0, 0, 0.08);
+.historyMainTransition {
+    justify-content: center;
+    margin-top: 0.375rem;
+    font-weight: 600;
 }
 
-.historyNode:hover .historyCard,
-.historyNode:focus-within .historyCard {
+.historyChildren {
+    position: relative;
+    gap: 0.5rem;
+    margin-top: 0;
+    padding-top: 0.75rem;
+}
+
+.historyChildren::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(50% - 1.5px);
+    z-index: 0;
+    width: 0;
+    border-left: 3px solid var(--sapButton_Emphasized_Background, #0070f2);
+}
+
+.historyChildCard {
+    position: relative;
+    z-index: 1;
+    margin: 0 0.625rem;
+    padding: 0.5rem 0.625rem;
+    border: 1px solid var(--sapList_BorderColor, #d5dadd);
+    border-radius: 0.375rem;
+    background: var(--sapList_AlternatingBackground, #f5f6f7);
+    font-size: 0.875rem;
+}
+
+.historyChildCard::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: -0.625rem;
+    width: 0.625rem;
+    height: 2px;
+    background: var(--sapButton_Emphasized_Background, #0070f2);
+}
+
+.historyChildCard::after {
+    content: "";
+    position: absolute;
+    top: calc(50% - 0.3125rem);
+    left: -0.875rem;
+    width: 0.5rem;
+    height: 0.5rem;
+    border: 2px solid var(--sapGroup_ContentBackground, #ffffff);
+    border-radius: 50%;
+    background: var(--sapButton_Emphasized_Background, #0070f2);
+}
+
+.historyMainNode:hover,
+.historyMainNode:focus-within,
+.historyChildCard:hover,
+.historyChildCard:focus-within {
     border-color: var(--sapButton_Emphasized_Background, #0070f2);
     box-shadow: 0 0.25rem 0.75rem rgba(0, 112, 242, 0.16);
 }
 
+.historyMainTransition .sapMObjStatusSuccess {
+    font-weight: 700;
+}
+
 @media (max-width: 600px) {
     .historyTrack {
-        gap: 0.75rem;
+        gap: 1rem;
         padding-left: 0.25rem;
         padding-right: 0.25rem;
     }
 
-    .historyNode {
-        flex-basis: 13rem;
+    .historyBranchGroup {
+        flex-basis: 15rem;
     }
 }
 

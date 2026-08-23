@@ -589,45 +589,65 @@
                                 <Toolbar>
                                     <Title text="{i18n>auditTrailTitle}" level="H4"/>
                                 </Toolbar>
-                                <FlexBox
-                                    items="{history>/}"
-                                    wrap="Wrap"
-                                    alignItems="Stretch"
-                                    class="historyTrack">
+                                <HBox items="{history>/}" class="historyTrack">
                                     <items>
-                                        <VBox class="historyNode" width="15rem">
-                                            <HBox alignItems="Center" class="historyNodeHeader">
-                                                <core:Icon
-                                                    src="{path: 'history>action_type', formatter: '.formatter.formatHistoryIcon'}"
-                                                    color="{path: 'history>action_type', formatter: '.formatter.formatHistoryIconColor'}"
-                                                    size="1.25rem"
-                                                    class="sapUiTinyMarginEnd"/>
-                                                <Text text="{history>field_name}" class="sapMTextBold" wrapping="true"/>
+                                        <VBox class="historyBranchGroup">
+                                            <HBox alignItems="Center" justifyContent="Center" class="historyGroupMeta">
+                                                <core:Icon src="sap-icon://date-time" size="0.75rem" class="sapUiTinyMarginEnd"/>
+                                                <Text text="{path: 'history>changed_at', formatter: '.formatter.formatHistoryDateTime'}" class="sapMTextColorSecondary"/>
                                             </HBox>
-                                            <VBox class="historyCard">
-                                                <HBox alignItems="Center" wrap="Wrap">
+                                            <HBox alignItems="Center" justifyContent="Center" class="historyGroupUser">
+                                                <core:Icon src="sap-icon://employee" size="0.75rem" class="sapUiTinyMarginEnd"/>
+                                                <Text text="{history>changed_by}" wrapping="false"/>
+                                            </HBox>
+
+                                            <VBox class="historyMainNode">
+                                                <HBox alignItems="Center" justifyContent="Center" class="historyMainNodeHeader">
+                                                    <core:Icon
+                                                        src="{path: 'history>main/action_type', formatter: '.formatter.formatHistoryIcon'}"
+                                                        color="{path: 'history>main/action_type', formatter: '.formatter.formatHistoryIconColor'}"
+                                                        size="1.1rem"
+                                                        class="sapUiTinyMarginEnd"/>
+                                                    <Text text="{path: 'history>main/field_name', formatter: '.formatter.formatHistoryField'}" class="sapMTextBold"/>
+                                                </HBox>
+                                                <HBox alignItems="Center" justifyContent="Center" wrap="Wrap" class="historyMainTransition">
                                                     <ObjectStatus
-                                                        text="{path: 'history>old_value', formatter: '.formatter.formatOptionalField'}"
+                                                        text="{parts: [{path: 'history>main/field_name'}, {path: 'history>main/old_value'}], formatter: '.formatter.formatHistoryFieldValue'}"
                                                         state="None"/>
                                                     <core:Icon src="sap-icon://arrow-right" size="0.75rem" class="sapUiTinyMarginBegin sapUiTinyMarginEnd"/>
-                                                    <ObjectStatus text="{history>new_value}" state="Information"/>
+                                                    <ObjectStatus
+                                                        text="{parts: [{path: 'history>main/field_name'}, {path: 'history>main/new_value'}], formatter: '.formatter.formatHistoryFieldValue'}"
+                                                        state="{path: 'history>main/new_value', formatter: '.formatter.formatStatusState'}"/>
                                                 </HBox>
                                                 <Text
-                                                    text="{history>notes}"
-                                                    visible="{= !!${history>notes} }"
+                                                    text="{history>main/notes}"
+                                                    visible="{= !!${history>main/notes} }"
                                                     class="sapUiTinyMarginTop"
                                                     wrapping="true"/>
-                                                <HBox alignItems="Center" class="sapUiTinyMarginTop">
-                                                    <core:Icon src="sap-icon://employee" size="0.75rem" class="sapUiTinyMarginEnd"/>
-                                                    <Text text="{history>changed_by}" wrapping="true"/>
-                                                </HBox>
-                                                <Text
-                                                    text="{path: 'history>changed_at', formatter: '.formatter.formatDateTime'}"
-                                                    class="sapUiTinyMarginTop sapMTextColorSecondary"/>
+                                            </VBox>
+
+                                            <VBox class="historyMainConnector" visible="{= ${history>children}.length > 0 }"/>
+
+                                            <VBox items="{history>children}" class="historyChildren">
+                                                <items>
+                                                    <VBox class="historyChildCard">
+                                                        <Text text="{path: 'history>field_name', formatter: '.formatter.formatHistoryField'}" class="sapMTextBold" wrapping="true"/>
+                                                        <HBox alignItems="Center" wrap="Wrap" class="sapUiTinyMarginTop">
+                                                            <Text text="{parts: [{path: 'history>field_name'}, {path: 'history>old_value'}], formatter: '.formatter.formatHistoryFieldValue'}"/>
+                                                            <core:Icon src="sap-icon://arrow-right" size="0.75rem" class="sapUiTinyMarginBegin sapUiTinyMarginEnd"/>
+                                                            <Text text="{parts: [{path: 'history>field_name'}, {path: 'history>new_value'}], formatter: '.formatter.formatHistoryFieldValue'}"/>
+                                                        </HBox>
+                                                        <Text
+                                                            text="{history>notes}"
+                                                            visible="{= !!${history>notes} }"
+                                                            class="sapUiTinyMarginTop sapMTextColorSecondary"
+                                                            wrapping="true"/>
+                                                    </VBox>
+                                                </items>
                                             </VBox>
                                         </VBox>
                                     </items>
-                                </FlexBox>
+                                </HBox>
                             </VBox>
                         </uxap:blocks>
                     </uxap:ObjectPageSubSection>

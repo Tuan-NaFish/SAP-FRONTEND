@@ -30,6 +30,15 @@ const SLA_HOURS: Record<string, number> = {
     "LOW":      72    // Must resolve within 72 hours (3 days)
 };
 
+type HistoryItem = Record<string, any>;
+
+type HistoryGroup = {
+    changed_at: unknown;
+    changed_by: string;
+    main: HistoryItem;
+    children: HistoryItem[];
+};
+
 /**
  * @namespace sap.defectmgmt.controller
  *
@@ -426,13 +435,61 @@ export default class IssueDetail extends BaseController {
 
         oListBinding.requestContexts().then((aContexts: Context[]) => {
             const aData = aContexts.map((oContext: Context) => {
-                return oContext.getObject();
+                return oContext.getObject() as HistoryItem;
             });
-            (that.getModel("history") as JSONModel).setData(aData);
+            (that.getModel("history") as JSONModel).setData(that._groupHistory(aData));
         }).catch((oError: Error) => {
             console.error("Failed to load history: " + oError.message);
             (that.getModel("history") as JSONModel).setData([]);
         });
+    }
+
+    private _groupHistory(aItems: HistoryItem[]): HistoryGroup[] {
+        const mGroups = new Map<string, HistoryItem[]>();
+
+        aItems.forEach((oItem) => {
+            const sTimestamp = this._historyTimestampKey(oItem.changed_at);
+            const sUser = String(oItem.changed_by || "");
+            const sKey = sTimestamp + "|" + sUser;
+            const aGroup = mGroups.get(sKey) || [];
+            aGroup.push(oItem);
+            mGroups.set(sKey, aGroup);
+        });
+
+        return Array.from(mGroups.values()).map((aGroup) => {
+            const iStatusIndex = aGroup.findIndex((oItem) => oItem.field_name === "STATUS");
+            const iMainIndex = iStatusIndex >= 0 ? iStatusIndex : 0;
+            const oMain = aGroup[iMainIndex];
+
+            return {
+                changed_at: oMain.changed_at,
+                changed_by: oMain.changed_by || "",
+                main: oMain,
+                children: aGroup.filter((_oItem, iIndex) => iIndex !== iMainIndex)
+            };
+        });
+    }
+
+    private _historyTimestampKey(oValue: unknown): string {
+        const oWrappedValue = oValue && typeof oValue === "object" && !(oValue instanceof Date)
+            ? oValue as { $date?: unknown; value?: unknown }
+            : undefined;
+        const vRawValue = oWrappedValue?.$date ?? oWrappedValue?.value ?? oValue;
+
+        if (vRawValue instanceof Date) {
+            return String(Math.floor(vRawValue.getTime() / 1000));
+        }
+
+        const sValue = String(vRawValue ?? "");
+        // write_history stamps each row independently. Group timestamp precision
+        // at seconds so fields emitted by one backend action become one branch.
+        const aAbapTimestamp = /^(\d{14})/.exec(sValue);
+        if (aAbapTimestamp) {
+            return aAbapTimestamp[1];
+        }
+
+        const oDate = new Date(sValue);
+        return isNaN(oDate.getTime()) ? sValue : String(Math.floor(oDate.getTime() / 1000));
     }
 
     // ============================================================
