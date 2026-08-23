@@ -217,8 +217,14 @@ body,
 .dashboardKpiNoAccent .sapMGT:hover,
 .dashboardKpiNoAccent .sapMGT:focus,
 .dashboardKpiNoAccent .sapMGT:active {
-    border-left: 0 !important;
-    box-shadow: none !important;
+    border-left: 1px solid var(--sapTile_BorderColor, #d9d9d9) !important;
+    border-inline-start: 1px solid var(--sapTile_BorderColor, #d9d9d9) !important;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.12) !important;
+}
+
+/* SAPUI5 renders the colored accent as a child element, not a tile border. */
+.dashboardKpiNoAccent .sapMGTCriticalBorder {
+    display: none !important;
 }
 
 /* Disable hover pointer cursor, outline, and click active state for display-only GenericTiles */
