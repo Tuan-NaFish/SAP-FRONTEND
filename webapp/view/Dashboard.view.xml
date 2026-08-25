@@ -114,7 +114,7 @@
                         <Text text="{dashboardData>/chartTotalLabel}" class="dashboardChartTotal"/>
                         <core:HTML id="statusDonut" class="dashboardCustomChart"/>
                     </Panel>
-                    <Panel headerText="Module × Severity" class="dashboardChartPanel dashboardColumnPanel sapUiNoContentPadding">
+                    <Panel headerText="Module x Severity" class="dashboardChartPanel dashboardColumnPanel sapUiNoContentPadding">
                         <core:HTML id="severityColumns" class="dashboardCustomChart"/>
                     </Panel>
                 </layout:Grid>
